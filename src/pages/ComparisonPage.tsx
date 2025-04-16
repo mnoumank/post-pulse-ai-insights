@@ -19,7 +19,9 @@ export default function ComparisonPage() {
     suggestions1, suggestions2,
     comparison,
     saveComparison,
-    isLoading
+    isLoading,
+    advancedParams,
+    updateAdvancedParams
   } = usePostComparison();
   
   const { user } = useAuth();
@@ -93,7 +95,10 @@ export default function ComparisonPage() {
         </div>
         
         <div className="mt-8">
-          <AdvancedAnalysisPanel />
+          <AdvancedAnalysisPanel 
+            params={advancedParams}
+            onChange={updateAdvancedParams}
+          />
         </div>
       </main>
       

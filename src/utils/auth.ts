@@ -211,6 +211,8 @@ export async function getUserComparisons(): Promise<any[]> {
       created_at,
       metrics,
       winner_id,
+      post_a_id,
+      post_b_id,
       posts!comparisons_post_a_id_fkey(id, content),
       posts!comparisons_post_b_id_fkey(id, content)
     `)
@@ -223,13 +225,18 @@ export async function getUserComparisons(): Promise<any[]> {
   }
   
   // Transform the data to a more usable format
-  return data.map(comp => ({
-    id: comp.id,
-    date: comp.created_at,
-    post1: comp.posts.find((p: any) => p.id === comp.post_a_id)?.content || '',
-    post2: comp.posts.find((p: any) => p.id === comp.post_b_id)?.content || '',
-    winnerId: comp.winner_id,
-    winningPost: comp.winner_id === comp.post_a_id ? 1 : comp.winner_id === comp.post_b_id ? 2 : 0,
-    metrics: comp.metrics
-  }));
+  return data.map(comp => {
+    const post1 = comp.posts.filter((p: any) => p.id === comp.post_a_id)[0];
+    const post2 = comp.posts.filter((p: any) => p.id === comp.post_b_id)[0];
+    
+    return {
+      id: comp.id,
+      date: comp.created_at,
+      post1: post1?.content || '',
+      post2: post2?.content || '',
+      winnerId: comp.winner_id,
+      winningPost: comp.winner_id === comp.post_a_id ? 1 : comp.winner_id === comp.post_b_id ? 2 : 0,
+      metrics: comp.metrics
+    };
+  });
 }
