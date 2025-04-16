@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -226,8 +225,12 @@ export async function getUserComparisons(): Promise<any[]> {
   
   // Transform the data to a more usable format
   return data.map(comp => {
-    const post1 = comp.posts.filter((p: any) => p.id === comp.post_a_id)[0];
-    const post2 = comp.posts.filter((p: any) => p.id === comp.post_b_id)[0];
+    // Explicitly cast posts to an array to fix TypeScript error
+    const posts_a = comp.posts as Array<{ id: string, content: string }>;
+    const posts_b = comp.posts as Array<{ id: string, content: string }>;
+    
+    const post1 = posts_a.find(p => p.id === comp.post_a_id);
+    const post2 = posts_b.find(p => p.id === comp.post_b_id);
     
     return {
       id: comp.id,
