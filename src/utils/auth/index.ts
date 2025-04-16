@@ -4,3 +4,4 @@ export * from './authentication';
 export * from './profiles';
 export * from './posts';
 export * from './comparisons';
+export * from './types';
