@@ -1,13 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getCurrentUser, login, logout, register, isLoggedIn } from '@/utils/auth';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl?: string;
-}
+import { getCurrentUser, login, logout, register } from '@/utils/auth';
+import { User } from '@/utils/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -34,14 +29,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const user = await getCurrentUser();
         setUser(user);
       } catch (err) {
-        setError('Authentication check failed');
-        console.error(err);
+        console.error('Authentication check failed:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // Get user data when signed in or token refreshed
+          try {
+            const user = await getCurrentUser();
+            setUser(user);
+          } catch (error) {
+            console.error('Failed to get user after auth state change:', error);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogin = async (email: string, password: string) => {

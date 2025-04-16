@@ -4,6 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Save, Share2 } from 'lucide-react';
 import { PostMetrics } from '@/utils/postAnalyzer';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 
 interface ComparisonSummaryProps {
   comparison: {
@@ -12,10 +15,20 @@ interface ComparisonSummaryProps {
   } | null;
   metrics1: PostMetrics | null;
   metrics2: PostMetrics | null;
-  onSave: () => void;
+  onSave: () => Promise<void>;
+  isSaving?: boolean;
 }
 
-export function ComparisonSummary({ comparison, metrics1, metrics2, onSave }: ComparisonSummaryProps) {
+export function ComparisonSummary({ 
+  comparison, 
+  metrics1, 
+  metrics2, 
+  onSave,
+  isSaving = false
+}: ComparisonSummaryProps) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   // If no comparison available yet, show waiting state
   if (!comparison || !metrics1 || !metrics2) {
     return (
@@ -72,6 +85,20 @@ export function ComparisonSummary({ comparison, metrics1, metrics2, onSave }: Co
     const lastStrength = strengths.pop();
     strengthsText = `${strengths.join(', ')}, and ${lastStrength}`;
   }
+  
+  const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save your comparison",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+    
+    await onSave();
+  };
 
   return (
     <Card>
@@ -92,9 +119,13 @@ export function ComparisonSummary({ comparison, metrics1, metrics2, onSave }: Co
         </div>
 
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-          <Button onClick={onSave} className="flex-1">
+          <Button 
+            onClick={handleSave} 
+            className="flex-1"
+            disabled={isSaving}
+          >
             <Save className="mr-2 h-4 w-4" />
-            Save Comparison
+            {isSaving ? 'Saving...' : 'Save Comparison'}
           </Button>
           <Button variant="outline" className="flex-1">
             <Share2 className="mr-2 h-4 w-4" />

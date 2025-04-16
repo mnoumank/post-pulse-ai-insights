@@ -10,6 +10,9 @@ import {
   PostSuggestion,
   AdvancedAnalysisParams
 } from '@/utils/postAnalyzer';
+import { savePost, saveComparison, getUserComparisons } from '@/utils/auth';
+import { toast } from '@/hooks/use-toast';
+import { useAuth } from './AuthContext';
 
 interface PostComparisonContextType {
   post1: string;
@@ -30,8 +33,10 @@ interface PostComparisonContextType {
   toggleAdvancedMode: () => void;
   advancedParams: AdvancedAnalysisParams;
   updateAdvancedParams: (params: Partial<AdvancedAnalysisParams>) => void;
-  saveComparison: () => void;
+  saveComparison: () => Promise<void>;
   savedComparisons: SavedComparison[];
+  isLoading: boolean;
+  refreshComparisons: () => Promise<void>;
 }
 
 interface SavedComparison {
@@ -40,8 +45,8 @@ interface SavedComparison {
   post1: string;
   post2: string;
   winningPost: number;
-  metrics1: PostMetrics;
-  metrics2: PostMetrics;
+  metrics1?: PostMetrics;
+  metrics2?: PostMetrics;
 }
 
 const defaultAdvancedParams: AdvancedAnalysisParams = {
@@ -53,6 +58,7 @@ const defaultAdvancedParams: AdvancedAnalysisParams = {
 const PostComparisonContext = createContext<PostComparisonContextType | undefined>(undefined);
 
 export function PostComparisonProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [post1, setPost1] = useState('');
   const [post2, setPost2] = useState('');
   const [metrics1, setMetrics1] = useState<PostMetrics | null>(null);
@@ -65,18 +71,14 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>(defaultAdvancedParams);
   const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Load saved comparisons from localStorage on initial render
+  // Fetch saved comparisons when the user changes
   useEffect(() => {
-    const savedData = localStorage.getItem('savedComparisons');
-    if (savedData) {
-      try {
-        setSavedComparisons(JSON.parse(savedData));
-      } catch (e) {
-        console.error('Failed to load saved comparisons', e);
-      }
+    if (user) {
+      refreshComparisons();
     }
-  }, []);
+  }, [user]);
 
   // Update analysis when posts change or advanced settings change
   useEffect(() => {
@@ -131,25 +133,72 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
     setAdvancedParams(prev => ({ ...prev, ...params }));
   };
 
-  // Save comparison to history
-  const saveComparison = () => {
-    if (!metrics1 || !metrics2 || !comparison) return;
-
-    const newComparison: SavedComparison = {
-      id: Date.now().toString(),
-      date: new Date().toISOString(),
-      post1,
-      post2,
-      winningPost: comparison.winner,
-      metrics1,
-      metrics2,
-    };
-
-    const updatedComparisons = [...savedComparisons, newComparison];
-    setSavedComparisons(updatedComparisons);
+  // Refresh comparisons from the database
+  const refreshComparisons = async () => {
+    if (!user) return;
     
-    // Save to localStorage
-    localStorage.setItem('savedComparisons', JSON.stringify(updatedComparisons));
+    setIsLoading(true);
+    try {
+      const comparisons = await getUserComparisons();
+      setSavedComparisons(comparisons);
+    } catch (error) {
+      console.error('Failed to load comparisons:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load your saved comparisons',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Save comparison to database
+  const handleSaveComparison = async () => {
+    if (!metrics1 || !metrics2 || !comparison) {
+      toast({
+        title: 'Cannot save',
+        description: 'Please make sure both posts have content',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // First save both posts
+      const post1Id = await savePost(post1);
+      const post2Id = await savePost(post2);
+      
+      // Determine winner ID
+      const winnerId = comparison.winner === 1 ? post1Id : comparison.winner === 2 ? post2Id : null;
+      
+      // Save the comparison with references to the posts
+      const metrics = {
+        post1: metrics1,
+        post2: metrics2
+      };
+      
+      const suggestionsData = {
+        post1: suggestions1,
+        post2: suggestions2
+      };
+      
+      await saveComparison(post1Id, post2Id, winnerId, metrics, suggestionsData);
+      
+      // Refresh the list of saved comparisons
+      await refreshComparisons();
+      
+    } catch (error) {
+      console.error('Failed to save comparison:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save your comparison',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -170,8 +219,10 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         toggleAdvancedMode,
         advancedParams,
         updateAdvancedParams,
-        saveComparison,
+        saveComparison: handleSaveComparison,
         savedComparisons,
+        isLoading,
+        refreshComparisons,
       }}
     >
       {children}

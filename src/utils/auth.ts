@@ -1,116 +1,235 @@
-// Authentication utility functions
-// This is a simplified mock implementation that would be replaced with actual auth
 
-interface User {
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+export interface User {
   id: string;
   name: string;
   email: string;
   avatarUrl?: string;
 }
 
-// Mock user data
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'demo@example.com',
-    password: 'password123',
-    name: 'Demo User',
-    avatarUrl: '/placeholder.svg',
+export async function login(email: string, password: string): Promise<User> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
-];
 
-// Mock authentication state
-let currentUser: User | null = null;
+  if (!data.user) {
+    throw new Error("No user returned from login");
+  }
 
-// Simple login function
-export const login = (email: string, password: string): Promise<User> => {
-  return new Promise((resolve, reject) => {
-    // Simulate network delay
-    setTimeout(() => {
-      const user = MOCK_USERS.find(u => u.email === email && u.password === password);
-      
-      if (user) {
-        // Don't include password in the returned user object
-        const { password, ...userWithoutPassword } = user;
-        currentUser = userWithoutPassword;
-        
-        // Store in localStorage to persist across refreshes
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
-        resolve(currentUser);
-      } else {
-        reject(new Error('Invalid email or password'));
-      }
-    }, 800);
+  // Get user profile from profiles table
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', data.user.id)
+    .single();
+
+  if (profileError) {
+    console.error("Error fetching profile:", profileError);
+  }
+
+  return {
+    id: data.user.id,
+    name: profileData?.full_name || data.user.email?.split('@')[0] || 'User',
+    email: data.user.email || '',
+    avatarUrl: profileData?.avatar_url,
+  };
+}
+
+export async function register(email: string, password: string, name: string): Promise<User> {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name,
+      },
+    },
   });
-};
 
-// Register function
-export const register = (email: string, password: string, name: string): Promise<User> => {
-  return new Promise((resolve, reject) => {
-    // Simulate network delay
-    setTimeout(() => {
-      if (MOCK_USERS.some(u => u.email === email)) {
-        reject(new Error('User with this email already exists'));
-        return;
-      }
-      
-      const newUser = {
-        id: String(MOCK_USERS.length + 1),
-        email,
-        password, // Note: In a real app, this would be hashed
-        name,
-        avatarUrl: '/placeholder.svg',
-      };
-      
-      MOCK_USERS.push(newUser);
-      
-      const { password: _, ...userWithoutPassword } = newUser;
-      currentUser = userWithoutPassword;
-      
-      // Store in localStorage to persist across refreshes
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      
-      resolve(currentUser);
-    }, 800);
-  });
-};
+  if (error) {
+    throw new Error(error.message);
+  }
 
-// Logout function
-export const logout = (): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      currentUser = null;
-      localStorage.removeItem('currentUser');
-      resolve();
-    }, 300);
-  });
-};
+  if (!data.user) {
+    throw new Error("No user returned from registration");
+  }
 
-// Get current user
-export const getCurrentUser = (): Promise<User | null> => {
-  return new Promise((resolve) => {
-    // First check if we have the current user in memory
-    if (currentUser) {
-      resolve(currentUser);
-      return;
-    }
-    
-    // Otherwise check localStorage
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      currentUser = JSON.parse(storedUser);
-      resolve(currentUser);
-      return;
-    }
-    
-    // No user found
-    resolve(null);
-  });
-};
+  return {
+    id: data.user.id,
+    name: name || data.user.email?.split('@')[0] || 'User',
+    email: data.user.email || '',
+    avatarUrl: undefined,
+  };
+}
 
-// Check if user is logged in
-export const isLoggedIn = async (): Promise<boolean> => {
+export async function logout(): Promise<void> {
+  const { error } = await supabase.auth.signOut();
+  
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError) {
+    console.error("Error getting session:", sessionError);
+    return null;
+  }
+  
+  if (!sessionData.session) {
+    return null;
+  }
+  
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  
+  if (userError) {
+    console.error("Error getting user:", userError);
+    return null;
+  }
+  
+  if (!userData.user) {
+    return null;
+  }
+
+  // Get user profile from profiles table
+  const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userData.user.id)
+    .single();
+
+  if (profileError && profileError.code !== 'PGRST116') {
+    console.error("Error fetching profile:", profileError);
+  }
+
+  return {
+    id: userData.user.id,
+    name: profileData?.full_name || userData.user.email?.split('@')[0] || 'User',
+    email: userData.user.email || '',
+    avatarUrl: profileData?.avatar_url,
+  };
+}
+
+export async function isLoggedIn(): Promise<boolean> {
   const user = await getCurrentUser();
-  return !!user;
-};
+  return user !== null;
+}
+
+// New functions to support the post comparison feature
+export async function savePost(content: string): Promise<string> {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    throw new Error("You must be logged in to save posts");
+  }
+  
+  const { data, error } = await supabase
+    .from('posts')
+    .insert({
+      user_id: user.id,
+      content: content
+    })
+    .select()
+    .single();
+    
+  if (error) {
+    toast({
+      title: "Error saving post",
+      description: error.message,
+      variant: "destructive",
+    });
+    throw new Error(error.message);
+  }
+  
+  return data.id;
+}
+
+export async function saveComparison(
+  post1Id: string,
+  post2Id: string,
+  winnerId: string | null,
+  metrics: any,
+  suggestions: any
+): Promise<string> {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    throw new Error("You must be logged in to save comparisons");
+  }
+  
+  const { data, error } = await supabase
+    .from('comparisons')
+    .insert({
+      user_id: user.id,
+      post_a_id: post1Id,
+      post_b_id: post2Id,
+      winner_id: winnerId,
+      metrics: metrics,
+      suggestions: suggestions
+    })
+    .select()
+    .single();
+    
+  if (error) {
+    toast({
+      title: "Error saving comparison",
+      description: error.message,
+      variant: "destructive",
+    });
+    throw new Error(error.message);
+  }
+  
+  toast({
+    title: "Comparison saved",
+    description: "Your comparison has been saved successfully",
+  });
+  
+  return data.id;
+}
+
+export async function getUserComparisons(): Promise<any[]> {
+  const user = await getCurrentUser();
+  
+  if (!user) {
+    throw new Error("You must be logged in to view comparisons");
+  }
+  
+  // Get comparisons with post content
+  const { data, error } = await supabase
+    .from('comparisons')
+    .select(`
+      id,
+      created_at,
+      metrics,
+      winner_id,
+      posts!comparisons_post_a_id_fkey(id, content),
+      posts!comparisons_post_b_id_fkey(id, content)
+    `)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error("Error fetching comparisons:", error);
+    throw new Error(error.message);
+  }
+  
+  // Transform the data to a more usable format
+  return data.map(comp => ({
+    id: comp.id,
+    date: comp.created_at,
+    post1: comp.posts.find((p: any) => p.id === comp.post_a_id)?.content || '',
+    post2: comp.posts.find((p: any) => p.id === comp.post_b_id)?.content || '',
+    winnerId: comp.winner_id,
+    winningPost: comp.winner_id === comp.post_a_id ? 1 : comp.winner_id === comp.post_b_id ? 2 : 0,
+    metrics: comp.metrics
+  }));
+}
