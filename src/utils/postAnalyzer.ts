@@ -1,4 +1,3 @@
-
 // This file contains functions to analyze LinkedIn posts and predict performance
 
 // Interfaces
@@ -54,41 +53,50 @@ const HASHTAG_OPTIMUM = {
 
 // Analyze functions
 export function analyzePost(postContent: string, advancedParams?: AdvancedAnalysisParams): PostMetrics {
-  // Simulating an AI analysis with some simple heuristics
+  // Normalize input to ensure consistent analysis
   const cleanContent = postContent.trim().toLowerCase();
   
-  // Base scores 
-  let engagementBase = 40 + Math.random() * 20; // 40-60 range
-  let reachBase = 35 + Math.random() * 30; // 35-65 range
-  let viralityBase = 30 + Math.random() * 25; // 30-55 range
+  // Remove randomness from base scores for consistent results
+  const engagementBase = 50; // Fixed base score
+  const reachBase = 45;      // Fixed base score
+  const viralityBase = 40;   // Fixed base score
   
-  // Content length factor
+  // Content length factor - more precise calculation
   const contentLength = cleanContent.length;
   let lengthMultiplier = 1.0;
   
   if (contentLength < OPTIMAL_LENGTH.min) {
     lengthMultiplier = 0.7 + (0.3 * contentLength / OPTIMAL_LENGTH.min);
   } else if (contentLength > OPTIMAL_LENGTH.max) {
-    lengthMultiplier = 0.95 - (0.2 * (contentLength - OPTIMAL_LENGTH.max) / 1000);
-    lengthMultiplier = Math.max(0.6, lengthMultiplier); // Don't penalize too much
+    lengthMultiplier = 0.95 - (0.2 * (contentLength - OPTIMAL_LENGTH.max) / OPTIMAL_LENGTH.max);
+    lengthMultiplier = Math.max(0.6, lengthMultiplier);
   } else {
-    // Sweet spot bonus
-    lengthMultiplier = 1.1;
+    // Sweet spot bonus with more granular scaling
+    const sweetSpotCenter = (OPTIMAL_LENGTH.min + OPTIMAL_LENGTH.max) / 2;
+    const distanceFromCenter = Math.abs(contentLength - sweetSpotCenter);
+    const maxDistance = (OPTIMAL_LENGTH.max - OPTIMAL_LENGTH.min) / 2;
+    lengthMultiplier = 1.1 - (0.1 * distanceFromCenter / maxDistance);
   }
   
-  // Positive words factor
+  // Positive words factor - improved weighting
   const positiveWordsCount = POSITIVE_FACTORS.filter(word => 
     cleanContent.includes(word)
   ).length;
-  const positiveMultiplier = 1 + (0.05 * positiveWordsCount);
+  const uniquePositiveWords = new Set(POSITIVE_FACTORS.filter(word => 
+    cleanContent.includes(word)
+  )).size;
+  const positiveMultiplier = 1 + (0.03 * uniquePositiveWords); // Reduced impact and considers uniqueness
   
-  // Engagement triggers factor
+  // Engagement triggers factor - improved detection
   const engagementTriggersCount = ENGAGEMENT_TRIGGERS.filter(trigger => 
     cleanContent.includes(trigger)
   ).length;
-  const engagementMultiplier = 1 + (0.1 * engagementTriggersCount);
+  const uniqueEngagementTriggers = new Set(ENGAGEMENT_TRIGGERS.filter(trigger => 
+    cleanContent.includes(trigger)
+  )).size;
+  const engagementMultiplier = 1 + (0.05 * uniqueEngagementTriggers); // Reduced impact
   
-  // Hashtag factor
+  // Hashtag factor - improved calculation
   const hashtagMatches = cleanContent.match(/#\w+/g);
   const hashtagCount = hashtagMatches ? hashtagMatches.length : 0;
   let hashtagMultiplier = 1.0;
@@ -96,11 +104,16 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
   if (hashtagCount === 0) {
     hashtagMultiplier = 0.85;
   } else if (hashtagCount >= HASHTAG_OPTIMUM.min && hashtagCount <= HASHTAG_OPTIMUM.max) {
-    hashtagMultiplier = 1.15;
+    hashtagMultiplier = 1.15 - (0.05 * Math.abs(hashtagCount - ((HASHTAG_OPTIMUM.min + HASHTAG_OPTIMUM.max) / 2)));
   } else if (hashtagCount > HASHTAG_OPTIMUM.max) {
     hashtagMultiplier = 1 - (0.03 * (hashtagCount - HASHTAG_OPTIMUM.max));
     hashtagMultiplier = Math.max(0.85, hashtagMultiplier);
   }
+  
+  // Sentence structure analysis
+  const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const avgSentenceLength = sentences.reduce((acc, s) => acc + s.trim().length, 0) / sentences.length;
+  const sentenceMultiplier = avgSentenceLength > 15 && avgSentenceLength < 100 ? 1.05 : 0.95;
   
   // Advanced parameters adjustments (if provided)
   let advancedMultiplier = 1.0;
@@ -154,20 +167,20 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     }
   }
   
-  // Calculate final scores
-  const engagementScore = Math.min(100, engagementBase * lengthMultiplier * positiveMultiplier * engagementMultiplier * hashtagMultiplier * advancedMultiplier);
-  const reachScore = Math.min(100, reachBase * lengthMultiplier * hashtagMultiplier * advancedMultiplier);
-  const viralityScore = Math.min(100, viralityBase * engagementMultiplier * positiveMultiplier * hashtagMultiplier * advancedMultiplier);
+  // Calculate final scores with deterministic rounding
+  const engagementScore = Math.round(Math.min(100, engagementBase * lengthMultiplier * positiveMultiplier * engagementMultiplier * hashtagMultiplier * sentenceMultiplier * advancedMultiplier));
+  const reachScore = Math.round(Math.min(100, reachBase * lengthMultiplier * hashtagMultiplier * sentenceMultiplier * advancedMultiplier));
+  const viralityScore = Math.round(Math.min(100, viralityBase * engagementMultiplier * positiveMultiplier * hashtagMultiplier * sentenceMultiplier * advancedMultiplier));
   
-  // Estimate engagement numbers based on scores
-  const likesEstimate = Math.floor(engagementScore * 0.6);
-  const commentsEstimate = Math.floor(engagementScore * 0.15);
-  const sharesEstimate = Math.floor(viralityScore * 0.08);
+  // Estimate engagement numbers based on scores - made deterministic
+  const likesEstimate = Math.floor(engagementScore * 0.55);
+  const commentsEstimate = Math.floor(engagementScore * 0.12);
+  const sharesEstimate = Math.floor(viralityScore * 0.07);
   
   return {
-    engagementScore: Math.round(engagementScore),
-    reachScore: Math.round(reachScore),
-    viralityScore: Math.round(viralityScore),
+    engagementScore,
+    reachScore,
+    viralityScore,
     likes: likesEstimate,
     comments: commentsEstimate,
     shares: sharesEstimate,
