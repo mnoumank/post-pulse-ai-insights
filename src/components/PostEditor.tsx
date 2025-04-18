@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PostEditorProps {
   postNumber: 1 | 2;
@@ -33,7 +33,6 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
   };
 
   const insertSample = () => {
-    // Pick a random sample that's different from the current one
     let randomIndex;
     do {
       randomIndex = Math.floor(Math.random() * samplePosts.length);
@@ -41,6 +40,42 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
     
     onChange(samplePosts[randomIndex]);
     setShowPlaceholder(false);
+  };
+
+  const cleanupText = () => {
+    if (!content.trim()) {
+      toast("No content to clean up", {
+        description: "Please add some text first"
+      });
+      return;
+    }
+
+    let cleanedText = content.split('\n').map((line, i) => {
+      if (line.trim() && !line.match(/^[👋🎯💡🔑✨🚀📈💪]/)) {
+        const emojis = ['👋', '🎯', '💡', '🔑', '✨', '🚀', '📈', '💪'];
+        return `${emojis[i % emojis.length]} ${line}`;
+      }
+      return line;
+    }).join('\n');
+
+    cleanedText = cleanedText.replace(/^- /gm, '• ');
+
+    if (!cleanedText.includes('#')) {
+      cleanedText += '\n\n#linkedin #growth #success #business';
+    }
+
+    if (!cleanedText.toLowerCase().includes('thoughts?') && 
+        !cleanedText.toLowerCase().includes('agree?') &&
+        !cleanedText.includes('?')) {
+      cleanedText += '\n\nWhat are your thoughts? 🤔';
+    }
+
+    cleanedText = cleanedText.replace(/([.!?])\s+/g, '$1\n\n');
+
+    onChange(cleanedText);
+    toast("Text cleaned up!", {
+      description: "Added structure, emojis, and engagement hooks"
+    });
   };
 
   const getScoreColor = (score: number) => {
@@ -57,15 +92,26 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
           <CardTitle className="text-xl">
             Post {postNumber} {isWinner && <Badge className="ml-2 bg-green-500">Winner</Badge>}
           </CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={insertSample} 
-            className="h-8 text-xs"
-          >
-            <RefreshCw className="h-3.5 w-3.5 mr-1" />
-            Sample
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={insertSample} 
+              className="h-8 text-xs"
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+              Sample
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={cleanupText} 
+              className="h-8 text-xs"
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1" />
+              Clean up
+            </Button>
+          </div>
         </div>
         {metrics && (
           <div className="flex gap-2 mt-2">

@@ -1,4 +1,3 @@
-
 // This file contains functions to analyze LinkedIn posts and predict performance
 
 // Interfaces
@@ -280,41 +279,41 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
   // Advanced parameters adjustments (if provided)
   let advancedMultiplier = 1.0;
   if (advancedParams) {
-    // Follower range impact
+    // Follower range impact - increased impact
     switch (advancedParams.followerRange) {
       case '0-500':
-        advancedMultiplier *= 0.8;
+        advancedMultiplier *= 0.6; // More significant reduction
         break;
       case '500-1K':
-        advancedMultiplier *= 0.9;
+        advancedMultiplier *= 0.8;
         break;
       case '1K-5K':
         advancedMultiplier *= 1.0;
         break;
       case '5K-10K':
-        advancedMultiplier *= 1.1;
+        advancedMultiplier *= 1.3; // Increased boost
         break;
       case '10K+':
-        advancedMultiplier *= 1.2;
+        advancedMultiplier *= 1.6; // Significant boost
         break;
     }
     
-    // Industry impact - now using keyword detection
+    // Industry impact - now using keyword detection with stronger multipliers
     if (advancedParams.industry) {
       const industryRelevance = analyzeIndustryRelevance(postContent, advancedParams.industry);
-      advancedMultiplier *= industryRelevance;
+      advancedMultiplier *= (industryRelevance * 1.5); // 50% stronger effect
     }
     
-    // Engagement level
+    // Engagement level - increased impact
     switch (advancedParams.engagementLevel) {
       case 'High':
-        advancedMultiplier *= 1.2;
+        advancedMultiplier *= 1.4; // 40% boost
         break;
       case 'Medium':
         advancedMultiplier *= 1.0;
         break;
       case 'Low':
-        advancedMultiplier *= 0.8;
+        advancedMultiplier *= 0.6; // 40% reduction
         break;
     }
   }
@@ -641,4 +640,3 @@ export const analyzers = {
   analyzeIndustryRelevance,
   getTextFingerprint
 };
-
