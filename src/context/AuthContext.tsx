@@ -1,10 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { login, logout, register } from '@/utils/auth/authentication';
 import { getCurrentUser } from '@/utils/auth/profiles';
 import { User } from '@/utils/auth/types';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
@@ -91,8 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(demoUser);
         setIsDemoUser(true);
         localStorage.setItem('demoUser', JSON.stringify(demoUser));
-        toast({
-          title: "Demo Mode",
+        toast("Demo Mode", {
           description: "You are now using the demo account"
         });
         setIsLoading(false);

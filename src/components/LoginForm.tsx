@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -18,7 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -43,8 +42,7 @@ export function LoginForm() {
     form.setValue('email', 'demo@example.com');
     form.setValue('password', 'password123');
     
-    toast({
-      title: "Demo Account",
+    toast("Demo Account", {
       description: "Demo credentials filled. Click Log In to continue."
     });
   };
