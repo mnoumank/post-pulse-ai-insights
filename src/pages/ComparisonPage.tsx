@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PostEditor } from '@/components/PostEditor';
 import { EngagementChart } from '@/components/EngagementChart';
@@ -26,8 +25,8 @@ export default function ComparisonPage() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   
-  // If user is not logged in, redirect to login page
   useEffect(() => {
     if (user === null) {
       navigate('/login');
@@ -98,6 +97,8 @@ export default function ComparisonPage() {
           <AdvancedAnalysisPanel 
             params={advancedParams}
             onChange={updateAdvancedParams}
+            isVisible={showAdvancedOptions}
+            onToggle={() => setShowAdvancedOptions(!showAdvancedOptions)}
           />
         </div>
       </main>
