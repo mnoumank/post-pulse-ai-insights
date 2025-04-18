@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -41,6 +42,11 @@ export function LoginForm() {
   const fillDemoAccount = () => {
     form.setValue('email', 'demo@example.com');
     form.setValue('password', 'password123');
+    
+    toast({
+      title: "Demo Account",
+      description: "Demo credentials filled. Click Log In to continue."
+    });
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {

@@ -4,6 +4,16 @@ import { User } from "./types";
 import { getCurrentUser } from "./profiles";
 
 export async function login(email: string, password: string): Promise<User> {
+  // Special handling for demo account
+  if (email === "demo@example.com" && password === "password123") {
+    return {
+      id: "demo-user-id",
+      name: "Demo User",
+      email: "demo@example.com",
+      avatarUrl: undefined,
+    };
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
