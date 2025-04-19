@@ -24,6 +24,89 @@ const samplePosts = [
   "Today marks 5 years at Company X! 🎉\n\nLooking back, I'm grateful for:\n- The amazing colleagues who became friends\n- Challenging projects that helped me grow\n- The supportive environment that encourages innovation\n\nExcited for what the future holds! #WorkAnniversary #CareerGrowth",
 ];
 
+const HASHTAG_CATEGORIES = {
+  leadership: ['#leadership', '#management', '#leadershipdevelopment', '#teamwork', '#coaching', '#mentoring'],
+  career: ['#careeradvice', '#careerdevelopment', '#careerchange', '#jobsearch', '#hiring', '#careers'],
+  business: ['#business', '#entrepreneurship', '#startups', '#smallbusiness', '#innovation', '#strategy'],
+  technology: ['#technology', '#tech', '#innovation', '#ai', '#digitaltransformation', '#future'],
+  marketing: ['#marketing', '#digitalmarketing', '#socialmedia', '#branding', '#contentmarketing'],
+  productivity: ['#productivity', '#timemanagement', '#goals', '#success', '#motivation', '#planning'],
+  networking: ['#networking', '#connections', '#community', '#professionals', '#linkedinnetwork'],
+  learning: ['#learning', '#growth', '#personaldevelopment', '#education', '#skills', '#mindset'],
+  industry: ['#industry', '#trends', '#solutions', '#insights', '#expertise', '#professional']
+};
+
+const getRelevantHashtags = (content: string, maxHashtags: number = 4) => {
+  const text = content.toLowerCase();
+  let relevantTags = new Set<string>();
+  
+  const keywordMap = {
+    'lead': 'leadership',
+    'team': 'leadership',
+    'manage': 'leadership',
+    'motivat': 'leadership',
+    
+    'career': 'career',
+    'job': 'career',
+    'hiring': 'career',
+    'interview': 'career',
+    
+    'business': 'business',
+    'startup': 'business',
+    'entrepreneur': 'business',
+    'company': 'business',
+    
+    'tech': 'technology',
+    'ai': 'technology',
+    'digital': 'technology',
+    'software': 'technology',
+    
+    'market': 'marketing',
+    'brand': 'marketing',
+    'content': 'marketing',
+    'social media': 'marketing',
+    
+    'productiv': 'productivity',
+    'goal': 'productivity',
+    'success': 'productivity',
+    'achieve': 'productivity',
+    
+    'network': 'networking',
+    'connect': 'networking',
+    'communit': 'networking',
+    
+    'learn': 'learning',
+    'develop': 'learning',
+    'grow': 'learning',
+    'skill': 'learning'
+  };
+
+  const matchedCategories = new Set<string>();
+  for (const [keyword, category] of Object.entries(keywordMap)) {
+    if (text.includes(keyword)) {
+      matchedCategories.add(category);
+    }
+  }
+  
+  if (matchedCategories.size === 0) {
+    matchedCategories.add('networking');
+    matchedCategories.add('professional');
+  }
+  
+  for (const category of matchedCategories) {
+    const categoryTags = HASHTAG_CATEGORIES[category];
+    if (categoryTags) {
+      const numToAdd = Math.min(2, Math.ceil(maxHashtags / matchedCategories.size));
+      const shuffled = [...categoryTags].sort(() => 0.5 - Math.random());
+      shuffled.slice(0, numToAdd).forEach(tag => relevantTags.add(tag));
+    }
+  }
+  
+  relevantTags.add('#linkedin');
+  
+  return Array.from(relevantTags).slice(0, maxHashtags);
+};
+
 export function PostEditor({ postNumber, content, onChange, metrics, isWinner }: PostEditorProps) {
   const [showPlaceholder, setShowPlaceholder] = useState(!content);
 
@@ -60,9 +143,10 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
 
     cleanedText = cleanedText.replace(/^- /gm, '• ');
 
-    if (!cleanedText.includes('#')) {
-      cleanedText += '\n\n#linkedin #growth #success #business';
-    }
+    cleanedText = cleanedText.replace(/#\w+/g, '').trim();
+
+    const relevantHashtags = getRelevantHashtags(cleanedText);
+    cleanedText += '\n\n' + relevantHashtags.join(' ');
 
     if (!cleanedText.toLowerCase().includes('thoughts?') && 
         !cleanedText.toLowerCase().includes('agree?') &&
@@ -74,7 +158,7 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
 
     onChange(cleanedText);
     toast("Text cleaned up!", {
-      description: "Added structure, emojis, and engagement hooks"
+      description: "Added structure, emojis, and relevant hashtags"
     });
   };
 
