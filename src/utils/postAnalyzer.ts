@@ -1,3 +1,4 @@
+
 // This file contains functions to analyze LinkedIn posts and predict performance
 
 // Interfaces
@@ -64,6 +65,28 @@ const EMOJIS = [
   '👍', '👏', '🙌', '🤝', '🔥', '⭐', '💯', '📊', '📈', '🚀', '💡', '📝', '🎯', '🏆'
 ];
 
+// NEW: Hook effectiveness factors
+const HOOK_PHRASES = [
+  'i discovered', 'i learned', 'breaking:', 'unpopular opinion', 'the truth about',
+  'little known fact', 'secret to', 'what nobody tells you', 'surprising', 'attention',
+  'listen up', 'game changer', 'finally', 'revealed', 'just in', 'case study', 
+  'my biggest mistake', 'how i', 'why you should', 'why you shouldn\'t'
+];
+
+// NEW: Storytelling elements
+const STORYTELLING_ELEMENTS = [
+  'when i', 'i remember', 'last week', 'last year', 'yesterday', 'today', 'my journey',
+  'what happened', 'lesson learned', 'failure', 'success', 'challenge', 'overcome',
+  'beginning', 'middle', 'end', 'result', 'outcome', 'learned', 'discovery'
+];
+
+// NEW: Value proposition indicators
+const VALUE_INDICATORS = [
+  'benefit', 'advantage', 'save time', 'boost', 'increase', 'improve', 'solution',
+  'tips', 'tricks', 'strategy', 'framework', 'template', 'checklist', 'guide',
+  'how to', 'steps to', 'method for', 'ways to', 'secrets of', 'proven', 'tested'
+];
+
 const INDUSTRY_KEYWORDS = {
   'Technology': ['tech', 'technology', 'software', 'developer', 'code', 'programming', 'digital', 'innovation', 'cloud', 'ai', 'artificial intelligence', 'machine learning', 'data science'],
   'Marketing': ['marketing', 'brand', 'content', 'seo', 'social media', 'campaign', 'audience', 'customer', 'promotion', 'advertising'],
@@ -71,6 +94,23 @@ const INDUSTRY_KEYWORDS = {
   'Healthcare': ['healthcare', 'medical', 'health', 'patient', 'doctor', 'hospital', 'care', 'clinical', 'wellness', 'pharma'],
   'Education': ['education', 'learning', 'teaching', 'student', 'school', 'university', 'college', 'academic', 'classroom', 'course'],
   'Retail': ['retail', 'shopping', 'ecommerce', 'product', 'customer', 'consumer', 'store', 'sales', 'price', 'discount'],
+};
+
+// NEW: Posting time weights (1.0 is baseline, higher is better)
+const TIME_OF_DAY_WEIGHTS = {
+  '8-10': 1.2,  // Morning peak
+  '12-14': 1.1, // Lunch break
+  '16-18': 1.15 // End of workday
+};
+
+const DAY_OF_WEEK_WEIGHTS = {
+  'monday': 1.0,
+  'tuesday': 1.15, 
+  'wednesday': 1.2,
+  'thursday': 1.15,
+  'friday': 0.9,
+  'saturday': 0.7,
+  'sunday': 0.8
 };
 
 // Text fingerprint function to ensure consistent scoring for identical texts
@@ -126,6 +166,75 @@ function countEmojis(text: string): number {
   return count;
 }
 
+// NEW: Analyze hook strength (first 100 characters)
+function analyzeHookStrength(text: string): number {
+  const firstHundredChars = text.toLowerCase().substring(0, 100);
+  
+  // Check for question marks in the opening
+  const hasQuestion = firstHundredChars.includes('?');
+  
+  // Check for hook phrases
+  const hookPhraseCount = HOOK_PHRASES.filter(phrase => 
+    firstHundredChars.includes(phrase)
+  ).length;
+  
+  // Check for numbers in the opening (people love numbered lists)
+  const hasNumbers = /\d+/.test(firstHundredChars);
+  
+  // Check for emojis in the opening
+  const hasEmojis = EMOJIS.some(emoji => firstHundredChars.includes(emoji));
+  
+  // Calculate hook score (0-1.5)
+  let hookScore = 1.0; // Base score
+  if (hasQuestion) hookScore += 0.15;
+  if (hookPhraseCount > 0) hookScore += Math.min(0.3, hookPhraseCount * 0.15);
+  if (hasNumbers) hookScore += 0.1;
+  if (hasEmojis) hookScore += 0.15;
+  
+  return hookScore;
+}
+
+// NEW: Analyze storytelling elements
+function analyzeStorytellingElements(text: string): number {
+  const lowercaseText = text.toLowerCase();
+  
+  // Count storytelling phrases
+  const storyElementCount = STORYTELLING_ELEMENTS.filter(element => 
+    lowercaseText.includes(element)
+  ).length;
+  
+  // Check for personal pronouns (I, me, my) indicating personal story
+  const personalPronounMatches = lowercaseText.match(/\b(i|me|my|mine|we|our|us)\b/g);
+  const personalPronounCount = personalPronounMatches ? personalPronounMatches.length : 0;
+  
+  // Calculate storytelling score (0-1.5)
+  const storyScore = 1.0 + 
+    Math.min(0.3, storyElementCount * 0.06) + 
+    Math.min(0.2, personalPronounCount * 0.02);
+  
+  return storyScore;
+}
+
+// NEW: Analyze value proposition
+function analyzeValueProposition(text: string): number {
+  const lowercaseText = text.toLowerCase();
+  
+  // Count value indicator phrases
+  const valueIndicatorCount = VALUE_INDICATORS.filter(indicator => 
+    lowercaseText.includes(indicator)
+  ).length;
+  
+  // Check for specific data points or statistics
+  const hasStatistics = /\d+%|\d+ percent|\d+x/i.test(text);
+  
+  // Calculate value score (0-1.4)
+  const valueScore = 1.0 + 
+    Math.min(0.3, valueIndicatorCount * 0.05) + 
+    (hasStatistics ? 0.1 : 0);
+  
+  return valueScore;
+}
+
 // Analyze sentiment score from -1 (negative) to 1 (positive)
 function analyzeSentiment(text: string): number {
   const lowercaseText = text.toLowerCase();
@@ -170,8 +279,8 @@ function analyzeIndustryRelevance(text: string, industry: string): number {
     }
   }
   
-  // Calculate relevance score: 0.8 base + up to 0.6 bonus for keywords (increased from 0.4)
-  return 0.8 + Math.min(0.6, (matchCount / industryKeywords.length) * 0.6);
+  // Calculate relevance score: 0.8 base + up to 0.8 bonus for keywords
+  return 0.8 + Math.min(0.8, (matchCount / industryKeywords.length) * 0.8);
 }
 
 // Analyze functions
@@ -248,7 +357,7 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     : 0;
   const sentenceMultiplier = avgSentenceLength > 15 && avgSentenceLength < 100 ? 1.05 : 0.95;
   
-  // NEW: Emoji analysis
+  // Emoji analysis
   const emojiCount = countEmojis(postContent);
   const emojiMultiplier = emojiCount > 0 && emojiCount <= 5 
     ? 1.05 + (0.01 * emojiCount)  // Small bonus for 1-5 emojis
@@ -256,7 +365,7 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
       ? 1.05 - (0.01 * (emojiCount - 5))  // Penalty for too many emojis
       : 0.95;  // Small penalty for no emojis
   
-  // NEW: Content structure analysis
+  // Content structure analysis
   const structure = analyzeContentStructure(postContent);
   const structureScore = 
     (structure.paragraphs > 1 ? 0.05 : 0) + 
@@ -264,7 +373,7 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     (structure.numberedLists > 0 ? 0.05 : 0);
   const structureMultiplier = 1 + structureScore;
   
-  // NEW: Reading time analysis
+  // Reading time analysis
   const readingTimeMinutes = calculateReadingTime(postContent);
   const readingTimeMultiplier = readingTimeMinutes >= 1 && readingTimeMinutes <= 3 
     ? 1.05  // Ideal reading time (1-3 minutes)
@@ -272,48 +381,57 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
       ? 1 - (0.03 * (readingTimeMinutes - 3))  // Penalty for long content
       : 0.95;  // Penalty for very short content
   
-  // NEW: Sentiment analysis
+  // Sentiment analysis
   const sentiment = analyzeSentiment(postContent);
   const sentimentMultiplier = 1 + (sentiment * 0.1);  // Positive sentiment gets a small boost
+  
+  // NEW: Hook strength analysis
+  const hookStrength = analyzeHookStrength(postContent);
+  
+  // NEW: Storytelling elements analysis
+  const storytellingScore = analyzeStorytellingElements(postContent);
+  
+  // NEW: Value proposition analysis
+  const valuePropositionScore = analyzeValueProposition(postContent);
   
   // Advanced parameters adjustments (if provided)
   let advancedMultiplier = 1.0;
   if (advancedParams) {
-    // Follower range impact - SIGNIFICANTLY increased impact
+    // Follower range impact - DRAMATICALLY increased impact
     switch (advancedParams.followerRange) {
       case '0-500':
-        advancedMultiplier *= 0.4; // 60% reduction (increased from 0.6)
+        advancedMultiplier *= 0.3; // 70% reduction (increased from 0.4)
         break;
       case '500-1K':
-        advancedMultiplier *= 0.65; // 35% reduction (increased from 0.8)
+        advancedMultiplier *= 0.5; // 50% reduction (increased from 0.65)
         break;
       case '1K-5K':
         advancedMultiplier *= 1.0; // Baseline
         break;
       case '5K-10K':
-        advancedMultiplier *= 1.6; // 60% boost (increased from 1.3)
+        advancedMultiplier *= 2.0; // 100% boost (increased from 1.6)
         break;
       case '10K+':
-        advancedMultiplier *= 2.2; // 120% boost (increased from 1.6)
+        advancedMultiplier *= 3.0; // 200% boost (increased from 2.2)
         break;
     }
     
-    // Industry impact - now using keyword detection with much stronger multipliers
+    // Industry impact - using keyword detection with extremely strong multipliers
     if (advancedParams.industry) {
       const industryRelevance = analyzeIndustryRelevance(postContent, advancedParams.industry);
-      advancedMultiplier *= (industryRelevance * 2.0); // 100% stronger effect (increased from 1.5)
+      advancedMultiplier *= (industryRelevance * 2.5); // 150% stronger effect (increased from 2.0)
     }
     
-    // Engagement level - significantly increased impact
+    // Engagement level - dramatically increased impact
     switch (advancedParams.engagementLevel) {
       case 'High':
-        advancedMultiplier *= 1.8; // 80% boost (increased from 1.4)
+        advancedMultiplier *= 2.5; // 150% boost (increased from 1.8)
         break;
       case 'Medium':
         advancedMultiplier *= 1.0; // Baseline
         break;
       case 'Low':
-        advancedMultiplier *= 0.45; // 55% reduction (increased from 0.6)
+        advancedMultiplier *= 0.35; // 65% reduction (increased from 0.45)
         break;
     }
   }
@@ -329,6 +447,9 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     structureMultiplier * 
     readingTimeMultiplier * 
     sentimentMultiplier * 
+    hookStrength *
+    storytellingScore *
+    valuePropositionScore *
     advancedMultiplier
   ));
   
@@ -338,6 +459,7 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     sentenceMultiplier * 
     structureMultiplier *
     readingTimeMultiplier *
+    hookStrength *
     advancedMultiplier
   ));
   
@@ -349,13 +471,17 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     emojiMultiplier * 
     structureMultiplier * 
     sentimentMultiplier *
+    storytellingScore *
+    valuePropositionScore *
     advancedMultiplier
   ));
   
-  // Estimate engagement numbers based on scores - more closely tied to advanced parameters
-  const likesEstimate = Math.floor(engagementScore * (advancedParams ? 0.8 : 0.55));
-  const commentsEstimate = Math.floor(engagementScore * (advancedParams ? 0.18 : 0.12));
-  const sharesEstimate = Math.floor(viralityScore * (advancedParams ? 0.12 : 0.07));
+  // Estimate engagement numbers based on scores - MUCH more closely tied to advanced parameters
+  const baseMultiplier = advancedParams ? 3.0 : 1.0;
+  
+  const likesEstimate = Math.floor(engagementScore * baseMultiplier * (advancedParams ? 1.2 : 0.55));
+  const commentsEstimate = Math.floor(engagementScore * baseMultiplier * (advancedParams ? 0.25 : 0.12));
+  const sharesEstimate = Math.floor(viralityScore * baseMultiplier * (advancedParams ? 0.18 : 0.07));
   
   const result = {
     engagementScore,
