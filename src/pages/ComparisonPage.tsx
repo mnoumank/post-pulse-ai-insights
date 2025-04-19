@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PostEditor } from '@/components/PostEditor';
@@ -32,6 +33,13 @@ export default function ComparisonPage() {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  // Add forceAnalyze function to trigger new analysis
+  const handleForceAnalyze = () => {
+    // This will force a new analysis with current parameters
+    setPost1(post1);
+    setPost2(post2);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -97,6 +105,7 @@ export default function ComparisonPage() {
           <AdvancedAnalysisPanel 
             params={advancedParams}
             onChange={updateAdvancedParams}
+            onAnalyze={handleForceAnalyze}
             isVisible={showAdvancedOptions}
             onToggle={() => setShowAdvancedOptions(!showAdvancedOptions)}
           />

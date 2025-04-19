@@ -23,6 +23,7 @@ import { AdvancedAnalysisParams } from '@/utils/postAnalyzer';
 interface AdvancedAnalysisPanelProps {
   params: AdvancedAnalysisParams;
   onChange: (params: Partial<AdvancedAnalysisParams>) => void;
+  onAnalyze: () => void;
   isVisible: boolean;
   onToggle: () => void;
 }
@@ -56,6 +57,7 @@ const engagementLevels = [
 export function AdvancedAnalysisPanel({ 
   params, 
   onChange,
+  onAnalyze,
   isVisible,
   onToggle 
 }: AdvancedAnalysisPanelProps) {
@@ -144,6 +146,13 @@ export function AdvancedAnalysisPanel({
               </SelectContent>
             </Select>
           </div>
+
+          <Button 
+            className="w-full mt-4"
+            onClick={onAnalyze}
+          >
+            Analyze with Current Parameters
+          </Button>
         </CardContent>
       )}
     </Card>
