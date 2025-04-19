@@ -170,8 +170,8 @@ function analyzeIndustryRelevance(text: string, industry: string): number {
     }
   }
   
-  // Calculate relevance score: 0.8 base + up to 0.4 bonus for keywords
-  return 0.8 + Math.min(0.4, (matchCount / industryKeywords.length) * 0.4);
+  // Calculate relevance score: 0.8 base + up to 0.6 bonus for keywords (increased from 0.4)
+  return 0.8 + Math.min(0.6, (matchCount / industryKeywords.length) * 0.6);
 }
 
 // Analyze functions
@@ -279,41 +279,41 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
   // Advanced parameters adjustments (if provided)
   let advancedMultiplier = 1.0;
   if (advancedParams) {
-    // Follower range impact - increased impact
+    // Follower range impact - SIGNIFICANTLY increased impact
     switch (advancedParams.followerRange) {
       case '0-500':
-        advancedMultiplier *= 0.6; // More significant reduction
+        advancedMultiplier *= 0.4; // 60% reduction (increased from 0.6)
         break;
       case '500-1K':
-        advancedMultiplier *= 0.8;
+        advancedMultiplier *= 0.65; // 35% reduction (increased from 0.8)
         break;
       case '1K-5K':
-        advancedMultiplier *= 1.0;
+        advancedMultiplier *= 1.0; // Baseline
         break;
       case '5K-10K':
-        advancedMultiplier *= 1.3; // Increased boost
+        advancedMultiplier *= 1.6; // 60% boost (increased from 1.3)
         break;
       case '10K+':
-        advancedMultiplier *= 1.6; // Significant boost
+        advancedMultiplier *= 2.2; // 120% boost (increased from 1.6)
         break;
     }
     
-    // Industry impact - now using keyword detection with stronger multipliers
+    // Industry impact - now using keyword detection with much stronger multipliers
     if (advancedParams.industry) {
       const industryRelevance = analyzeIndustryRelevance(postContent, advancedParams.industry);
-      advancedMultiplier *= (industryRelevance * 1.5); // 50% stronger effect
+      advancedMultiplier *= (industryRelevance * 2.0); // 100% stronger effect (increased from 1.5)
     }
     
-    // Engagement level - increased impact
+    // Engagement level - significantly increased impact
     switch (advancedParams.engagementLevel) {
       case 'High':
-        advancedMultiplier *= 1.4; // 40% boost
+        advancedMultiplier *= 1.8; // 80% boost (increased from 1.4)
         break;
       case 'Medium':
-        advancedMultiplier *= 1.0;
+        advancedMultiplier *= 1.0; // Baseline
         break;
       case 'Low':
-        advancedMultiplier *= 0.6; // 40% reduction
+        advancedMultiplier *= 0.45; // 55% reduction (increased from 0.6)
         break;
     }
   }
@@ -352,10 +352,10 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
     advancedMultiplier
   ));
   
-  // Estimate engagement numbers based on scores - made deterministic
-  const likesEstimate = Math.floor(engagementScore * 0.55);
-  const commentsEstimate = Math.floor(engagementScore * 0.12);
-  const sharesEstimate = Math.floor(viralityScore * 0.07);
+  // Estimate engagement numbers based on scores - more closely tied to advanced parameters
+  const likesEstimate = Math.floor(engagementScore * (advancedParams ? 0.8 : 0.55));
+  const commentsEstimate = Math.floor(engagementScore * (advancedParams ? 0.18 : 0.12));
+  const sharesEstimate = Math.floor(viralityScore * (advancedParams ? 0.12 : 0.07));
   
   const result = {
     engagementScore,
