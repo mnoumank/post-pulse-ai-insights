@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { RefreshCw, Sparkles, Hash } from 'lucide-react';
 import { toast } from 'sonner';
+import { AIPostMetrics } from '@/utils/aiAnalyzer';
 
 interface PostEditorProps {
   postNumber: 1 | 2;
   content: string;
   onChange: (content: string) => void;
-  metrics: {
-    engagementScore: number;
-    reachScore: number;
-    viralityScore: number;
-  } | null;
+  metrics: AIPostMetrics | null;
   isWinner?: boolean;
 }
 
@@ -162,6 +159,23 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
     });
   };
 
+  const addRecommendedHashtags = () => {
+    if (!metrics?.recommendedHashtags?.length) {
+      toast("No AI-recommended hashtags available", {
+        description: "Enable AI analysis to get hashtag recommendations"
+      });
+      return;
+    }
+
+    let updatedContent = content.replace(/#\w+/g, '').trim();
+    updatedContent += '\n\n' + metrics.recommendedHashtags.join(' ');
+    onChange(updatedContent);
+    
+    toast("Hashtags added!", {
+      description: "Added AI-recommended hashtags to your post"
+    });
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'bg-green-500';
     if (score >= 60) return 'bg-green-400';
@@ -173,8 +187,14 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
     <Card className={`w-full ${isWinner ? 'border-2 border-green-500' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">
+          <CardTitle className="text-xl flex items-center">
             Post {postNumber} {isWinner && <Badge className="ml-2 bg-green-500">Winner</Badge>}
+            {metrics?.isAIEnhanced && (
+              <Badge variant="outline" className="ml-2 flex items-center">
+                <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
+                AI Enhanced
+              </Badge>
+            )}
           </CardTitle>
           <div className="flex gap-2">
             <Button 
@@ -226,6 +246,29 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
           )}
         </div>
       </CardContent>
+      {metrics?.recommendedHashtags?.length > 0 && (
+        <CardFooter className="flex-col items-start pt-0">
+          <div className="flex items-center mb-2">
+            <Hash className="h-4 w-4 mr-1 text-blue-500" />
+            <span className="text-sm font-medium">AI Recommended Hashtags:</span>
+            <Button 
+              variant="link" 
+              size="sm" 
+              onClick={addRecommendedHashtags} 
+              className="text-xs ml-2 h-6 p-0"
+            >
+              Add to post
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {metrics.recommendedHashtags.map((tag, i) => (
+              <Badge key={i} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }

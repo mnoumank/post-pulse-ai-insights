@@ -10,6 +10,7 @@ import {
   PostSuggestion,
   AdvancedAnalysisParams
 } from '@/utils/postAnalyzer';
+import { analyzePostWithAI, combineAnalysisResults, convertAISuggestions, AIPostMetrics } from '@/utils/aiAnalyzer';
 import { savePost, saveComparison, getUserComparisons } from '@/utils/auth';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from './AuthContext';
@@ -19,8 +20,8 @@ interface PostComparisonContextType {
   post2: string;
   setPost1: (content: string) => void;
   setPost2: (content: string) => void;
-  metrics1: PostMetrics | null;
-  metrics2: PostMetrics | null;
+  metrics1: AIPostMetrics | null;
+  metrics2: AIPostMetrics | null;
   timeSeries1: TimeSeriesData[];
   timeSeries2: TimeSeriesData[];
   suggestions1: PostSuggestion[];
@@ -37,6 +38,8 @@ interface PostComparisonContextType {
   savedComparisons: SavedComparison[];
   isLoading: boolean;
   refreshComparisons: () => Promise<void>;
+  isAIEnabled: boolean;
+  toggleAIAnalysis: () => void;
 }
 
 interface SavedComparison {
@@ -61,8 +64,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [post1, setPost1] = useState('');
   const [post2, setPost2] = useState('');
-  const [metrics1, setMetrics1] = useState<PostMetrics | null>(null);
-  const [metrics2, setMetrics2] = useState<PostMetrics | null>(null);
+  const [metrics1, setMetrics1] = useState<AIPostMetrics | null>(null);
+  const [metrics2, setMetrics2] = useState<AIPostMetrics | null>(null);
   const [timeSeries1, setTimeSeries1] = useState<TimeSeriesData[]>([]);
   const [timeSeries2, setTimeSeries2] = useState<TimeSeriesData[]>([]);
   const [suggestions1, setSuggestions1] = useState<PostSuggestion[]>([]);
@@ -72,6 +75,7 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>(defaultAdvancedParams);
   const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAIEnabled, setIsAIEnabled] = useState(true);
 
   // Fetch saved comparisons when the user changes
   useEffect(() => {
@@ -85,47 +89,114 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
     // Don't analyze if posts are empty
     if (!post1.trim() && !post2.trim()) return;
 
-    // Calculate metrics
-    if (post1.trim()) {
-      const currentParams = isAdvancedMode ? advancedParams : undefined;
-      const newMetrics1 = analyzePost(post1, currentParams);
-      setMetrics1(newMetrics1);
-      setTimeSeries1(generateTimeSeries(post1));
-      setSuggestions1(generateSuggestions(post1));
-    } else {
-      setMetrics1(null);
-      setTimeSeries1([]);
-      setSuggestions1([]);
-    }
+    const analyzePostWithCombinedApproach = async (postContent: string, isPost1: boolean) => {
+      if (!postContent.trim()) {
+        if (isPost1) {
+          setMetrics1(null);
+          setTimeSeries1([]);
+          setSuggestions1([]);
+        } else {
+          setMetrics2(null);
+          setTimeSeries2([]);
+          setSuggestions2([]);
+        }
+        return null;
+      }
 
-    if (post2.trim()) {
       const currentParams = isAdvancedMode ? advancedParams : undefined;
-      const newMetrics2 = analyzePost(post2, currentParams);
-      setMetrics2(newMetrics2);
-      setTimeSeries2(generateTimeSeries(post2));
-      setSuggestions2(generateSuggestions(post2));
-    } else {
-      setMetrics2(null);
-      setTimeSeries2([]);
-      setSuggestions2([]);
-    }
+      
+      // Always run the algorithmic analysis
+      const algorithmicMetrics = analyzePost(postContent, currentParams);
+      const timeSeriesData = generateTimeSeries(postContent);
+      let postSuggestions = generateSuggestions(postContent);
+      
+      // If AI is enabled, enhance with AI analysis
+      let combinedMetrics: AIPostMetrics = {
+        ...algorithmicMetrics,
+        recommendedHashtags: [],
+        isAIEnhanced: false
+      };
+      
+      if (isAIEnabled) {
+        try {
+          const aiResults = await analyzePostWithAI(
+            postContent, 
+            currentParams?.industry
+          );
+          
+          if (aiResults) {
+            combinedMetrics = combineAnalysisResults(algorithmicMetrics, aiResults);
+            
+            // Combine algorithmic and AI suggestions
+            const aiSuggestions = convertAISuggestions(aiResults.suggestions);
+            postSuggestions = [...aiSuggestions, ...postSuggestions].slice(0, 6);
+          }
+        } catch (error) {
+          console.error('Error enhancing analysis with AI:', error);
+          // Fall back to algorithmic results if AI fails
+        }
+      }
+      
+      if (isPost1) {
+        setMetrics1(combinedMetrics);
+        setTimeSeries1(timeSeriesData);
+        setSuggestions1(postSuggestions);
+      } else {
+        setMetrics2(combinedMetrics);
+        setTimeSeries2(timeSeriesData);
+        setSuggestions2(postSuggestions);
+      }
+      
+      return combinedMetrics;
+    };
 
-    // Compare posts if both have content
-    if (post1.trim() && post2.trim()) {
-      const currentParams = isAdvancedMode ? advancedParams : undefined;
-      const comparisonResult = comparePostsPerformance(post1, post2, currentParams);
-      setComparison({
-        winner: comparisonResult.winner,
-        margin: comparisonResult.margin,
-      });
-    } else {
-      setComparison(null);
-    }
-  }, [post1, post2, isAdvancedMode, advancedParams]);
+    // Run analysis for both posts
+    const runAnalysis = async () => {
+      const metrics1Result = await analyzePostWithCombinedApproach(post1, true);
+      const metrics2Result = await analyzePostWithCombinedApproach(post2, false);
+      
+      // Compare posts if both have content
+      if (metrics1Result && metrics2Result) {
+        const post1Score = (metrics1Result.engagementScore + metrics1Result.reachScore + metrics1Result.viralityScore) / 3;
+        const post2Score = (metrics2Result.engagementScore + metrics2Result.reachScore + metrics2Result.viralityScore) / 3;
+        
+        if (post1Score > post2Score) {
+          setComparison({
+            winner: 1,
+            margin: ((post1Score - post2Score) / post2Score) * 100,
+          });
+        } else if (post2Score > post1Score) {
+          setComparison({
+            winner: 2,
+            margin: ((post2Score - post1Score) / post1Score) * 100,
+          });
+        } else {
+          setComparison({
+            winner: 0,
+            margin: 0,
+          });
+        }
+      } else {
+        setComparison(null);
+      }
+    };
+    
+    runAnalysis();
+  }, [post1, post2, isAdvancedMode, advancedParams, isAIEnabled]);
 
   // Toggle advanced mode
   const toggleAdvancedMode = () => {
     setIsAdvancedMode(!isAdvancedMode);
+  };
+
+  // Toggle AI analysis
+  const toggleAIAnalysis = () => {
+    setIsAIEnabled(!isAIEnabled);
+    // Notify the user of the change
+    toast({
+      title: isAIEnabled ? "AI Analysis Disabled" : "AI Analysis Enabled",
+      description: isAIEnabled ? "Now using algorithmic analysis only." : "Posts will now be analyzed with AI assistance.",
+    });
   };
 
   // Update advanced parameters
@@ -223,6 +294,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         savedComparisons,
         isLoading,
         refreshComparisons,
+        isAIEnabled,
+        toggleAIAnalysis,
       }}
     >
       {children}

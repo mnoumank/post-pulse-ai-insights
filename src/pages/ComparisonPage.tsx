@@ -6,10 +6,12 @@ import { EngagementChart } from '@/components/EngagementChart';
 import { SuggestionCards } from '@/components/SuggestionCards';
 import { MetricsBarChart } from '@/components/MetricsBarChart';
 import { ComparisonSummary } from '@/components/ComparisonSummary';
-import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
 import { usePostComparison } from '@/context/PostComparisonContext';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Sparkles } from 'lucide-react';
 
 export default function ComparisonPage() {
   const { 
@@ -20,13 +22,12 @@ export default function ComparisonPage() {
     comparison,
     saveComparison,
     isLoading,
-    advancedParams,
-    updateAdvancedParams
+    isAIEnabled,
+    toggleAIAnalysis
   } = usePostComparison();
   
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   
   useEffect(() => {
     if (user === null) {
@@ -34,23 +35,32 @@ export default function ComparisonPage() {
     }
   }, [user, navigate]);
 
-  // Add forceAnalyze function to trigger new analysis
-  const handleForceAnalyze = () => {
-    // This will force a new analysis with current parameters
-    setPost1(post1);
-    setPost2(post2);
-  };
-
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       
       <main className="flex-1 container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
-          <p className="text-muted-foreground mt-2">
-            Write two versions of your post to see which one is predicted to perform better
-          </p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
+            <p className="text-muted-foreground mt-2">
+              Write two versions of your post to see which one is predicted to perform better
+            </p>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="ai-mode" 
+                checked={isAIEnabled}
+                onCheckedChange={toggleAIAnalysis}
+              />
+              <Label htmlFor="ai-mode" className="flex items-center cursor-pointer">
+                <Sparkles className="h-4 w-4 mr-1 text-blue-500" />
+                AI Analysis
+              </Label>
+            </div>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -99,16 +109,6 @@ export default function ComparisonPage() {
           <div>
             <SuggestionCards suggestions={suggestions2} title="Post 2 Insights" />
           </div>
-        </div>
-        
-        <div className="mt-8">
-          <AdvancedAnalysisPanel 
-            params={advancedParams}
-            onChange={updateAdvancedParams}
-            onAnalyze={handleForceAnalyze}
-            isVisible={showAdvancedOptions}
-            onToggle={() => setShowAdvancedOptions(!showAdvancedOptions)}
-          />
         </div>
       </main>
       
