@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { login, logout, register } from '@/utils/auth/authentication';
 import { getCurrentUser } from '@/utils/auth/profiles';
@@ -21,22 +22,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDemoUser, setIsDemoUser] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in when the app loads
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        // Check if we have a demo user in localStorage
-        const demoUser = localStorage.getItem('demoUser');
-        if (demoUser) {
-          setUser(JSON.parse(demoUser));
-          setIsDemoUser(true);
-          setIsLoading(false);
-          return;
-        }
-
         const user = await getCurrentUser();
         setUser(user);
       } catch (err) {
@@ -48,13 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
 
-    // Set up auth state change listener (only if not demo user)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (isDemoUser) return; // Skip for demo user
-
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Get user data when signed in or token refreshed
           try {
             const user = await getCurrentUser();
             setUser(user);
@@ -63,40 +49,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
-          localStorage.removeItem('demoUser');
-          setIsDemoUser(false);
         }
       }
     );
 
-    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
-  }, [isDemoUser]);
+  }, []);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Special handling for demo account
-      if (email === "demo@example.com" && password === "password123") {
-        const demoUser = {
-          id: "demo-user-id",
-          name: "Demo User",
-          email: "demo@example.com",
-          avatarUrl: undefined,
-        };
-        setUser(demoUser);
-        setIsDemoUser(true);
-        localStorage.setItem('demoUser', JSON.stringify(demoUser));
-        toast("Demo Mode", {
-          description: "You are now using the demo account"
-        });
-        setIsLoading(false);
-        return;
-      }
-
       const user = await login(email, password);
       setUser(user);
     } catch (err) {
@@ -127,15 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      if (isDemoUser) {
-        // Handle demo user logout
-        localStorage.removeItem('demoUser');
-        setUser(null);
-        setIsDemoUser(false);
-      } else {
-        await logout();
-        setUser(null);
-      }
+      await logout();
+      setUser(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Logout failed';
       setError(errorMessage);

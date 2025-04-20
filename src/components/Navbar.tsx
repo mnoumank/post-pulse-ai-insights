@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/context/AuthContext';
 import { ChevronDown, History, LogOut, User, BarChart2 } from 'lucide-react';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -55,6 +56,7 @@ export function Navbar() {
         </div>
         
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -94,4 +96,3 @@ export function Navbar() {
       </div>
     </header>
   );
-}
