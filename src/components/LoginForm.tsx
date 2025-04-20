@@ -18,6 +18,8 @@ import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { PageTransition } from '@/components/PageTransition';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -37,7 +39,6 @@ export function LoginForm() {
     },
   });
 
-  // If you want to pre-fill with demo account
   const fillDemoAccount = () => {
     form.setValue('email', 'demo@example.com');
     form.setValue('password', 'password123');
@@ -55,7 +56,6 @@ export function LoginForm() {
       await login(values.email, values.password);
       navigate('/compare');
     } catch (err) {
-      // Error is handled by the auth context
       console.error('Login failed:', err);
     } finally {
       setIsLoading(false);
@@ -63,72 +63,109 @@ export function LoginForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl">Log in</CardTitle>
-        <CardDescription>
-          Access your saved LinkedIn post comparisons
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="your@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Logging in...' : 'Log In'}
+    <PageTransition>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Log in</CardTitle>
+          <CardDescription>
+            Access your saved LinkedIn post comparisons
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          placeholder="your@email.com" 
+                          {...field}
+                          className={`${form.formState.errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          {...field}
+                          className={`${form.formState.errors.password ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                    </motion.div>
+                    Logging in...
+                  </>
+                ) : (
+                  'Log In'
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-muted-foreground text-center">
+            Don't have an account?{' '}
+            <Button 
+              variant="link" 
+              className="p-0 h-auto" 
+              onClick={() => navigate('/signup')}
+            >
+              Sign Up
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="text-sm text-muted-foreground text-center">
-          Don't have an account?{' '}
-          <Button 
-            variant="link" 
-            className="p-0 h-auto" 
-            onClick={() => navigate('/signup')}
-          >
-            Sign Up
+          </div>
+          <Button variant="outline" className="w-full" onClick={fillDemoAccount}>
+            Use Demo Account
           </Button>
-        </div>
-        <Button variant="outline" className="w-full" onClick={fillDemoAccount}>
-          Use Demo Account
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </PageTransition>
   );
 }

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -18,6 +17,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { PageTransition } from './PageTransition';
+import { motion } from 'framer-motion';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -60,97 +61,93 @@ export function SignupForm() {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl">Create an account</CardTitle>
-        <CardDescription>
-          Start optimizing your LinkedIn posts today
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="your@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Creating Account...' : 'Sign Up'}
+    <PageTransition>
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create an account</CardTitle>
+          <CardDescription>
+            Start optimizing your LinkedIn posts today
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {['name', 'email', 'password', 'confirmPassword'].map((fieldName) => (
+                <FormField
+                  key={fieldName}
+                  control={form.control}
+                  name={fieldName as any}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={fieldName.includes('password') ? 'password' : 'text'}
+                            placeholder={fieldName.includes('password') ? '••••••••' : `Your ${fieldName}`}
+                            {...field}
+                            className={`${
+                              form.formState.errors[fieldName as keyof typeof form.formState.errors]
+                                ? 'border-destructive focus-visible:ring-destructive'
+                                : ''
+                            }`}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              ))}
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                    </motion.div>
+                    Creating Account...
+                  </>
+                ) : (
+                  'Sign Up'
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter>
+          <div className="text-sm text-muted-foreground text-center w-full">
+            Already have an account?{' '}
+            <Button 
+              variant="link" 
+              className="p-0 h-auto" 
+              onClick={() => navigate('/login')}
+            >
+              Log In
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-      <CardFooter>
-        <div className="text-sm text-muted-foreground text-center w-full">
-          Already have an account?{' '}
-          <Button 
-            variant="link" 
-            className="p-0 h-auto" 
-            onClick={() => navigate('/login')}
-          >
-            Log In
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+          </div>
+        </CardFooter>
+      </Card>
+    </PageTransition>
   );
 }
