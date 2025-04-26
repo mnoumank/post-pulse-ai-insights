@@ -1,13 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { login, logout, register } from '@/utils/auth/authentication';
-import { getCurrentUser } from '@/utils/auth/profiles';
-import { User } from '@/utils/auth/types';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { auth } from '@/integrations/firebase/firebase'; // Import your Firebase auth instance
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
 
 interface AuthContextType {
-  user: User | null;
+  user: any | null; // Replace `any` with your user type if you have a defined type
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -19,51 +15,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        const user = await getCurrentUser();
-        setUser(user);
-      } catch (err) {
-        console.error('Authentication check failed:', err);
-      } finally {
-        setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+      } else {
+        setUser(null);
       }
-    };
+      setIsLoading(false);
+    });
 
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          try {
-            const user = await getCurrentUser();
-            setUser(user);
-          } catch (error) {
-            console.error('Failed to get user after auth state change:', error);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const user = await login(email, password);
-      setUser(user);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      setUser(userCredential.user);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -77,8 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      const user = await register(email, password, name);
-      setUser(user);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      setUser(userCredential.user);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
@@ -92,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      await logout();
+      await signOut(auth);
       setUser(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Logout failed';

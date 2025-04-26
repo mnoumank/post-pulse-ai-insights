@@ -1,7 +1,10 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { User } from "./types";
 import { getCurrentUser } from "./profiles";
+
+const auth = getAuth();
+const db = getFirestore();
 
 export async function login(email: string, password: string): Promise<User> {
   // Special handling for demo account
@@ -14,69 +17,54 @@ export async function login(email: string, password: string): Promise<User> {
     };
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-  if (error) {
+    // Get user profile from Firestore
+    const profileRef = doc(db, "profiles", user.uid);
+    const profileSnap = await getDoc(profileRef);
+
+    const profileData = profileSnap.exists() ? profileSnap.data() : null;
+
+    return {
+      id: user.uid,
+      name: profileData?.full_name || user.email?.split('@')[0] || 'User',
+      email: user.email || '',
+      avatarUrl: profileData?.avatar_url,
+    };
+  } catch (error: any) {
     throw new Error(error.message);
   }
-
-  if (!data.user) {
-    throw new Error("No user returned from login");
-  }
-
-  // Get user profile from profiles table
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
-
-  if (profileError) {
-    console.error("Error fetching profile:", profileError);
-  }
-
-  return {
-    id: data.user.id,
-    name: profileData?.full_name || data.user.email?.split('@')[0] || 'User',
-    email: data.user.email || '',
-    avatarUrl: profileData?.avatar_url,
-  };
 }
 
 export async function register(email: string, password: string, name: string): Promise<User> {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        full_name: name,
-      },
-    },
-  });
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-  if (error) {
+    // Save user profile to Firestore
+    const profileRef = doc(db, "profiles", user.uid);
+    await setDoc(profileRef, {
+      full_name: name,
+      avatar_url: null,
+    });
+
+    return {
+      id: user.uid,
+      name: name || user.email?.split('@')[0] || 'User',
+      email: user.email || '',
+      avatarUrl: undefined,
+    };
+  } catch (error: any) {
     throw new Error(error.message);
   }
-
-  if (!data.user) {
-    throw new Error("No user returned from registration");
-  }
-
-  return {
-    id: data.user.id,
-    name: name || data.user.email?.split('@')[0] || 'User',
-    email: data.user.email || '',
-    avatarUrl: undefined,
-  };
 }
 
 export async function logout(): Promise<void> {
-  const { error } = await supabase.auth.signOut();
-  
-  if (error) {
+  try {
+    await signOut(auth);
+  } catch (error: any) {
     throw new Error(error.message);
   }
 }

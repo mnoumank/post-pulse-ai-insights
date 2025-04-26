@@ -1,45 +1,51 @@
-
-import { supabase } from "@/integrations/supabase/client";
+import { getAuth } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { User } from "./types";
 
+const auth = getAuth();
+const db = getFirestore();
+
 export async function getCurrentUser(): Promise<User | null> {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  
-  if (sessionError) {
-    console.error("Error getting session:", sessionError);
-    return null;
-  }
-  
-  if (!sessionData.session) {
-    return null;
-  }
-  
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  
-  if (userError) {
-    console.error("Error getting user:", userError);
-    return null;
-  }
-  
-  if (!userData.user) {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
     return null;
   }
 
-  // Get user profile from profiles table
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userData.user.id)
-    .single();
+  try {
+    const profileRef = doc(db, "profiles", currentUser.uid); // Reference to the profile in Firestore
+    const profileSnap = await getDoc(profileRef); // Get the profile document
 
-  if (profileError && profileError.code !== 'PGRST116') {
-    console.error("Error fetching profile:", profileError);
+    if (!profileSnap.exists()) {
+      // Create a default profile if none exists
+      const defaultProfile = {
+        full_name: currentUser.displayName || currentUser.email?.split("@")[0] || "User",
+        avatar_url: null,
+      };
+
+      // Save the new profile to Firestore
+      await setDoc(profileRef, defaultProfile);
+
+      // Return the user information including the default profile
+      return {
+        id: currentUser.uid,
+        name: defaultProfile.full_name,
+        email: currentUser.email || "",
+        avatarUrl: defaultProfile.avatar_url,
+      };
+    }
+
+    // If the profile exists, return the data from Firestore
+    const profileData = profileSnap.data();
+
+    return {
+      id: currentUser.uid,
+      name: profileData.full_name || currentUser.email?.split('@')[0] || "User",
+      email: currentUser.email || "",
+      avatarUrl: profileData.avatar_url,
+    };
+  } catch (error) {
+    console.error("Error fetching or creating profile:", error);
+    return null;
   }
-
-  return {
-    id: userData.user.id,
-    name: profileData?.full_name || userData.user.email?.split('@')[0] || 'User',
-    email: userData.user.email || '',
-    avatarUrl: profileData?.avatar_url,
-  };
 }

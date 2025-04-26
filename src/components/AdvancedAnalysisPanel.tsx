@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Card,
@@ -18,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { AdvancedAnalysisParams } from '@/utils/postAnalyzer';
+import { AdvancedAnalysisParams } from '@/utils/postAnalyzer'; //// Imported model structure
 
 interface AdvancedAnalysisPanelProps {
   params: AdvancedAnalysisParams;
@@ -67,7 +66,7 @@ export function AdvancedAnalysisPanel({
         <div>
           <CardTitle>Advanced Analysis Options</CardTitle>
           <CardDescription>
-            Customize parameters to get more accurate predictions
+            Customize parameters to get smarter predictions based on viral post research
           </CardDescription>
         </div>
         <Button
@@ -83,7 +82,7 @@ export function AdvancedAnalysisPanel({
           )}
         </Button>
       </CardHeader>
-      
+
       {isVisible && (
         <CardContent className="space-y-6">
           <div className="space-y-3">
@@ -151,7 +150,7 @@ export function AdvancedAnalysisPanel({
             className="w-full mt-4"
             onClick={onAnalyze}
           >
-            Analyze with Current Parameters
+            Analyze with Smart Parameters
           </Button>
         </CardContent>
       )}

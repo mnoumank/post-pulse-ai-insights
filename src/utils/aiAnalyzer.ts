@@ -1,4 +1,3 @@
-
 import { PostMetrics, PostSuggestion } from './postAnalyzer';
 
 interface AIAnalysisResponse {
@@ -19,17 +18,48 @@ export interface AIPostMetrics extends PostMetrics {
 
 export async function analyzePostWithAI(
   postContent: string, 
-  industry?: string
+  industry?: string,
+  apiKey?: string
 ): Promise<AIAnalysisResponse | null> {
   try {
-    const response = await fetch('/api/rest/v1/pg/functions/analyze-post', {
+    const response = await fetch('https://api-inference.huggingface.co/models/google/flan-t5-large', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer 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`,
       },
       body: JSON.stringify({
-        postContent,
-        industry,
+        inputs: `
+          Analyze this LinkedIn post and provide metrics and suggestions:
+          Post: "${postContent}"
+          ${industry ? `Industry: ${industry}` : ''}
+          
+          Respond with JSON format containing:
+          - engagementScore (1-100)
+          - reachScore (1-100)
+          - viralityScore (1-100)
+          - suggestions array with title and description
+          - recommendedHashtags array
+          
+          Example response:
+          {
+            "engagementScore": 75,
+            "reachScore": 80,
+            "viralityScore": 65,
+            "suggestions": [
+              {
+                "title": "Add more personal story",
+                "description": "Posts with personal stories get 30% more engagement"
+              }
+            ],
+            "recommendedHashtags": ["career", "success"]
+          }
+        `,
+        parameters: {
+          max_new_tokens: 500,
+          temperature: 0.7,
+          return_full_text: false
+        }
       }),
     });
 
@@ -39,12 +69,43 @@ export async function analyzePostWithAI(
       return null;
     }
 
-    return await response.json();
+    const result = await response.json();
+    const generatedText = result[0]?.generated_text;
+    
+    if (!generatedText) {
+      console.error('No generated text in response');
+      return null;
+    }
+
+    // Extract JSON from the response
+    const jsonStart = generatedText.indexOf('{');
+    const jsonEnd = generatedText.lastIndexOf('}') + 1;
+    const jsonString = generatedText.slice(jsonStart, jsonEnd);
+    
+    try {
+      const parsedResult: AIAnalysisResponse = JSON.parse(jsonString);
+      
+      // Validate and normalize scores
+      parsedResult.engagementScore = Math.min(100, Math.max(1, parsedResult.engagementScore || 50));
+      parsedResult.reachScore = Math.min(100, Math.max(1, parsedResult.reachScore || 50));
+      parsedResult.viralityScore = Math.min(100, Math.max(1, parsedResult.viralityScore || 50));
+      
+      // Ensure arrays exist
+      parsedResult.suggestions = parsedResult.suggestions || [];
+      parsedResult.recommendedHashtags = parsedResult.recommendedHashtags || [];
+
+      return parsedResult;
+    } catch (e) {
+      console.error('Failed to parse AI response:', generatedText);
+      return null;
+    }
   } catch (error) {
     console.error('Error during AI post analysis:', error);
     return null;
   }
 }
+
+// The following functions remain EXACTLY THE SAME as in your original code:
 
 export function combineAnalysisResults(
   algorithmicResults: PostMetrics,

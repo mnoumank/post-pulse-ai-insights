@@ -1,32 +1,56 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react'; //// added useState
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { usePostComparison } from '@/context/PostComparisonContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { ChevronRight, Clock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { db } from '@/integrations/firebase/firebase';
+import { doc, getDoc } from 'firebase/firestore'; //// import firestore methods
 
 export default function HistoryPage() {
-  const { savedComparisons, isLoading, refreshComparisons } = usePostComparison();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // If user is not logged in, redirect to login page
+  const [savedComparisons, setSavedComparisons] = useState<any[]>([]); //// added local state
+  const [isLoading, setIsLoading] = useState(true); //// added local loading state
+
   useEffect(() => {
     if (user === null) {
       navigate('/login');
     }
   }, [user, navigate]);
 
-  // Refresh comparisons when the page loads
   useEffect(() => {
-    if (user) {
-      refreshComparisons();
-    }
+    const fetchComparisons = async () => {
+      if (user) {
+        setIsLoading(true); //// set loading true
+        try {
+          const historyRef = doc(db, 'history', user.uid); //// point to history/{userId}
+          const historySnap = await getDoc(historyRef);
+
+          if (historySnap.exists()) {
+            const data = historySnap.data();
+            if (Array.isArray(data.savedComparisons)) { //// assume array inside
+              setSavedComparisons(data.savedComparisons);
+            } else {
+              setSavedComparisons([]);
+            }
+          } else {
+            setSavedComparisons([]);
+          }
+        } catch (error) {
+          console.error('Error fetching comparisons:', error);
+          setSavedComparisons([]);
+        } finally {
+          setIsLoading(false); //// loading finished
+        }
+      }
+    };
+
+    fetchComparisons();
   }, [user]);
 
   const truncatePost = (content: string, maxLength = 100) => {
@@ -34,10 +58,8 @@ export default function HistoryPage() {
     return content.substring(0, maxLength) + '...';
   };
 
-  const viewComparisonDetails = (id: string) => {
-    // For now, we'll just navigate to the compare page
-    // In a future enhancement, we could load the specific comparison
-    navigate('/compare');
+  const viewComparisonDetails = (comparison: any) => { //// updated to accept whole comparison object
+    navigate('/compare', { state: { comparison } }); //// pass comparison via navigation state
   };
 
   return (
@@ -53,7 +75,6 @@ export default function HistoryPage() {
         </div>
         
         {isLoading ? (
-          // Loading skeletons
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="overflow-hidden">
@@ -71,7 +92,6 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : savedComparisons.length === 0 ? (
-          // Empty state
           <Card className="bg-muted/50 border-dashed">
             <CardContent className="py-8 text-center">
               <h3 className="text-xl font-medium mb-2">No comparisons yet</h3>
@@ -84,13 +104,12 @@ export default function HistoryPage() {
             </CardContent>
           </Card>
         ) : (
-          // List of comparisons
           <div className="space-y-4">
-            {savedComparisons.map((comparison) => (
+            {savedComparisons.map((comparison, idx) => ( //// added idx fallback for key
               <Card 
-                key={comparison.id} 
+                key={comparison.id || idx}
                 className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => viewComparisonDetails(comparison.id)}
+                onClick={() => viewComparisonDetails(comparison)} //// pass full comparison object
               >
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">

@@ -1,12 +1,13 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, Share2 } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { PostMetrics } from '@/utils/postAnalyzer';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { saveComparison } from '@/integrations/firebase/firebase'; //// keep only saveComparison import
+//// import { firestore } from '@/integrations/firebase/firebase'; //// removed wrong firestore import
 
 interface ComparisonSummaryProps {
   comparison: {
@@ -19,17 +20,16 @@ interface ComparisonSummaryProps {
   isSaving?: boolean;
 }
 
-export function ComparisonSummary({ 
-  comparison, 
-  metrics1, 
-  metrics2, 
+export function ComparisonSummary({
+  comparison,
+  metrics1,
+  metrics2,
   onSave,
-  isSaving = false
+  isSaving = false,
 }: ComparisonSummaryProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
-  // If no comparison available yet, show waiting state
+
   if (!comparison || !metrics1 || !metrics2) {
     return (
       <Card>
@@ -44,38 +44,31 @@ export function ComparisonSummary({
     );
   }
 
-  // Get the winner metrics
   const winnerMetrics = comparison.winner === 1 ? metrics1 : metrics2;
   const loserMetrics = comparison.winner === 1 ? metrics2 : metrics1;
 
-  // Calculate which aspects make the winner better
-  const strengths = [];
+  const metricLabels: [keyof PostMetrics, string][] = [
+    ['engagementScore', 'higher engagement potential'],
+    ['reachScore', 'better reach'],
+    ['viralityScore', 'stronger virality'],
+    ['likes', 'more likes'],
+    ['comments', 'more comments'],
+    ['shares', 'more shares'],
+  ];
 
-  if (winnerMetrics.engagementScore > loserMetrics.engagementScore) {
-    strengths.push('higher engagement potential');
+  const strengths: string[] = [];
+
+  for (const [key, label] of metricLabels) {
+    const winnerValue = winnerMetrics[key] ?? 0;
+    const loserValue = loserMetrics[key] ?? 0;
+
+    if (winnerValue > loserValue) {
+      strengths.push(label);
+    } else if (winnerValue === loserValue) {
+      strengths.push(`equal ${label}`);
+    }
   }
 
-  if (winnerMetrics.reachScore > loserMetrics.reachScore) {
-    strengths.push('better reach');
-  }
-
-  if (winnerMetrics.viralityScore > loserMetrics.viralityScore) {
-    strengths.push('stronger virality');
-  }
-
-  if (winnerMetrics.likes > loserMetrics.likes) {
-    strengths.push('more likes');
-  }
-
-  if (winnerMetrics.comments > loserMetrics.comments) {
-    strengths.push('more comments');
-  }
-
-  if (winnerMetrics.shares > loserMetrics.shares) {
-    strengths.push('more shares');
-  }
-
-  // Format the strengths list
   let strengthsText = '';
   if (strengths.length === 1) {
     strengthsText = strengths[0];
@@ -85,54 +78,68 @@ export function ComparisonSummary({
     const lastStrength = strengths.pop();
     strengthsText = `${strengths.join(', ')}, and ${lastStrength}`;
   }
-  
+
   const handleSave = async () => {
     if (!user) {
       toast({
-        title: "Authentication required",
-        description: "Please log in to save your comparison",
-        variant: "destructive",
+        title: 'Authentication required',
+        description: 'Please log in to save your comparison',
+        variant: 'destructive',
       });
       navigate('/login');
       return;
     }
-    
-    await onSave();
+
+    try {
+      const comparisonData = {
+        winner: comparison.winner,
+        margin: comparison.margin,
+        strengths: strengthsText,
+        metrics1,
+        metrics2,
+        createdAt: new Date().toISOString(), //// added createdAt timestamp
+      };
+
+      console.log('Saving comparison data:', comparisonData);
+
+      //// call our fixed saveComparison function instead of Firestore here
+      await saveComparison(user.uid, comparisonData); //// use correct saving method
+
+      toast({
+        title: 'Comparison saved',
+        description: 'Your result has been saved successfully.',
+      });
+    } catch (error) {
+      console.error('Error saving comparison:', error);
+      toast({
+        title: 'Save failed',
+        description: 'Something went wrong. Try again.',
+        variant: 'destructive',
+      });
+    }
   };
+
+  const formattedMargin = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1,
+  }).format(comparison.margin);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Comparison Summary</CardTitle>
         <CardDescription>
-          Analysis based on LinkedIn post engagement patterns
+          {comparison.winner === 1 ? 'Post 1' : 'Post 2'} won by {formattedMargin}%!
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">
-            Post {comparison.winner} is predicted to perform better
-          </h3>
-          <p className="text-muted-foreground">
-            Expected to outperform by approximately {Math.round(comparison.margin)}%, with {strengthsText}.
-          </p>
-        </div>
-
-        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-          <Button 
-            onClick={handleSave} 
-            className="flex-1"
-            disabled={isSaving}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Saving...' : 'Save Comparison'}
-          </Button>
-          <Button variant="outline" className="flex-1">
-            <Share2 className="mr-2 h-4 w-4" />
-            Share Results
-          </Button>
-        </div>
+      <CardContent>
+        <h3 className="text-lg font-semibold">Key Insights</h3>
+        <ul className="list-disc pl-5 mt-2">
+          {strengthsText && <li>{strengthsText}</li>}
+        </ul>
       </CardContent>
+      <Button onClick={handleSave} className="w-full mt-4" disabled={isSaving}>
+        {isSaving ? 'Saving...' : <><Save className="mr-2" /> Save Comparison</>}
+      </Button>
     </Card>
   );
 }

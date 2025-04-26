@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PostEditor } from '@/components/PostEditor';
 import { EngagementChart } from '@/components/EngagementChart';
@@ -12,6 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Sparkles } from 'lucide-react';
+import { db } from '@/integrations/firebase/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export default function ComparisonPage() {
   const { 
@@ -20,7 +21,7 @@ export default function ComparisonPage() {
     timeSeries1, timeSeries2,
     suggestions1, suggestions2,
     comparison,
-    saveComparison,
+    saveComparison, 
     isLoading,
     isAIEnabled,
     toggleAIAnalysis
@@ -28,17 +29,54 @@ export default function ComparisonPage() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
+  const saveToHistory = async () => {
+    if (!user) return;
+    try {
+      const userHistoryRef = doc(db, 'history', user.uid);
+      await setDoc(userHistoryRef, {
+        post1,
+        post2,
+        metrics1,
+        metrics2,
+        comparison,
+        createdAt: new Date().toISOString()
+      });
+      console.log('Comparison saved successfully.');
+    } catch (error) {
+      console.error('Error saving comparison:', error);
+    }
+  };
+
+  const fetchHistory = async () => {
+    if (!user) return;
+    try {
+      const userHistoryRef = doc(db, 'history', user.uid);
+      const docSnap = await getDoc(userHistoryRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setPost1(data.post1);
+        setPost2(data.post2);
+        console.log('History fetched.');
+      } else {
+        console.log('No previous history found.');
+      }
+    } catch (error) {
+      console.error('Error fetching history:', error);
+    }
+  };
+
   useEffect(() => {
     if (user === null) {
       navigate('/login');
+    } else {
+      fetchHistory();
     }
   }, [user, navigate]);
 
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      
       <main className="flex-1 container py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
@@ -93,7 +131,7 @@ export default function ComparisonPage() {
               comparison={comparison} 
               metrics1={metrics1} 
               metrics2={metrics2} 
-              onSave={saveComparison}
+              onSave={saveToHistory} 
               isSaving={isLoading}
             />
           </div>

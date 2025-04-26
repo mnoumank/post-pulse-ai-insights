@@ -60,6 +60,13 @@ export function SignupForm() {
     }
   };
 
+  const formFields = [
+    { name: 'name', label: 'Name', type: 'text', placeholder: 'Your name' },
+    { name: 'email', label: 'Email', type: 'email', placeholder: 'Your email address' },
+    { name: 'password', label: 'Password', type: 'password', placeholder: '••••••••' },
+    { name: 'confirmPassword', label: 'Confirm Password', type: 'password', placeholder: '••••••••' }
+  ];
+
   return (
     <PageTransition>
       <Card className="w-full max-w-md mx-auto">
@@ -82,36 +89,31 @@ export function SignupForm() {
               </Alert>
             </motion.div>
           )}
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {['name', 'email', 'password', 'confirmPassword'].map((fieldName) => (
-                <FormField
-                  key={fieldName}
-                  control={form.control}
-                  name={fieldName as any}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1')}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={fieldName.includes('password') ? 'password' : 'text'}
-                            placeholder={fieldName.includes('password') ? '••••••••' : `Your ${fieldName}`}
-                            {...field}
-                            className={`${
-                              form.formState.errors[fieldName as keyof typeof form.formState.errors]
-                                ? 'border-destructive focus-visible:ring-destructive'
-                                : ''
-                            }`}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-              ))}
+                {formFields.map(({ name, label, type, placeholder }) => (
+                <FormField key={name} control={form.control} name={name as keyof z.infer<typeof formSchema>} render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                    <Input
+                      type={type}
+                      placeholder={placeholder}
+                      {...field}
+                      className={`${
+                      form.formState.errors[name as keyof z.infer<typeof formSchema>]
+                        ? 'border-destructive focus-visible:ring-destructive'
+                        : ''
+                      }`}
+                    />
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500" />
+                  </FormItem>
+                )} />
+                ))}
               
               <Button 
                 type="submit" 
