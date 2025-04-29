@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Sparkles, Hash, HelpCircle, Megaphone, Tags, Type, Smile } from 'lucide-react';
 import { toast } from 'sonner';
-import { AIPostMetrics } from '@/utils/aiAnalyzer';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Fuse from 'fuse.js';
+
+// Types
+interface AIPostMetrics {
+  engagementScore: number;
+  reachScore: number;
+  viralityScore: number;
+  isAIEnhanced?: boolean;
+}
 
 interface PostEditorProps {
   postNumber: 1 | 2;
@@ -16,475 +23,407 @@ interface PostEditorProps {
   isWinner?: boolean;
 }
 
-const samplePosts = [
-  "🚀 Excited to announce our new product launch! After months of hard work, our team has created something truly innovative. #ProductLaunch #Innovation\n\nWhat features would you like to see in our next update?",
-  "💡 I've been reflecting on leadership lessons I've learned in my career:\n\n1. Listen more than you speak\n2. Empower your team to make decisions\n3. Celebrate small wins along the way\n4. Be transparent, especially during challenges\n\nWhat's your most valuable leadership lesson? Comment below 👇 #Leadership #CareerAdvice",
-  "🎉 Today marks 5 years at Company X!\n\nLooking back, I'm grateful for:\n- The amazing colleagues who became friends\n- Challenging projects that helped me grow\n- The supportive environment that encourages innovation\n\nExcited for what the future holds! #WorkAnniversary #CareerGrowth",
-  "📈 Just hit 10K followers! A huge thank you to everyone who's been part of this journey.\n\nKey lessons from growing this community:\n• Consistency matters\n• Quality over quantity\n• Engagement builds relationships\n\nWhat's your favorite tip for community building? #Growth #ThankYou",
-  "🤔 Have you noticed how workplace dynamics have changed post-pandemic?\n\nHere's what we're seeing:\n🔹 More focus on mental health\n🔹 Hybrid work is here to stay\n🔹 Skills matter more than degrees\n\nHow has your workplace evolved? #FutureOfWork #Leadership"
-];
-
-const HASHTAG_CATEGORIES = {
-  leadership: ['#leadership', '#management', '#leadershipdevelopment', '#teamwork', '#coaching', '#mentoring'],
-  career: ['#careeradvice', '#careerdevelopment', '#careerchange', '#jobsearch', '#hiring', '#careers'],
-  business: ['#business', '#entrepreneurship', '#startups', '#smallbusiness', '#innovation', '#strategy'],
-  technology: ['#technology', '#tech', '#innovation', '#ai', '#digitaltransformation', '#future'],
-  marketing: ['#marketing', '#digitalmarketing', '#socialmedia', '#branding', '#contentmarketing'],
-  productivity: ['#productivity', '#timemanagement', '#goals', '#success', '#motivation', '#planning'],
-  networking: ['#networking', '#connections', '#community', '#professionals', '#linkedinnetwork'],
-  learning: ['#learning', '#growth', '#personaldevelopment', '#education', '#skills', '#mindset'],
-  industry: ['#industry', '#trends', '#solutions', '#insights', '#expertise', '#professional']
-};
+type SuggestionKey =
+  | 'hook'
+  | 'question'
+  | 'cta'
+  | 'hashtags'
+  | 'whitespace'
+  | 'emojis'
+  | 'readability'
+  | 'passive';
 
 interface ContentAnalysis {
-  missingElements: {
-    hook: boolean;
-    question: boolean;
-    cta: boolean;
-    hashtags: boolean;
-    whitespace: boolean;
-    emojis: boolean;
-  };
-  suggestedImprovements: string[];
+  missing: Record<SuggestionKey, boolean>;
+  suggestions: Suggestion[];
   recommendedCta: string;
+  hashtags: string[];
+  readabilityScore: number;
 }
 
-const EMOJI_MAP = {
-  announcement: ['🚀', '🎊', '📢', '✨', '🔥'],
-  idea: ['💡', '🧠', '🌟', '🔍', '🎯'],
-  growth: ['📈', '🌱', '🚀', '⬆️', '💹'],
-  challenge: ['💪', '🏋️', '🧗', '⛰️', '🦾'],
-  question: ['🤔', '❓', '⁉️', '🔎', '🧐'],
-  gratitude: ['🙏', '❤️', '😊', '🤗', '🎁'],
-  team: ['👥', '🤝', '👫', '👨‍👩‍👧‍👦', '🫂'],
-  future: ['🔮', '⌛', '⏳', '🔭', '🧭'],
-  important: ['🔑', '❗', '‼️', '⚠️', '⭐'],
-  celebration: ['🎉', '🥳', '🎊', '👏', '🏆'],
-  default: ['👋', '💬', '📝', '🖊️', '✍️']
+interface Suggestion {
+  key: SuggestionKey;
+  title: string;
+  description: string;
+  examples: string[];
+  benefits: string;
+  Icon: React.ComponentType<any>;
+}
+
+
+
+
+// 1. Expanded Hook Templates
+const HOOK_OPTIONS = [
+  "🚀 Excited to share our latest breakthrough!",
+  "💡 Here's an insight that surprised me…",
+  "🎉 Celebrating a major milestone today—",
+  "🔑 Key takeaway: always focus on…",
+  "✨ Big news: we've just released…",
+  "📈 Growth alert: our community just hit…",
+  "⚡ Breaking: new feature now available!",
+  "🤔 Did you know you can…?",
+  "🎯 My top tip for [topic] is…",
+  "🔥 Hot off the press: our team achieved…",
+  "📢 Announcing our partnership with…",
+  "🌟 Here’s why this matters to you…",
+  "💪 Overcame a challenge today—here’s how…",
+  "🙏 Grateful for the support—thank you everyone!",
+  "📣 Major update: [brief summary]…",
+  // NEW ADDITIONS (15+ more):
+  "🏆 Humbled to win [award]—this is why it matters…",
+  "🌍 Proud to share: we just expanded to [location]!",
+  "⚠️ The biggest mistake I see in [industry]?",
+  "🔄 We pivoted—here’s why it was the best decision…",
+  "💯 [X] clients served—and the #1 lesson they taught us…",
+  "🚨 PSA: If you’re not doing [X], you’re missing out…",
+  "🌱 How we grew [metric] by [X]% in [timeframe]…",
+  "🤯 Mind blown by [trend/stat]—here’s what it means…",
+  "🎙️ Just featured on [podcast/media]! Listen here → [link]",
+  "🛠️ Behind the scenes: how we built [product/feature]…",
+  "📉 Why we failed at [X] (and what we learned)…",
+  "👀 Sneak peek: our next big thing drops [date]…",
+  "🤝 Thrilled to collaborate with [influencer/company]!",
+  "📚 Sharing my top [X] lessons from [event/year]…",
+  "⏳ Time-sensitive: this opportunity closes [date]!",
+  "💬 Ask me anything about [topic]—I’ll reply below!",
+  "🏅 [Team member] just did [achievement]—so proud!",
+  "🔍 Deep dive: why [trend] is changing everything…"
+];
+
+const samplePosts = [
+  "🚀 Exciting news! I just launched my new startup focused on AI-driven solutions. 💡 What are your thoughts on the future of AI in business?",
+];
+
+// 2. Expanded Hashtag Categories
+const HASHTAG_CATEGORIES = {
+  leadership: [
+    '#leadership','#management','#teamwork','#coaching','#mentoring',
+    '#vision','#strategy','#inspiration','#empowerment','#executive'
+  ],
+  career: [
+    '#career','#careeradvice','#careerdevelopment','#jobsearch','#hiring',
+    '#resume','#interview','#promotion','#success','#professional'
+  ],
+  business: [
+    '#business','#entrepreneurship','#startups','#innovation','#strategy',
+    '#growth','#finance','#marketing','#leadership','#scale'
+  ],
+  technology: [
+    '#technology','#tech','#AI','#machinelearning','#software',
+    '#cloud','#automation','#IoT','#cybersecurity','#bigdata'
+  ],
+  marketing: [
+    '#marketing','#digitalmarketing','#socialmedia','#branding','#contentmarketing',
+    '#SEO','#advertising','#campaign','#growthhacking','#inboundmarketing'
+  ],
+  productivity: [
+    '#productivity','#timemanagement','#efficiency','#goals','#focus',
+    '#workflow','#habits','#motivation','#mindset','#organization'
+  ],
+  networking: [
+    '#networking','#connections','#community','#collaboration','#events',
+    '#LinkedIn','#partnerships','#referrals','#socialnetworking','#relationships'
+  ],
+  learning: [
+    '#learning','#growth','#education','#skills','#training',
+    '#elearning','#development','#knowledge','#mindset','#continuouslearning'
+  ],
+  industry: [
+    '#industry','#trends','#insights','#analysis','#expertise',
+    '#sector','#innovation','#research','#forecast','#professional'
+  ]
 };
 
-const SuggestionTooltips = {
+// 3. Expanded CTA Options
+const CTA_OPTIONS = [
+  "👇 Drop your thoughts below",
+  "➡️ Tag someone who would benefit",
+  "🔖 Save for later",
+  "✍️ Share your experience",
+  "💬 Like & share to help others",
+  "📢 Spread the word by sharing",
+  "🔗 Feel free to share this post",
+  "👍 Hit like if this resonates",
+  "🗣️ Let’s discuss in the comments",
+  "📲 Share with your network",
+  "🤝 Invite a friend to weigh in",
+  "🎯 What’s your top takeaway?",
+  "❓ Any questions? Ask below",
+  "📌 Bookmark this for reference",
+  "💡 Got ideas? Drop them below",
+  // NEW ADDITIONS:
+  "🚀 Which point resonates most? Comment!",
+  "👀 Who needs to see this? Tag them!",
+  "📈 Want more tips like this? Follow →",
+  "🤔 Agree or disagree? Tell me why!",
+  "🌱 Found this helpful? Repost ♻️",
+  "🔄 Share with your team!",
+  "💭 How would you apply this?",
+  "📥 DM me for the full guide",
+  "🏷️ Know someone struggling with this? Tag them!",
+  "📝 What would you add to this list?",
+  "⏳ Will you try this today? Say yes below!",
+  "🎁 Bonus tip in the comments ↓",
+  "📚 Want the full framework? Comment 'Guide'",
+  "🧠 How do you approach this?",
+  "💥 First time hearing this?",
+  "🛠️ Which strategy will you use first?",
+  "🤯 Did this change your perspective?",
+  "👋 New here? Connect with me!",
+  "📣 Help me reach [X] likes!",
+  "⚡ Quick favor: share with 1 friend",
+  "🏆 Which tip was most valuable?",
+  "🔔 Turn on notifications for more!",
+  "💌 DM me your biggest challenge"
+];
+
+const EMOJI_MAP: Record<string, string[]> = {
+  announcement: ['🚀', '📢', '✨', '🎊', '📣', '🔔', '🌟', '⚡', '🆕', '🎯'],
+  idea:         ['💡', '🧠', '🌟', '🔍', '💭', '🎨', '🤯', '💎', '🛠️', '💫'],
+  growth:       ['📈', '🌱', '💹', '🚀', '🔼', '📊', '🪴', '🌳', '🧗', '🏔️'],
+  challenge:    ['💪', '🧗', '🦾', '🏋️', '⚔️', '🥊', '🛡️', '🧩', '🏃', '⛰️'],
+  question:     ['🤔', '❓', '🧐', '⁉️', '❔', '🔎', '👀', '💬', '🗨️', '🤷'],
+  gratitude:    ['🙏', '❤️', '😊', '🤗', '🥰', '💝', '🎁', '🫂', '🌺', '☀️'],
+  team:         ['👥', '🤝', '🫂', '👫', '👬', '👭', '🤜🤛', '🤲', '🧑‍🤝‍🧑', '🏘️'],
+  future:       ['🔮', '⌛', '🔭', '🚧', '🛸', '🧭', '⏳', '🕰️', '🗓️', '🔜'],
+  important:    ['🔑', '❗', '⚠️', '‼️', '🚨', '⛔', '🔴', '🔔', '🔎', '💢'],
+  celebration:  ['🎉', '🥳', '🏆', '🎊', '🎁', '🏅', '🎖️', '🍾', '🥂', '🪅'],
+  learning:     ['📚', '🎓', '🧠', '📖', '✏️', '📝', '📘', '📙', '📒', '🖋️'],
+  tech:         ['💻', '📱', '🔌', '🖥️', '⌨️', '🖱️', '📡', '🛰️', '🤖', '👾'],
+  business:     ['💼', '📊', '📑', '📌', '🏢', '🏭', '🛒', '💰', '💳', '💵'],
+  motivation:   ['🔥', '⚡', '💯', '🏆', '🚀', '🎯', '💥', '👊', '🦾', '💪'],
+  productivity: ['⏱️', '🕒', '✅', '📅', '🗓️', '📋', '✂️', '📎', '📌', '🖇️'],
+  creativity:   ['🎨', '🖌️', '🖍️', '✏️', '📝', '📐', '🎭', '🎬', '🎤', '🎼'],
+  default:      ['👋', '💬', '📝', '🔹', '▪️', '🔘', '🔵', '⚫', '🔳', '🔷']
+};
+
+const SUGGESTION_CONFIG: Record<SuggestionKey, Suggestion> = {
   hook: {
+    key: 'hook',
     title: "Attention-Grabbing Hook",
-    description: "The first 2-3 lines determine whether people keep reading. A strong hook should spark curiosity or emotion.",
-    examples: [
-      "🚀 Just launched our biggest update yet!",
-      "💡 Here's a counterintuitive leadership lesson...",
-      "😮 I never expected this to happen when I...",
-      "📣 Breaking: Our team just achieved something incredible!",
-      "🤯 What if I told you everything you know about [topic] is wrong?"
-    ],
-    benefits: "Posts with strong hooks get 3-5x more engagement in the first few lines."
+    description: "The first lines should spark curiosity or emotion.",
+    examples: HOOK_OPTIONS.slice(0, 3),
+    benefits: "Hooks boost initial engagement by up to 5×",
+    Icon: Megaphone
   },
   question: {
+    key: 'question',
     title: "Engagement Question",
-    description: "Questions invite comments and discussions, which boosts your post's visibility in the algorithm.",
-    examples: [
-      "What's been your experience with this?",
-      "How would you handle this situation?",
-      "Which of these resonates most with you and why?",
-      "What would you add to this list?",
-      "Has anyone else faced this challenge?"
-    ],
-    benefits: "Posts with questions receive 2-3x more comments on average."
+    description: "Questions invite comments and discussions.",
+    examples: ["What's your experience?", "How would you handle this?"],
+    benefits: "Posts with questions get 2–3× more comments",
+    Icon: HelpCircle
   },
   cta: {
-    title: "Call-to-Action (CTA)",
-    description: "A clear CTA tells readers exactly what you want them to do next, increasing engagement.",
-    examples: [
-      "Drop a 💙 if you agree or comment with your thoughts!",
-      "Share with someone who needs to see this ➡️",
-      "Save this for later and try it out!",
-      "Tag a colleague who would appreciate this",
-      "Let's discuss in the comments 👇"
-    ],
-    benefits: "Posts with CTAs have 30-50% higher engagement rates."
+    key: 'cta',
+    title: "Call-to-Action",
+    description: "A clear CTA tells readers what to do next.",
+    examples: CTA_OPTIONS.slice(0, 3),
+    benefits: "CTAs increase engagement by 30–50%",
+    Icon: Tags
   },
   hashtags: {
+    key: 'hashtags',
     title: "Relevant Hashtags",
-    description: "Hashtags help your post get discovered by people interested in those topics beyond your network.",
-    examples: [
-      "#Leadership #CareerGrowth #ProfessionalDevelopment",
-      "#TechInnovation #DigitalTransformation #FutureOfWork",
-      "#MarketingTips #ContentStrategy #SocialMediaMarketing"
-    ],
-    benefits: "Posts with 3-5 hashtags get 2x more reach than those without."
+    description: "Hashtags help new audiences discover you.",
+    examples: ["#Leadership #CareerGrowth", "#TechInnovation"],
+    benefits: "3–5 hashtags can double your reach",
+    Icon: Hash
   },
   whitespace: {
+    key: 'whitespace',
     title: "Proper Spacing",
-    description: "Good spacing makes your post easier to read, especially on mobile devices where screen space is limited.",
-    examples: [
-      "Short paragraphs\n\nSeparated by blank lines",
-      "Bullet points with\n\nClear separation between ideas",
-      "Section breaks\n\nBetween different topics\n\nFor better readability"
-    ],
-    benefits: "Well-spaced posts get 25% more read-through to the end."
+    description: "Spacing improves mobile readability.",
+    examples: ["Short paragraphs with blank lines"],
+    benefits: "Well-spaced posts retain 25% more readers",
+    Icon: Type
   },
   emojis: {
+    key: 'emojis',
     title: "Strategic Emojis",
-    description: "Emojis break up text, add visual interest, and help convey tone in your professional communication.",
-    examples: [
-      "🚀 Use for announcements and launches",
-      "💡 Great for insights and ideas",
-      "🎯 Perfect for key takeaways",
-      "🤝 Ideal for collaboration topics",
-      "📊 Works well for data and metrics"
-    ],
-    benefits: "Posts with emojis get 15-20% more engagement than text-only posts."
+    description: "Emojis add visual interest and convey tone.",
+    examples: ["🚀 for launches", "💡 for insights"],
+    benefits: "Emojis boost engagement by 15–20%",
+    Icon: Smile
+  },
+  readability: {
+    key: 'readability',
+    title: "Simplify Sentences",
+    description: "Shorter sentences improve clarity.",
+    examples: ["Split long sentences at commas"],
+    benefits: "Simpler text holds reader attention better",
+    Icon: Sparkles
+  },
+  passive: {
+    key: 'passive',
+    title: "Active Voice",
+    description: "Active voice strengthens your message.",
+    examples: ["We developed (not 'was developed')"],
+    benefits: "Active voice drives stronger engagement",
+    Icon: Megaphone
   }
 };
 
-const getRelevantHashtags = (content: string, maxHashtags: number = 4) => {
-  const text = content.toLowerCase();
-  let relevantTags = new Set<string>();
-  
-  const keywordMap = {
-    'lead': 'leadership',
-    'team': 'leadership',
-    'manage': 'leadership',
-    'motivat': 'leadership',
-    'career': 'career',
-    'job': 'career',
-    'hiring': 'career',
-    'interview': 'career',
-    'business': 'business',
-    'startup': 'business',
-    'entrepreneur': 'business',
-    'company': 'business',
-    'tech': 'technology',
-    'ai': 'technology',
-    'digital': 'technology',
-    'software': 'technology',
-    'market': 'marketing',
-    'brand': 'marketing',
-    'content': 'marketing',
-    'social media': 'marketing',
-    'productiv': 'productivity',
-    'goal': 'productivity',
-    'success': 'productivity',
-    'achieve': 'productivity',
-    'network': 'networking',
-    'connect': 'networking',
-    'communit': 'networking',
-    'learn': 'learning',
-    'develop': 'learning',
-    'grow': 'learning',
-    'skill': 'learning'
-  };
+// Utilities
+class ContentAnalyzer {
+  private hookFuse: Fuse<string>;
+  private ctaFuse: Fuse<string>;
 
-  const matchedCategories = new Set<string>();
-  for (const [keyword, category] of Object.entries(keywordMap)) {
-    if (text.includes(keyword)) {
-      matchedCategories.add(category);
-    }
-  }
-  
-  if (matchedCategories.size === 0) {
-    matchedCategories.add('networking');
-    matchedCategories.add('professional');
-  }
-  
-  for (const category of matchedCategories) {
-    const categoryTags = HASHTAG_CATEGORIES[category];
-    if (categoryTags) {
-      const numToAdd = Math.min(2, Math.ceil(maxHashtags / matchedCategories.size));
-      const shuffled = [...categoryTags].sort(() => 0.5 - Math.random());
-      shuffled.slice(0, numToAdd).forEach(tag => relevantTags.add(tag));
-    }
-  }
-  
-  relevantTags.add('#linkedin');
-  
-  return Array.from(relevantTags).slice(0, maxHashtags);
-};
+  constructor() {
+    this.hookFuse = new Fuse(HOOK_OPTIONS, {
+      includeScore: true,
+      threshold: 0.4,
+      keys: ['text']
+    });
 
-const analyzeContent = (content: string): ContentAnalysis => {
-  const analysis: ContentAnalysis = {
-    missingElements: {
-      hook: true,
-      question: true,
-      cta: true,
-      hashtags: true,
-      whitespace: true,
-      emojis: true,
-    },
-    suggestedImprovements: [],
-    recommendedCta: '',
-  };
-
-  if (!content.trim()) {
-    return analysis;
+    this.ctaFuse = new Fuse(CTA_OPTIONS, {
+      threshold: 0.3,
+      ignoreLocation: true
+    });
   }
 
-  // Check for hooks/attention grabbers
-  const hookPatterns = [
-    /^[👋🎯💡🔑✨🚀📈💪🤔🙏👥🔮🎉🔥]/,
-    /(excited|proud|happy|thrilled) to announce/i,
-    /(introducing|launching|releasing) our/i,
-    /(breaking news|big news|important update)/i,
-    /(just in|hot off the press)/i,
-    /(never expected|surprising|shocking)/i
-  ];
-  analysis.missingElements.hook = !hookPatterns.some(pattern => pattern.test(content));
-
-  // Check for questions
-  analysis.missingElements.question = !/(\?|what do you think|your thoughts|comment below|let me know)/i.test(content);
-
-  // Check for CTAs
-  const ctaPatterns = [
-    /(share your thoughts|let me know|comment below|join the conversation)/i,
-    /(click the link|learn more|read more|check it out)/i,
-    /(save this post|bookmark this|share with your network)/i,
-    /(what's your take|how would you handle|have you experienced)/i,
-    /(tag a colleague|who needs to see this)/i
-  ];
-  analysis.missingElements.cta = !ctaPatterns.some(pattern => pattern.test(content));
-
-  // Check for hashtags
-  analysis.missingElements.hashtags = !/#\w+/i.test(content);
-
-  // Check for whitespace issues
-  analysis.missingElements.whitespace = /\n{3,}|^\s*$/.test(content);
-
-  // Check for emojis
-  analysis.missingElements.emojis = !/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(content);
-
-  // Generate suggested improvements
-  if (analysis.missingElements.hook) {
-    analysis.suggestedImprovements.push("attention-grabbing hook");
-  }
-  if (analysis.missingElements.question) {
-    analysis.suggestedImprovements.push("engagement question");
-  }
-  if (analysis.missingElements.cta) {
-    analysis.suggestedImprovements.push("clear call-to-action");
-  }
-  if (analysis.missingElements.hashtags) {
-    analysis.suggestedImprovements.push("relevant hashtags");
-  }
-  if (analysis.missingElements.whitespace) {
-    analysis.suggestedImprovements.push("better spacing");
-  }
-  if (analysis.missingElements.emojis) {
-    analysis.suggestedImprovements.push("strategic emojis");
+  analyze(content: string): ContentAnalysis {
+    const cleanContent = this.cleanContent(content);
+    const missing = this.checkMissingElements(cleanContent);
+    
+    return {
+      missing,
+      suggestions: this.getSuggestions(missing),
+      recommendedCta: this.getRecommendedCta(cleanContent),
+      hashtags: this.getHashtags(cleanContent),
+      readabilityScore: this.calculateReadability(cleanContent)
+    };
   }
 
-  // Determine best CTA based on content
-  if (content.match(/announce|launch|introduce/i)) {
-    analysis.recommendedCta = "What features would you like to see in future updates? Let us know in the comments! 💬";
-  } else if (content.match(/lesson|learn|experience/i)) {
-    analysis.recommendedCta = "What's your experience with this? Share in the comments below! 👇";
-  } else if (content.match(/question|problem|challenge/i)) {
-    analysis.recommendedCta = "How would you solve this? Let's discuss in the comments! 💡";
-  } else if (content.match(/milestone|achievement|anniversary/i)) {
-    analysis.recommendedCta = "What milestones are you celebrating this year? Share your wins below! 🎉";
-  } else if (content.match(/data|statistic|number/i)) {
-    analysis.recommendedCta = "How does this compare to your experience? Drop a comment with your thoughts! 📊";
-  } else {
-    analysis.recommendedCta = "What are your thoughts on this? Let me know in the comments! 💭";
+  private cleanContent(text: string): string {
+    return text
+      .replace(/\s+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[^\S\r\n]{2,}/g, ' ')
+      .trim();
   }
 
-  return analysis;
-};
+  private checkMissingElements(content: string): Record<SuggestionKey, boolean> {
+    return {
+      hook: !this.hookFuse.search(content).some(r => r.score! < 0.4),
+      question: !/[?]/.test(content),
+      cta: !this.ctaFuse.search(content).length,
+      hashtags: (content.match(/#\w+/g) || []).length < 3,
+      whitespace: !/\n\n/.test(content),
+      emojis: !/[\p{Emoji}]/u.test(content),
+      readability: this.calculateReadability(content) > 12,
+      passive: /\b(am|is|are|was|were|be|been|being)\s+[\w]+ed\b/gi.test(content)
+    };
+  }
 
-const getBestEmojiForLine = (line: string): string => {
-  const emojiCategories = {
-    announcement: ['🚀', '🎊', '📢', '✨', '🔥'],
-    idea: ['💡', '🧠', '🌟', '🔍', '🎯'],
-    growth: ['📈', '🌱', '🚀', '⬆️', '💹'],
-    challenge: ['💪', '🏋️', '🧗', '⛰️', '🦾'],
-    question: ['🤔', '❓', '⁉️', '🔎', '🧐'],
-    gratitude: ['🙏', '❤️', '😊', '🤗', '🎁'],
-    team: ['👥', '🤝', '👫', '👨‍👩‍👧‍👦', '🫂'],
-    future: ['🔮', '⌛', '⏳', '🔭', '🧭'],
-    important: ['🔑', '❗', '‼️', '⚠️', '⭐'],
-    celebration: ['🎉', '🥳', '🎊', '👏', '🏆'],
-    default: ['👋', '💬', '📝', '🖊️', '✍️']
-  };
+  private getSuggestions(missing: Record<SuggestionKey, boolean>): Suggestion[] {
+    return (Object.entries(missing) as [SuggestionKey, boolean][])
+      .filter(([_, isMissing]) => isMissing)
+      .map(([key]) => SUGGESTION_CONFIG[key]);
+  }
 
-  if (/launch|announce|new|introduce/i.test(line)) {
-    return emojiCategories.announcement[Math.floor(Math.random() * emojiCategories.announcement.length)];
+  private getRecommendedCta(content: string): string {
+    const existingCtas = CTA_OPTIONS.filter(cta => content.includes(cta));
+    return existingCtas.length > 0 
+      ? existingCtas[0]
+      : CTA_OPTIONS[Math.floor(Math.random() * CTA_OPTIONS.length)];
   }
-  if (/lesson|learn|knowledge|experience/i.test(line)) {
-    return emojiCategories.idea[Math.floor(Math.random() * emojiCategories.idea.length)];
-  }
-  if (/success|achievement|milestone|growth/i.test(line)) {
-    return emojiCategories.growth[Math.floor(Math.random() * emojiCategories.growth.length)];
-  }
-  if (/challenge|problem|difficult|hard/i.test(line)) {
-    return emojiCategories.challenge[Math.floor(Math.random() * emojiCategories.challenge.length)];
-  }
-  if (/question|ask|opinion|thoughts/i.test(line)) {
-    return emojiCategories.question[Math.floor(Math.random() * emojiCategories.question.length)];
-  }
-  if (/thank|grateful|appreciate/i.test(line)) {
-    return emojiCategories.gratitude[Math.floor(Math.random() * emojiCategories.gratitude.length)];
-  }
-  if (/team|together|collaborate/i.test(line)) {
-    return emojiCategories.team[Math.floor(Math.random() * emojiCategories.team.length)];
-  }
-  if (/future|next|coming/i.test(line)) {
-    return emojiCategories.future[Math.floor(Math.random() * emojiCategories.future.length)];
-  }
-  if (/important|key|critical/i.test(line)) {
-    return emojiCategories.important[Math.floor(Math.random() * emojiCategories.important.length)];
-  }
-  if (/happy|excited|thrilled/i.test(line)) {
-    return emojiCategories.celebration[Math.floor(Math.random() * emojiCategories.celebration.length)];
-  }
-  return emojiCategories.default[Math.floor(Math.random() * emojiCategories.default.length)];
-};
 
+  private getHashtags(content: string): string[] {
+    const existing = [...new Set(content.match(/#\w+/g) || [])];
+    return existing.length >= 5 ? existing : [
+      ...existing,
+      ...HASHTAG_CATEGORIES.business.slice(0, 5 - existing.length)
+    ];
+  }
+
+  private calculateReadability(content: string): number {
+    const words = content.split(/\s+/).length || 1;
+    const sentences = (content.match(/[.!?]+/g) || []).length || 1;
+    return Math.round((words / sentences) * 0.4 + (content.length / words) * 5.84);
+  }
+}
+
+// Component
 export function PostEditor({ postNumber, content, onChange, metrics, isWinner }: PostEditorProps) {
   const [showPlaceholder, setShowPlaceholder] = useState(!content);
-  const analysis = analyzeContent(content);
+  const [activeSuggestion, setActiveSuggestion] = useState<SuggestionKey | null>(null);
+  const analyzer = useMemo(() => new ContentAnalyzer(), []);
+  const analysis = useMemo(() => analyzer.analyze(content), [content, analyzer]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(e.target.value);
-    setShowPlaceholder(e.target.value.length === 0);
-  };
+  useEffect(() => {
+    setShowPlaceholder(!content);
+    setActiveSuggestion(null);
+  }, [content]);
 
-  const insertSample = () => {
-    let randomIndex;
-    do {
-      randomIndex = Math.floor(Math.random() * samplePosts.length);
-    } while (content === samplePosts[randomIndex] && samplePosts.length > 1);
+  const handleEnhance = useCallback(() => {
+    let enhanced = content;
     
-    onChange(samplePosts[randomIndex]);
-    setShowPlaceholder(false);
-  };
-
-  const cleanupText = () => {
-    if (!content.trim()) {
-      toast("No content to clean up", {
-        description: "Please add some text first"
-      });
-      return;
+    // Add missing elements
+    if (analysis.missing.hook) {
+      enhanced = `${HOOK_OPTIONS[Math.floor(Math.random() * HOOK_OPTIONS.length)]}\n\n${enhanced}`;
+    }
+    
+    if (analysis.missing.cta) {
+      enhanced += `\n\n${analysis.recommendedCta}`;
     }
 
-    // Process each line intelligently
-    let cleanedText = content
-      .split('\n')
-      .filter(line => line.trim())
-      .map((line, i, arr) => {
-        // Skip if line already starts with an emoji
-        if (!line.match(/^[👋🎯💡🔑✨🚀📈💪🤔🙏👥🔮🎉🔥]/)) {
-          const emoji = getBestEmojiForLine(line);
-          return `${emoji} ${line.trim()}`;
+    // Formatting improvements
+    enhanced = enhanced
+      .split('\n\n')
+      .map(para => {
+        if (para.length > 160) {
+          return para.replace(/([,;])\s+/g, '$1\n• ');
         }
-        return line.trim();
+        return para;
       })
       .join('\n\n');
 
-    // Fix bullet points and lists
-    cleanedText = cleanedText.replace(/^[-•*]\s*/gm, '• ');
-
-    // Remove existing hashtags but preserve the text
-    cleanedText = cleanedText.replace(/#\w+/g, '').trim();
-
-    // Get relevant hashtags (max 4)
-    const relevantHashtags = getRelevantHashtags(cleanedText, 4);
-    
-    // Add hashtags only if we have content
-    if (cleanedText && relevantHashtags.length > 0) {
-      cleanedText += '\n\n' + relevantHashtags.join(' ');
-    }
-
-    // Add missing elements based on analysis
-    if (analysis.missingElements.question) {
-      cleanedText += `\n\n${analysis.recommendedCta}`;
-    }
-
-    // Remove any excessive empty lines
-    cleanedText = cleanedText.replace(/\n{3,}/g, '\n\n').trim();
-
-    onChange(cleanedText);
-    
-    // Show detailed toast with improvements
-    if (analysis.suggestedImprovements.length > 0) {
-      toast.success("Post enhanced!", {
-        description: `Added: ${analysis.suggestedImprovements.join(', ')}`,
-        action: {
-          label: "Undo",
-          onClick: () => onChange(content),
-        },
-      });
-    } else {
-      toast("Post already looks great!", {
-        description: "Only minor formatting improvements were made",
-      });
-    }
-  };
-
-  const addRecommendedHashtags = () => {
-    if (!metrics?.recommendedHashtags?.length) {
-      toast("No AI-recommended hashtags available", {
-        description: "Enable AI analysis to get hashtag recommendations"
-      });
-      return;
-    }
-
-    let updatedContent = content.replace(/#\w+/g, '').trim();
-    updatedContent += '\n\n' + metrics.recommendedHashtags.join(' ');
-    onChange(updatedContent);
-    
-    toast("Hashtags added!", {
-      description: "Added AI-recommended hashtags to your post"
+    onChange(enhanced);
+    toast.success("Post enhanced", {
+      description: `Added: ${analysis.suggestions.map(s => s.title).join(', ')}`
     });
-  };
+  }, [content, analysis, onChange]);
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-green-400';
-    if (score >= 40) return 'bg-yellow-400';
-    return 'bg-red-400';
-  };
+  const getScoreColor = (score: number) =>
+    score >= 80 ? 'bg-green-500' :
+    score >= 60 ? 'bg-green-400' :
+    score >= 40 ? 'bg-yellow-400' :
+    'bg-red-400';
 
   return (
     <Card className={`w-full ${isWinner ? 'border-2 border-green-500' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-xl flex items-center">
-            Post {postNumber} {isWinner && <Badge className="ml-2 bg-green-500">Winner</Badge>}
+          <CardTitle className="flex items-center text-xl">
+            Post {postNumber}
+            {isWinner && <Badge className="ml-2 bg-green-500">Winner</Badge>}
             {metrics?.isAIEnhanced && (
-              <Badge variant="outline" className="ml-2 flex items-center">
-                <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
-                AI Enhanced
+              <Badge variant="outline" className="ml-2">
+                <Sparkles className="h-3 w-3 mr-1" /> AI Enhanced
               </Badge>
             )}
           </CardTitle>
           <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={insertSample} 
-              className="h-8 text-xs"
-            >
-              <RefreshCw className="h-3.5 w-3.5 mr-1" />
-              Sample
+            <Button variant="ghost" size="sm" onClick={() => onChange('')}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" /> Clear
             </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={cleanupText} 
-              className="h-8 text-xs"
-            >
-              <Sparkles className="h-3.5 w-3.5 mr-1" />
-              Enhance
+            <Button variant="ghost" size="sm" onClick={handleEnhance}>
+              <Sparkles className="h-3.5 w-3.5 mr-1" /> Enhance
             </Button>
           </div>
         </div>
         {metrics && (
           <div className="flex gap-2 mt-2">
-            <Badge variant="outline" className="text-xs">
-              Engagement: <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.engagementScore)}`}>{metrics.engagementScore}</span>
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              Reach: <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.reachScore)}`}>{metrics.reachScore}</span>
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              Virality: <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.viralityScore)}`}>{metrics.viralityScore}</span>
-            </Badge>
+            {(['engagementScore', 'reachScore', 'viralityScore'] as const).map((metric) => (
+              <Badge key={metric} variant="outline" className="text-xs">
+                {metric}:
+                <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics[metric])}`}>
+                  {metrics[metric]}
+                </span>
+              </Badge>
+            ))}
           </div>
         )}
       </CardHeader>
@@ -492,170 +431,56 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
         <div className="relative">
           <Textarea
             value={content}
-            onChange={handleChange}
-            placeholder=""
-            className="min-h-[240px] resize-y font-sans text-base leading-relaxed p-4"
+            onChange={(e) => onChange(e.target.value)}
+            className="min-h-[240px] resize-y p-4 font-sans leading-relaxed"
+            placeholder="Type your LinkedIn post here..."
           />
-          {showPlaceholder && (
-            <div className="absolute top-0 left-0 p-4 text-gray-400 pointer-events-none">
-              Type your LinkedIn post here...
-            </div>
-          )}
         </div>
       </CardContent>
       <CardFooter className="flex-col items-start pt-0 gap-2">
-        {analysis.suggestedImprovements.length > 0 && (
+        {analysis.suggestions.length > 0 && (
           <div className="w-full">
-            <h4 className="text-xs font-semibold mb-1">Suggested Improvements</h4>
-            <div className="grid grid-cols-2 gap-1 text-xs">
-              <TooltipProvider>
-                {analysis.missingElements.hook && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="justify-start w-full">
-                        <Megaphone className="h-3 w-3 mr-1" /> missing hook
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <h4 className="font-bold mb-1">{SuggestionTooltips.hook.title}</h4>
-                      <p className="mb-2">{SuggestionTooltips.hook.description}</p>
-                      <p className="font-semibold text-sm mb-1">Examples:</p>
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {SuggestionTooltips.hook.examples.map((ex, i) => (
-                          <li key={i}>{ex}</li>
-                        ))}
-                      </ul>
-                      <p className="text-green-500 text-sm">{SuggestionTooltips.hook.benefits}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                {analysis.missingElements.question && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="justify-start w-full">
-                        <HelpCircle className="h-3 w-3 mr-1" /> missing engaging question
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <h4 className="font-bold mb-1">{SuggestionTooltips.question.title}</h4>
-                      <p className="mb-2">{SuggestionTooltips.question.description}</p>
-                      <p className="font-semibold text-sm mb-1">Examples:</p>
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {SuggestionTooltips.question.examples.map((ex, i) => (
-                          <li key={i}>{ex}</li>
-                        ))}
-                      </ul>
-                      <p className="text-green-500 text-sm">{SuggestionTooltips.question.benefits}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                {analysis.missingElements.cta && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="justify-start w-full">
-                        <Megaphone className="h-3 w-3 mr-1" /> missing Call to Action
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <h4 className="font-bold mb-1">{SuggestionTooltips.cta.title}</h4>
-                      <p className="mb-2">{SuggestionTooltips.cta.description}</p>
-                      <p className="font-semibold text-sm mb-1">Examples:</p>
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {SuggestionTooltips.cta.examples.map((ex, i) => (
-                          <li key={i}>{ex}</li>
-                        ))}
-                      </ul>
-                      <p className="text-green-500 text-sm">{SuggestionTooltips.cta.benefits}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                {analysis.missingElements.hashtags && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="justify-start w-full">
-                        <Tags className="h-3 w-3 mr-1" /> missing proper hashtags
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <h4 className="font-bold mb-1">{SuggestionTooltips.hashtags.title}</h4>
-                      <p className="mb-2">{SuggestionTooltips.hashtags.description}</p>
-                      <p className="font-semibold text-sm mb-1">Examples:</p>
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {SuggestionTooltips.hashtags.examples.map((ex, i) => (
-                          <li key={i}>{ex}</li>
-                        ))}
-                      </ul>
-                      <p className="text-green-500 text-sm">{SuggestionTooltips.hashtags.benefits}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                {analysis.missingElements.whitespace && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="justify-start w-full">
-                        <Type className="h-3 w-3 mr-1" /> Fix spacing
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <h4 className="font-bold mb-1">{SuggestionTooltips.whitespace.title}</h4>
-                      <p className="mb-2">{SuggestionTooltips.whitespace.description}</p>
-                      <p className="font-semibold text-sm mb-1">Examples:</p>
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {SuggestionTooltips.whitespace.examples.map((ex, i) => (
-                          <li key={i} className="whitespace-pre-wrap">{ex}</li>
-                        ))}
-                      </ul>
-                      <p className="text-green-500 text-sm">{SuggestionTooltips.whitespace.benefits}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-
-                {analysis.missingElements.emojis && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Badge variant="outline" className="justify-start w-full">
-                        <Smile className="h-3 w-3 mr-1" /> missing proper emojis
-                      </Badge>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <h4 className="font-bold mb-1">{SuggestionTooltips.emojis.title}</h4>
-                      <p className="mb-2">{SuggestionTooltips.emojis.description}</p>
-                      <p className="font-semibold text-sm mb-1">Examples:</p>
-                      <ul className="list-disc pl-4 mb-2 space-y-1">
-                        {SuggestionTooltips.emojis.examples.map((ex, i) => (
-                          <li key={i}>{ex}</li>
-                        ))}
-                      </ul>
-                      <p className="text-green-500 text-sm">{SuggestionTooltips.emojis.benefits}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </TooltipProvider>
+            <h4 className="text-xs font-semibold mb-2">Optimization Suggestions</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {analysis.suggestions.map((suggestion) => (
+                <div key={suggestion.key} className="relative">
+                  <Badge
+                    variant="outline"
+                    className="w-full cursor-pointer text-left"
+                    onClick={() => setActiveSuggestion(
+                      activeSuggestion === suggestion.key ? null : suggestion.key
+                    )}
+                  >
+                    <suggestion.Icon className="h-3 w-3 mr-1 inline-block" />
+                    {suggestion.title}
+                  </Badge>
+                  {activeSuggestion === suggestion.key && (
+                    <div className="absolute z-10 mt-1 p-3 bg-background border rounded-lg shadow-lg w-[300px]">
+                      <h4 className="font-bold mb-2">{suggestion.title}</h4>
+                      <p className="text-sm mb-2">{suggestion.description}</p>
+                      <div className="text-sm mb-2">
+                        <span className="font-medium">Examples:</span>
+                        <ul className="list-disc pl-4 mt-1">
+                          {suggestion.examples.map((ex, i) => (
+                            <li key={i}>{ex}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p className="text-green-500 text-sm">{suggestion.benefits}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          </div>
-        )}
-
-        {metrics?.recommendedHashtags?.length > 0 && (
-          <div className="w-full">
-            <div className="flex items-center mb-1">
-              <Hash className="h-4 w-4 mr-1" />
-              <span className="text-xs font-semibold">Suggested Hashtags</span>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 text-xs" 
-              onClick={addRecommendedHashtags}
-            >
-              Add AI Hashtags
-            </Button>
           </div>
         )}
       </CardFooter>
     </Card>
   );
 }
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-// Enhanced LinkedIn Post Analysis with Machine Learning-inspired Techniques
+// Enhanced LinkedIn Post Analysis with Machine Learning-inspired Techniques (SMRT v3)
 
 // Interfaces remain the same
 export interface PostMetrics {
@@ -23,720 +23,452 @@ export interface PostSuggestion {
 }
 
 export interface AdvancedAnalysisParams {
-  followerRange: string;
-  industry: string;
-  engagementLevel: string;
+  followerRange?: string;
+  industry?: string;
+  engagementLevel?: string;
 }
 
-// Enhanced constants with weighted values and expanded factors
-const OPTIMAL_LENGTH = {
-  min: 150,
-  max: 1300,
-  ideal: 750 // Added ideal length
-}; 
-const POSITIVE_FACTORS = [
-  {word: 'thank', weight: 1.2}, {word: 'appreciate', weight: 1.3}, 
-  {word: 'excited', weight: 1.5}, {word: 'proud', weight: 1.4},
-  {word: 'happy', weight: 1.2}, {word: 'success', weight: 1.6},
-  {word: 'grateful', weight: 1.5}, {word: 'joyful', weight: 1.3},
-  {word: 'inspired', weight: 1.4}, {word: 'amazing', weight: 1.7},
-  {word: 'celebrate', weight: 1.6}, {word: 'accomplishment', weight: 1.5},
-  {word: 'positive', weight: 1.4}, {word: 'thrilled', weight: 1.6},
-  {word: 'motivation', weight: 1.5}, {word: 'winning', weight: 1.6},
-  {word: 'achievement', weight: 1.7}, {word: 'incredible', weight: 1.5},
-  {word: 'remarkable', weight: 1.5}, {word: 'unstoppable', weight: 1.8},
-  {word: 'persistence', weight: 1.7}, {word: 'invaluable', weight: 1.6},
-  {word: 'extraordinary', weight: 1.7}, {word: 'life-changing', weight: 1.8},
-  {word: 'outstanding', weight: 1.7}, {word: 'blessed', weight: 1.6},
-  {word: 'fortunate', weight: 1.5}, {word: 'inspired', weight: 1.6},
+// ==== CONSTANTS & PRECOMPILED PATTERNS ====
+const OPTIMAL_LENGTH = { min: 150, max: 1300, ideal: 750 }; //// Added ideal
+const HASHTAG_OPTIMUM = { min: 3, max: 5, ideal: 4 };
+
+type WeightedTerm = { term: string; weight: number }; //// Generic weighted type
+
+const POSITIVE_FACTORS: WeightedTerm[] = [
+  { term: 'thank', weight: 1.2 },
+  { term: 'excited', weight: 1.5 },
+  { term: 'proud', weight: 1.4 },
+  { term: 'success', weight: 1.6 },
+  { term: 'grateful', weight: 1.5 },
+  { term: 'celebrate', weight: 1.6 },
+  { term: 'achievement', weight: 1.7 },
+  { term: 'unstoppable', weight: 1.8 },
+  { term: 'growth', weight: 1.5 }, //// expanded
+  { term: 'honored', weight: 1.4 }, //// expanded
+  { term: 'appreciation', weight: 1.5 }, //// expanded
+  { term: 'milestone', weight: 1.7 }, //// expanded
+  { term: 'rewarding', weight: 1.6 }, //// expanded
+  { term: 'blessed', weight: 1.4 }, //// expanded
+  { term: 'amazing journey', weight: 1.5 }, //// expanded
+  { term: 'next chapter', weight: 1.6 }, //// expanded
+  { term: 'dream come true', weight: 1.7 }, //// expanded
+  { term: 'overwhelmed with joy', weight: 1.8 }, //// expanded
+  { term: 'incredible', weight: 1.5 }, //// expanded
+  { term: 'energized', weight: 1.4 }, //// expanded
+  { term: 'positive impact', weight: 1.5 }, //// expanded
+  { term: 'unstoppable momentum', weight: 1.7 }, //// expanded
+  { term: 'onwards and upwards', weight: 1.5 }, //// expanded
+  { term: 'victory', weight: 1.6 }, //// expanded
+  { term: 'moment of pride', weight: 1.5 }, //// expanded
+  { term: 'thankful heart', weight: 1.4 }, //// expanded
+  { term: 'bright future', weight: 1.5 }, //// expanded
+  { term: 'huge win', weight: 1.6 }, //// expanded
+  { term: 'fulfilled', weight: 1.4 }, //// expanded
+  { term: 'momentous occasion', weight: 1.6 }, //// expanded
+  { term: 'winning mindset', weight: 1.5 }, //// expanded
+  { term: 'legacy', weight: 1.6 }, //// expanded
+  { term: 'fulfilled dreams', weight: 1.7 }, //// expanded
+  { term: 'grateful journey', weight: 1.5 }, //// expanded
+  { term: 'elevated', weight: 1.5 }, //// expanded
+  { term: 'unstoppable energy', weight: 1.8 }, //// expanded
+  { term: 'positive vibes', weight: 1.4 }, //// expanded
+  { term: 'forward progress', weight: 1.5 }, //// expanded
+  { term: 'satisfying milestone', weight: 1.6 }, //// expanded
+  { term: 'journey of success', weight: 1.6 }, //// expanded
+  { term: 'major achievement', weight: 1.7 }, //// expanded
+  { term: 'exciting future', weight: 1.5 }, //// expanded
+  { term: 'dream realized', weight: 1.7 }, //// expanded
+  { term: 'hard work pays off', weight: 1.6 }, //// expanded
+  { term: 'personal growth', weight: 1.5 }, //// expanded
+  { term: 'thankful for support', weight: 1.4 }, //// expanded
+  { term: 'moment of gratitude', weight: 1.5 }, //// expanded
+  { term: 'tremendous honor', weight: 1.5 }, //// expanded
+  { term: 'milestone reached', weight: 1.6 }, //// expanded
+  { term: 'lifelong dream', weight: 1.7 }, //// expanded
 ];
 
-const NEGATIVE_FACTORS = [
-  {word: 'disappointed', weight: 1.4}, {word: 'unfortunate', weight: 1.2},
-  {word: 'sad', weight: 1.3}, {word: 'regret', weight: 1.5},
-  {word: 'failure', weight: 1.6}, {word: 'frustrated', weight: 1.5},
-  {word: 'hurt', weight: 1.4}, {word: 'unhappy', weight: 1.3},
-  {word: 'missed', weight: 1.2}, {word: 'neglected', weight: 1.4},
-  {word: 'sorrow', weight: 1.3}, {word: 'painful', weight: 1.5},
-  {word: 'betrayal', weight: 1.6}, {word: 'regrettable', weight: 1.4},
-  {word: 'losing', weight: 1.7}, {word: 'hopeless', weight: 1.8},
-  {word: 'defeated', weight: 1.5}, {word: 'tragic', weight: 1.7},
-  {word: 'embarrassment', weight: 1.6}, {word: 'downfall', weight: 1.7},
-  {word: 'failure', weight: 1.8}, {word: 'dismay', weight: 1.5},
-  {word: 'depression', weight: 1.6}, {word: 'demotivated', weight: 1.7},
-  {word: 'rejection', weight: 1.6}, {word: 'heartbreak', weight: 1.7},
-  {word: 'despair', weight: 1.8},
+const NEGATIVE_FACTORS: WeightedTerm[] = [
+  { term: 'challenge', weight: 1.2 },
+  { term: 'problem', weight: 1.3 },
+  { term: 'failure', weight: 1.5 },
+  { term: 'mistake', weight: 1.4 },
+  { term: 'difficult', weight: 1.3 },
+  { term: 'struggle', weight: 1.5 },
+  { term: 'loss', weight: 1.4 },
+  { term: 'setback', weight: 1.4 },
+  { term: 'painful', weight: 1.5 }, //// expanded
+  { term: 'obstacle', weight: 1.4 }, //// expanded
+  { term: 'burnout', weight: 1.3 }, //// expanded
+  { term: 'disappointment', weight: 1.5 }, //// expanded
+  { term: 'critical', weight: 1.3 }, //// expanded
+  { term: 'problematic', weight: 1.2 }, //// expanded
+  { term: 'low point', weight: 1.4 }, //// expanded
+  { term: 'crisis', weight: 1.5 }, //// expanded
+  { term: 'hardship', weight: 1.4 }, //// expanded
+  { term: 'stuck', weight: 1.2 }, //// expanded
+  { term: 'difficult road', weight: 1.4 }, //// expanded
+  { term: 'learning the hard way', weight: 1.5 }, //// expanded
+];
+const ENGAGEMENT_TRIGGERS: WeightedTerm[] = [
+  { term: 'share your thoughts', weight: 1.8 },
+  { term: 'comment below', weight: 1.7 },
+  { term: 'your opinion matters', weight: 1.6 },
+  { term: 'join the conversation', weight: 1.8 },
+  { term: 'connect', weight: 1.5 },
+  { term: 'community', weight: 1.5 },
+  { term: 'let’s discuss', weight: 1.7 },
+  { term: 'feedback welcome', weight: 1.6 },
+  { term: 'tell us', weight: 1.6 }, //// expanded
+  { term: 'love to hear from you', weight: 1.7 }, //// expanded
+  { term: 'drop a comment', weight: 1.7 }, //// expanded
+  { term: 'your thoughts?', weight: 1.7 }, //// expanded
+  { term: 'we want your input', weight: 1.6 }, //// expanded
+  { term: 'share experiences', weight: 1.8 }, //// expanded
+  { term: 'inspire others', weight: 1.7 }, //// expanded
+  { term: 'tell your story', weight: 1.8 }, //// expanded
+  { term: 'how do you feel', weight: 1.7 }, //// expanded
+];
+const EMOJI_WEIGHTS: WeightedTerm[] = [
+  { term: '🎉', weight: 1.6 },
+  { term: '🔥', weight: 1.7 },
+  { term: '💯', weight: 1.5 },
+  { term: '👏', weight: 1.6 },
+  { term: '🙏', weight: 1.5 },
+  { term: '❤️', weight: 1.5 },
+  { term: '🚀', weight: 1.6 },
+  { term: '⭐', weight: 1.4 },
+  { term: '🥳', weight: 1.5 }, //// expanded
+  { term: '💪', weight: 1.5 }, //// expanded
+  { term: '🌟', weight: 1.5 }, //// expanded
+  { term: '🫶', weight: 1.4 }, //// expanded
+  { term: '🤝', weight: 1.4 }, //// expanded
+];
+const STORYTELLING_TERMS: WeightedTerm[] = [
+  { term: 'journey', weight: 1.7 },
+  { term: 'story', weight: 1.6 },
+  { term: 'experience', weight: 1.5 },
+  { term: 'lesson', weight: 1.5 },
+  { term: 'memory', weight: 1.4 },
+  { term: 'reflection', weight: 1.4 },
+  { term: 'path', weight: 1.5 },
+  { term: 'chapter', weight: 1.5 },
+  { term: 'turning point', weight: 1.6 }, //// expanded
+  { term: 'growth journey', weight: 1.7 }, //// expanded
+  { term: 'personal story', weight: 1.6 }, //// expanded
+  { term: 'life-changing moment', weight: 1.7 }, //// expanded
+  { term: 'pivot', weight: 1.5 }, //// expanded
+  { term: 'narrative', weight: 1.5 }, //// expanded
+];
+const VALUE_INDICATORS: WeightedTerm[] = [
+  { term: 'valuable', weight: 1.6 },
+  { term: 'insight', weight: 1.5 },
+  { term: 'wisdom', weight: 1.5 },
+  { term: 'knowledge', weight: 1.4 },
+  { term: 'expertise', weight: 1.5 },
+  { term: 'guidance', weight: 1.4 },
+  { term: 'lesson learned', weight: 1.6 },
+  { term: 'deep dive', weight: 1.5 },
+  { term: 'framework', weight: 1.4 }, //// expanded
+  { term: 'methodology', weight: 1.4 }, //// expanded
+  { term: 'tip', weight: 1.5 }, //// expanded
+  { term: 'strategy', weight: 1.5 }, //// expanded
+  { term: 'roadmap', weight: 1.5 }, //// expanded
+  { term: 'resource', weight: 1.4 }, //// expanded
+];
+const INDUSTRY_KEYWORDS: WeightedTerm[] = [
+  { term: 'tech', weight: 1.5 },
+  { term: 'AI', weight: 1.6 },
+  { term: 'cloud', weight: 1.5 },
+  { term: 'startups', weight: 1.4 },
+  { term: 'SaaS', weight: 1.4 },
+  { term: 'fintech', weight: 1.5 },
+  { term: 'blockchain', weight: 1.6 },
+  { term: 'marketing', weight: 1.4 },
+  { term: 'sales', weight: 1.4 },
+  { term: 'healthcare', weight: 1.5 }, //// expanded
+  { term: 'edtech', weight: 1.5 }, //// expanded
+  { term: 'greentech', weight: 1.5 }, //// expanded
+  { term: 'cybersecurity', weight: 1.6 }, //// expanded
+  { term: 'consulting', weight: 1.4 }, //// expanded
+  { term: 'leadership', weight: 1.5 }, //// expanded
+  { term: 'ecommerce', weight: 1.5 }, //// expanded
+  { term: 'biotech', weight: 1.6 }, //// expanded
+  { term: 'HR tech', weight: 1.4 }, //// expanded
+  { term: 'logistics', weight: 1.4 }, //// expanded
+  { term: 'sustainability', weight: 1.5 }, //// expanded
+  { term: 'robotics', weight: 1.5 }, //// expanded
+  { term: 'data science', weight: 1.6 }, //// expanded
+  { term: 'product management', weight: 1.5 }, //// expanded
+  { term: 'venture capital', weight: 1.4 }, //// expanded
+  { term: 'space tech', weight: 1.5 }, //// expanded
 ];
 
 
 
-
-const ENGAGEMENT_TRIGGERS = [
-  {phrase: 'agree?', weight: 1.3}, {phrase: 'thoughts', weight: 1.2},
-  {phrase: 'comment below', weight: 1.5}, {phrase: 'share your', weight: 1.4},
-  {phrase: 'what do you think', weight: 1.3}, {phrase: 'let us know', weight: 1.5},
-  {phrase: 'join the conversation', weight: 1.4}, {phrase: 'have you experienced', weight: 1.6},
-  {phrase: 'tag a friend', weight: 1.2}, {phrase: 'share your story', weight: 1.5},
-  {phrase: 'don’t miss out', weight: 1.4}, {phrase: 'help us spread the word', weight: 1.3},
-  {phrase: 'tell us about your', weight: 1.5}, {phrase: 'give us your thoughts', weight: 1.6},
-  {phrase: 'your opinion matters', weight: 1.4}, {phrase: 'voice your opinion', weight: 1.5},
-  {phrase: 'drop a comment', weight: 1.4}, {phrase: 'discuss in the comments', weight: 1.5},
-  {phrase: 'share with others', weight: 1.3}, {phrase: 'we want to hear from you', weight: 1.6},
-  {phrase: 'let’s talk', weight: 1.4}, {phrase: 'what’s your view?', weight: 1.5},
-];
-
-const HASHTAG_OPTIMUM = {
-  min: 3,
-  max: 5,
-  ideal: 4
+const TIME_OF_DAY_WEIGHTS: Record<string, number> = { //// Simplified
+  '6-9': 1.15, //// original
+  '9-12': 1.3, //// original
+  '12-15': 1.4, //// original
+  '15-18': 1.35, //// original
+  '18-21': 1.2, //// original
+  //// expanded
+  '0-3': 0.8,
+  '3-6': 0.9,
+  '21-24': 1.0
 };
 
-const EMOJI_WEIGHTS = {
-  '😀': 1.1, '😃': 1.1, '😄': 1.2, '😁': 1.1, '😆': 1.0,
-  '😊': 1.3, '😎': 1.4, '💪': 1.5, '🔥': 1.6, '✨': 1.4,
-  '👏': 1.5,  '❤️': 1.6, '👍': 1.2, '💯': 1.5,
-  '😢': 1.4, '😔': 1.3, '😤': 1.6, '😞': 1.5, '😭': 1.6,
-  '🤔': 1.2, '🤩': 1.4, '🥳': 1.6, '😜': 1.1, '🤯': 1.5,
-  '💥': 1.70, '🎉': 1.4, '💃': 1.5, '🕺': 1.4, '💝': 1.6,
-  '🎯': 1.74, '🤗': 1.5, '🙌': 1.6, '⚡': 1.7001, '🔑': 1.8,
-  '🌟': 1.721, '📈': 1.6, '🔓': 1.71, '💬': 1.5, '🔴': 1.4,
+const DAY_OF_WEEK_WEIGHTS: Record<string, number> = {
+  monday: 1.1, //// original
+  tuesday: 1.15, //// original
+  wednesday: 1.2, //// original
+  thursday: 1.25, //// original
+  friday: 1.2, //// original
+  //// expanded
+  saturday: 0.9,
+  sunday: 0.85
 };
 
-const HOOK_PHRASES = [
-  {phrase: 'i discovered', weight: 1.4}, 
-  {phrase: 'breaking:', weight: 1.6},
-  {phrase: 'unveiling', weight: 1.5}, 
-  {phrase: 'did you know', weight: 1.4},
-  {phrase: 'introducing', weight: 1.5},
-  {phrase: 'find out', weight: 1.3},
-  {phrase: 'here’s why', weight: 1.4},
-  {phrase: 'the truth behind', weight: 1.5},
-  {phrase: 'how to', weight: 1.6},
-  {phrase: 'the secret to', weight: 1.7},
-  {phrase: 'why you need to', weight: 1.6},
-  {phrase: 'what’s next', weight: 1.5},
-  {phrase: 'let’s dive into', weight: 1.6},
-  {phrase: 'did you realize', weight: 1.5},
-  {phrase: 'the inside scoop', weight: 1.7},
-  {phrase: 'here’s the deal', weight: 1.4},
-  {phrase: 'your guide to', weight: 1.5},
-  {phrase: 'just released', weight: 1.4},
-  {phrase: 'see how', weight: 1.5},
-  {phrase: 'find out why', weight: 1.6},
-  {phrase: 'step into', weight: 1.6},
-  {phrase: 'it’s time for', weight: 1.7},
-  {phrase: 'you won’t believe', weight: 1.8},
-];
+const analysisCache = new Map<string, PostMetrics>();
 
-const STORYTELLING_ELEMENTS = [
-  {element: 'when i', weight: 1.2}, 
-  {element: 'my journey', weight: 1.4},
-  {element: 'it all started', weight: 1.5},
-  {element: 'back then', weight: 1.3},
-  {element: 'at that moment', weight: 1.5},
-  {element: 'it was a turning point', weight: 1.6},
-  {element: 'that’s when i realized', weight: 1.6},
-  {element: 'and then', weight: 1.4},
-  {element: 'after months of', weight: 1.7},
-  {element: 'as time went by', weight: 1.5},
-  {element: 'unexpectedly', weight: 1.5},
-  {element: 'one day', weight: 1.3},
-  {element: 'along the way', weight: 1.5},
-  {element: 'from there', weight: 1.6},
-  {element: 'looking back', weight: 1.5},
-  {element: 'over the years', weight: 1.4},
-  {element: 'suddenly', weight: 1.5},
-  {element: 'by then', weight: 1.4},
-  {element: 'the turning point', weight: 1.6},
-  {element: 'what happened next', weight: 1.5},
-];
-
-const VALUE_INDICATORS = [
-  {indicator: 'cutting-edge', weight: 1.5},
-  {indicator: 'game-changing', weight: 1.6},
-  {indicator: 'world-class', weight: 1.7},
-  {indicator: 'innovative', weight: 1.5},
-  {indicator: 'best-in-class', weight: 1.6},
-  {indicator: 'state-of-the-art', weight: 1.7},
-  {indicator: 'top-tier', weight: 1.5},
-  {indicator: 'premium', weight: 1.6},
-  {indicator: 'leading', weight: 1.7},
-  {indicator: 'unparalleled', weight: 1.6},
-  {indicator: 'exclusive', weight: 1.7},
-  {indicator: 'next-level', weight: 1.6},
-  {indicator: 'outstanding', weight: 1.7},
-  {indicator: 'top-of-the-line', weight: 1.8},
-  {indicator: 'innovative', weight: 1.6},
-  {indicator: 'exceptional', weight: 1.6},
-  {indicator: 'premium quality', weight: 1.5},
-  {indicator: 'best quality', weight: 1.6},
-];
-
-const INDUSTRY_KEYWORDS = [
-  'technology', 'innovation', 'entrepreneurship', 'business', 'leadership', 'growth', 
-  'startup', 'disruption', 'strategy', 'marketing', 'branding', 'investing', 
-  'funding', 'venture capital', 'productivity', 'sustainability', 'AI', 'machine learning',
-  'data', 'cloud', 'digital transformation', 'web 3.0', 'crypto', 'blockchain', 'fintech', 
-  'leadership development', 'sales', 'customer service', 'healthcare', 'e-commerce',
-  'financial services', 'software development', 'automation', 'robotics', 'cybersecurity', 
-  'education', 'remote work', 'online learning', 'self-improvement', 'personal growth',
-  'digital marketing', 'UX/UI', 'agile', 'design thinking', 'customer experience',
-  'mobile app development', 'data science', 'AR/VR', 'IoT', '5G', 'edge computing', 'tech trends',
-];
-
-
-// Time and day weights for LinkedIn post timing optimization
-
-const TIME_OF_DAY_WEIGHTS = {
-  '0-2': 0.9,   // Late night
-  '2-4': 0.8,   // Very late night
-  '4-6': 1.0,   // Early morning
-  '6-8': 1.15,  // Morning start
-  '8-10': 1.2,  // Morning peak, great time for engagement
-  '10-12': 1.3, // Late morning
-  '12-14': 1.4, // Early afternoon, ideal for posting during lunch breaks
-  '14-16': 1.3, // Mid-afternoon
-  '16-18': 1.4, // Late afternoon, another peak time
-  '18-20': 1.3, // Evening, when professionals wrap up their day
-  '20-22': 1.1, // Night, winding down but still decent engagement
-  '22-24': 1.0, // Late night, low engagement
-};
-
-const DAY_OF_WEEK_WEIGHTS = {
-  'monday': 1.1,     // Start of the week, people are catching up
-  'tuesday': 1.15,   // Best day for engagement, people are active and focused
-  'wednesday': 1.2,  // Mid-week, higher productivity and engagement
-  'thursday': 1.25,  // Another strong day for engagement, closer to the weekend
-  'friday': 1.2,     // People preparing for the weekend, engagement is still good
-  'saturday': 1.0,   // Weekend, lower engagement but might get attention
-  'sunday': 0.9,     // End of the weekend, low engagement for professional posts
-};
-
-
-
-// Enhanced text fingerprint using hash of first 100 words
-function getTextFingerprint(text: string): string {
-  const words = text.trim().toLowerCase().split(/\s+/).slice(0, 100).join(' ');
-  let hash = 0;
-  for (let i = 0; i < words.length; i++) {
-    const char = words.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash.toString();
+// ==== GENERIC HELPERS ====
+function weightedMatchCount(list: WeightedTerm[], text: string): number { //// New helper
+  const lower = text.toLowerCase();
+  return list.reduce((sum, { term, weight }) =>
+    lower.includes(term) ? sum + weight : sum
+  , 0);
 }
 
-// Enhanced reading time calculation with syllable analysis
-function calculateReadingTime(text: string): number {
-  const words = text.trim().split(/\s+/);
-  const syllableCount = words.reduce((total, word) => total + countSyllables(word), 0);
-  const avgSyllablesPerWord = syllableCount / words.length;
-  
-  // Adjust reading speed based on complexity
-  let baseSpeed = 225;
-  if (avgSyllablesPerWord > 1.8) baseSpeed -= 25;
-  
-  return Math.max(1, Math.ceil(words.length / baseSpeed));
-}
-
-// Enhanced syllable counting algorithm
+const syllableCache = new Map<string, number>(); //// Memoize syllables
 function countSyllables(word: string): number {
-  word = word.toLowerCase().replace(/[^a-z]/g, '');
-  if (word.length <= 3) return 1;
-  
-  word = word.replace(/(?:[^laeiouy]|ed|[^laeiouy]e)$/, '');
-  word = word.replace(/^y/, '');
-  return Math.max(1, (word.match(/[aeiouy]{1,2}/g) || []).length);
+  const key = word.toLowerCase();
+  if (syllableCache.has(key)) return syllableCache.get(key)!;
+  const cleaned = key.replace(/[^a-z]/g, '');
+  const count = Math.max(1, (cleaned.match(/[aeiouy]{1,2}/g) || []).length);
+  syllableCache.set(key, count);
+  return count;
 }
 
-// Enhanced content structure analysis
-function analyzeContentStructure(text: string): {
-  paragraphs: number;
-  bulletPoints: number;
-  numberedLists: number;
-  headings: number;
-} {
-  const lines = text.split('\n').filter(line => line.trim().length > 0);
-  let paragraphs = 0;
-  let bulletPoints = 0;
-  let numberedLists = 0;
-  let headings = 0;
-  let inParagraph = false;
-
-  const bulletRegex = /^\s*[\-\•\*]\s/;
-  const numberedRegex = /^\s*\d+[\.\)]\s/;
-  const headingRegex = /^\s*#{1,3}\s/;
-
-  for (const line of lines) {
-    if (headingRegex.test(line)) {
-      headings++;
-      inParagraph = false;
-    } else if (bulletRegex.test(line)) {
-      bulletPoints++;
-      inParagraph = false;
-    } else if (numberedRegex.test(line)) {
-      numberedLists++;
-      inParagraph = false;
-    } else if (line.trim().length > 0) {
-      if (!inParagraph) {
-        paragraphs++;
-        inParagraph = true;
-      }
-    } else {
-      inParagraph = false;
-    }
-  }
-
-  return { paragraphs, bulletPoints, numberedLists, headings };
+// ==== ANALYSIS FUNCTIONS ====
+export function analyzeSentiment(text: string): number {
+  const words = text.split(/\s+/).length;
+  const pos = weightedMatchCount(POSITIVE_FACTORS, text);
+  const neg = weightedMatchCount(NEGATIVE_FACTORS, text);
+  const raw = (pos - neg) / words * 2;
+  return Math.max(-0.5, Math.min(1.5, raw));
 }
 
-// Enhanced emoji analysis with weights
-function analyzeEmojis(text: string): { count: number; score: number } {
-  const emojiRegex = /[\u{1F600}-\u{1F6FF}]/gu;
-  const emojis = text.match(emojiRegex) || [];
-  const uniqueEmojis = [...new Set(emojis)];
-  
-  const score = (emojis as string[]).reduce((total, emoji) => {
-    return total + (EMOJI_WEIGHTS[emoji] || 1.0);
-  }, 0);
-  
-  return {
-    count: emojis.length,
-    score: Math.min(2.0, 1.0 + (Number(score) * 0.05))
-  };
+export function analyzeEngagementTriggers(text: string): number {
+  const w = weightedMatchCount(ENGAGEMENT_TRIGGERS, text);
+  return 1 + Math.min(1, w * 0.1);
 }
 
-// Enhanced sentiment analysis with weighted words
-function analyzeSentiment(text: string): number {
-  const lowerText = text.toLowerCase();
-  let positiveScore = 0;
-  let negativeScore = 0;
-  const words = lowerText.split(/\s+/);
-  const totalWords = words.length;
+const HOOK_PHRASES: WeightedTerm[] = [
+  { term: 'did you know', weight: 1.5 },
+  { term: 'what if', weight: 1.6 },
+  { term: 'imagine', weight: 1.4 },
+  { term: 'have you ever', weight: 1.5 },
+  { term: 'why not', weight: 1.4 },
+  { term: 'curious', weight: 1.3 },
+  { term: 'guess what', weight: 1.5 },
+  { term: 'breaking news', weight: 1.6 },
+  //// expanded list below
+  { term: 'picture this', weight: 1.4 }, //// 
+  { term: 'you won’t believe', weight: 1.7 }, //// 
+  { term: 'this might surprise you', weight: 1.5 }, //// 
+  { term: 'little known fact', weight: 1.4 }, //// 
+  { term: 'the truth is', weight: 1.3 }, //// 
+  { term: 'here’s the deal', weight: 1.3 }, //// 
+  { term: 'important update', weight: 1.5 }, //// 
+  { term: 'shocking discovery', weight: 1.7 }, //// 
+  { term: 'the real reason', weight: 1.6 }, //// 
+  { term: 'must see', weight: 1.5 }, //// 
+  { term: 'startling fact', weight: 1.6 }, //// 
+  { term: 'once in a lifetime', weight: 1.7 }, //// 
+  { term: 'a new study reveals', weight: 1.5 }, //// 
+  { term: 'scientists say', weight: 1.4 }, //// 
+  { term: 'many people don’t know', weight: 1.5 }, //// 
+  { term: 'this changes everything', weight: 1.7 }, //// 
+  { term: 'experts agree', weight: 1.4 }, //// 
+  { term: 'new research shows', weight: 1.5 }, //// 
+  { term: 'revealed', weight: 1.5 }, //// 
+  { term: 'you need to see this', weight: 1.6 }, //// 
+];
 
-  POSITIVE_FACTORS.forEach(({ word, weight }) => {
-    if (lowerText.includes(word)) {
-      positiveScore += weight;
-    }
-  });
 
-  NEGATIVE_FACTORS.forEach(({ word, weight }) => {
-    if (lowerText.includes(word)) {
-      negativeScore += weight;
-    }
-  });
-
-  const positiveRatio = positiveScore / totalWords;
-  const negativeRatio = negativeScore / totalWords;
-  
-  return Math.min(1.5, Math.max(-0.5, (positiveRatio - negativeRatio) * 2));
-}
-
-// Enhanced engagement trigger analysis
-function analyzeEngagementTriggers(text: string): number {
-  const lowerText = text.toLowerCase();
-  let triggerScore = 0;
-  
-  ENGAGEMENT_TRIGGERS.forEach(({ phrase, weight }) => {
-    if (lowerText.includes(phrase)) {
-      triggerScore += weight;
-    }
-  });
-
-  return Math.min(2.0, 1.0 + (triggerScore * 0.1));
-}
-
-// Enhanced hook strength analysis
-function analyzeHookStrength(text: string): number {
-  const firstHundred = text.toLowerCase().substring(0, 100);
-  let score = 1.0;
-
-  if (firstHundred.includes('?')) score += 0.15;
-
-  let hookPhrasesFound = 0;
-  for (const { phrase, weight } of HOOK_PHRASES) {
-    if (firstHundred.includes(phrase)) {
-      hookPhrasesFound++;
-      score += weight * 0.1;
-      if (hookPhrasesFound >= 2) break;
-    }
-  }
-
-  if (/\d+/.test(firstHundred)) score += 0.1;
-  if (countEmojis(firstHundred) > 0) score += 0.15;
-
+export function analyzeHookStrength(text: string): number {
+  const head = text.slice(0,100);
+  let score = 1 + (/\?/.test(head) ? 0.15 : 0);
+  score += Math.min(2, weightedMatchCount(HOOK_PHRASES, head) * 0.1);
   return Math.min(1.5, score);
 }
 
-// Enhanced storytelling analysis
-function analyzeStorytellingElements(text: string): number {
-  const lowerText = text.toLowerCase();
-  let elementsFound = 0;
-  let personalPronouns = 0;
-
-  for (const { element, weight } of STORYTELLING_ELEMENTS) {
-    if (lowerText.includes(element)) {
-      elementsFound++;
-      if (elementsFound >= 5) break;
-    }
-  }
-
-  const pronouns = [' i ', ' me ', ' my ', ' mine ', ' we ', ' our ', ' us '];
-  for (const pronoun of pronouns) {
-    let pos = lowerText.indexOf(pronoun);
-    while (pos !== -1) {
-      personalPronouns++;
-      pos = lowerText.indexOf(pronoun, pos + 1);
-    }
-  }
-
-  return 1.0 + Math.min(0.3, elementsFound * 0.06) + Math.min(0.2, personalPronouns * 0.02);
+export function analyzeStorytelling(text: string): number {
+  const found = weightedMatchCount(STORYTELLING_TERMS, text);
+  const pronouns = (text.match(/\b(i|we|my|our)\b/gi) || []).length;
+  return 1 + Math.min(0.3, found*0.05) + Math.min(0.2, pronouns*0.02);
 }
 
-// Enhanced value proposition analysis
-function analyzeValueProposition(text: string): number {
-  const lowerText = text.toLowerCase();
-  let indicatorsFound = 0;
-
-  for (const { indicator, weight } of VALUE_INDICATORS) {
-    if (lowerText.includes(indicator)) {
-      indicatorsFound++;
-      if (indicatorsFound >= 6) break;
-    }
-  }
-
-  const hasStatistics = /\d+%|\d+ percent|\d+x/i.test(text);
-  return 1.0 + Math.min(0.3, indicatorsFound * 0.05) + (hasStatistics ? 0.1 : 0);
+export function analyzeValueProposition(text: string): number {
+  const found = weightedMatchCount(VALUE_INDICATORS, text);
+  const bonus = /\d+%|\d+ percent/.test(text) ? 0.1 : 0;
+  return 1 + Math.min(0.3, found*0.05) + bonus;
 }
 
-// Enhanced industry relevance analysis
-function analyzeIndustryRelevance(text: string, industry: string): number {
-  if (!industry || !INDUSTRY_KEYWORDS[industry]) return 1.0;
-  
-  const lowerText = text.toLowerCase();
-  let relevanceScore = 0;
-  
-  INDUSTRY_KEYWORDS[industry].forEach(({ keyword, score }) => {
-    if (lowerText.includes(keyword)) {
-      relevanceScore += score;
-    }
+export function analyzeIndustryRelevance(text: string, industry?: string): number {
+  if (!industry || !INDUSTRY_KEYWORDS[industry]) return 1;
+  const s = weightedMatchCount(INDUSTRY_KEYWORDS[industry], text);
+  return Math.min(1.2, 0.8 + s*0.1);
+}
+
+export function calculateReadingTime(text: string): number {
+  const words = text.split(/\s+/);
+  const syllables = words.reduce((a,w) => a + countSyllables(w), 0);
+  let speed = 225 - (syllables/words.length > 1.8 ? 25 : 0);
+  return Math.max(1, Math.ceil(words.length / speed));
+}
+
+export function analyzeEmojis(text: string): { count: number; score: number } {
+  const emojis: string[] = text.match(/[\u{1F600}-\u{1F6FF}]/gu) || [];
+  const score = emojis.reduce((a, e) => a + (EMOJI_WEIGHTS[e] || 1), 0);
+  return { count: emojis.length, score: 1 + Math.min(1, score*0.05) };
+}
+
+export function analyzeContentStructure(text: string) {
+  const lines = text.split('\n');
+  let paras=0, bullets=0, lists=0, heads=0, inPara=false;
+  lines.forEach(ln => {
+    if (/^#{1,3}\s/.test(ln)) { heads++; inPara=false; }
+    else if (/^[-*•]\s/.test(ln)) { bullets++; inPara=false; }
+    else if (/^\d+[\.)]\s/.test(ln)) { lists++; inPara=false; }
+    else if (ln.trim()) { if (!inPara){ paras++; inPara=true; }} else inPara=false;
   });
-
-  return 0.8 + Math.min(1.2, relevanceScore * 0.1);
+  return { paragraphs: paras, bulletPoints: bullets, numberedLists: lists, headings: heads };
 }
 
-// Enhanced post analysis with all factors
-export function analyzePost(postContent: string, advancedParams?: AdvancedAnalysisParams): PostMetrics {
-  const fingerprint = getTextFingerprint(postContent);
-  
-  // Check cache first
-  if (analysisCache.has(fingerprint)) {
-    return { ...analysisCache.get(fingerprint)! };
-  }
+export function getTextFingerprint(text: string): string {
+  const key = text.toLowerCase().split(/\s+/).slice(0,100).join(' ');
+  let h=0; for (let c of key) { h=((h<<5)-h)+c.charCodeAt(0); h|=0; }
+  return h.toString();
+}
 
-  // Enhanced content analysis
-  const contentAnalysis = {
-    ...analyzeContentStructure(postContent),
-    readingTime: calculateReadingTime(postContent),
-    sentiment: analyzeSentiment(postContent),
-    engagementTriggers: analyzeEngagementTriggers(postContent),
-    emojis: analyzeEmojis(postContent),
-    hookStrength: analyzeHookStrength(postContent),
-    storytelling: analyzeStorytellingElements(postContent),
-    valueProposition: analyzeValueProposition(postContent),
-    industryRelevance: advancedParams?.industry ? 
-      analyzeIndustryRelevance(postContent, advancedParams.industry) : 1.0
-  };
+// ==== SCORING HELPERS ====
+function calculateLengthMultiplier(len: number): number {
+  const center = (OPTIMAL_LENGTH.min + OPTIMAL_LENGTH.max)/2;
+  const width = (OPTIMAL_LENGTH.max - OPTIMAL_LENGTH.min)/2;
+  const dist = Math.abs(len - center)/width;
+  return Math.max(0.7, Math.min(1.5, 1.2 - Math.pow(dist,1.5)*0.5));
+}
 
-  // Enhanced scoring multipliers
+function calculateFollowerImpact(range: string = ''): number {
+  const map: Record<string,number> = {'0-500':0.4,'500-1K':0.6,'1K-5K':1,'5K+':1.7};
+  return map[range] || 1;
+}
+
+function calculateEngagementImpact(level: string = ''): number {
+  return { High:1.8, Medium:1, Low:0.4 }[level] || 1;
+}
+
+function combineMultipliers(m: Record<string, number>): number {
+  return Object.values(m).reduce((a,v) => a*v, 1);
+}
+
+// ==== CORE ANALYSIS ====
+export function analyzePost(
+  content: string,
+  params?: AdvancedAnalysisParams
+): PostMetrics {
+  const fp = getTextFingerprint(content);
+  if (analysisCache.has(fp)) return { ...analysisCache.get(fp)! };
+
+  const struct  = analyzeContentStructure(content);
+  const reading = calculateReadingTime(content);
+  const sent    = analyzeSentiment(content);
+  const trig    = analyzeEngagementTriggers(content);
+  const emoInfo = analyzeEmojis(content);
+  const hook    = analyzeHookStrength(content);
+  const story   = analyzeStorytelling(content);
+  const value   = analyzeValueProposition(content);
+  const industryRel = analyzeIndustryRelevance(content, params?.industry);
+
   const multipliers = {
-    length: calculateLengthMultiplier(postContent.length),
-    sentiment: 1 + (contentAnalysis.sentiment * 0.15),
-    engagement: contentAnalysis.engagementTriggers,
-    emojis: contentAnalysis.emojis.score,
-    hookStrength: contentAnalysis.hookStrength,
-    storytelling: contentAnalysis.storytelling,
-    valueProposition: contentAnalysis.valueProposition,
-    industryRelevance: contentAnalysis.industryRelevance,
-    // ... other multipliers
+    length: calculateLengthMultiplier(content.length),
+    sentiment: 1 + sent*0.1,
+    triggers: trig,
+    emojis: emoInfo.score,
+    hook,
+    story,
+    value,
+    industryRel
   };
+  const advMult = calculateFollowerImpact(params?.followerRange || '') *
+                  calculateEngagementImpact(params?.engagementLevel || '');
+  const base = { eng:50, reach:50, viral:50 };
 
-  // Enhanced advanced parameter handling
-  let advancedMultiplier = 1.0;
-  if (advancedParams) {
-    advancedMultiplier *= calculateFollowerImpact(advancedParams.followerRange);
-    advancedMultiplier *= calculateEngagementImpact(advancedParams.engagementLevel);
-  }
+  const engagementScore = Math.min(100, Math.round(base.eng * combineMultipliers(multipliers) * advMult));
+  const reachScore     = Math.min(100, Math.round(base.reach * multipliers.length * multipliers.emojis * industryRel * advMult * 0.9));
+  const viralityScore  = Math.min(100, Math.round(base.viral * trig * multipliers.sentiment * story * advMult * 1.1));
 
-  // Enhanced score calculation
-  const scores = {
-    engagement: calculateEngagementScore(
-      baseScores.engagement,
-      multipliers,
-      advancedMultiplier
-    ),
-    reach: calculateReachScore(
-      baseScores.reach,
-      multipliers,
-      advancedMultiplier
-    ),
-    virality: calculateViralityScore(
-      baseScores.virality,
-      multipliers,
-      advancedMultiplier
-    )
-  };
+  const likes    = Math.floor(Math.pow(engagementScore,1.1)*0.5);
+  const comments = Math.floor(Math.pow(engagementScore,1.3)*0.08);
+  const shares   = Math.floor(Math.pow(viralityScore,1.2)*0.1);
 
-  // Enhanced engagement estimation
-  const engagementEstimates = {
-    likes: estimateLikes(scores.engagement, multipliers),
-    comments: estimateComments(scores.engagement, multipliers),
-    shares: estimateShares(scores.virality, multipliers)
-  };
-
-  const result = {
-    engagementScore: scores.engagement,
-    reachScore: scores.reach,
-    viralityScore: scores.virality,
-    likes: engagementEstimates.likes,
-    comments: engagementEstimates.comments,
-    shares: engagementEstimates.shares
-  };
-
-  // Cache result
-  analysisCache.set(fingerprint, { ...result });
+  const result = { engagementScore, reachScore, viralityScore, likes, comments, shares };
+  analysisCache.set(fp, result);
   return result;
 }
 
-// Enhanced time series generation with realistic engagement curve
-export function generateTimeSeries(postContent: string, hours: number = 24): TimeSeriesData[] {
-  const { engagementScore } = analyzePost(postContent);
+export function generateTimeSeries(content: string, hrs = 24): TimeSeriesData[] {
+  const { engagementScore } = analyzePost(content);
   const data: TimeSeriesData[] = [];
-  
-  // Enhanced engagement curve modeling
-  for (let hour = 0; hour < hours; hour++) {
-    let engagement: number;
-    
-    if (hour < 3) {
-      // Initial rapid growth phase
-      engagement = engagementScore * (0.2 + (0.8 * (hour / 3)));
-    } else if (hour < 8) {
-      // Peak and slight decay phase
-      const peakHeight = engagementScore * (0.9 + (Math.random() * 0.1));
-      engagement = peakHeight * (1 - (0.03 * (hour - 3)));
-    } else {
-      // Long tail decay phase
-      const decayRate = 0.04 + (Math.random() * 0.03);
-      engagement = engagementScore * 0.7 * Math.pow(1 - decayRate, hour - 8);
-    }
-    
-    data.push({
-      time: `${hour}h`,
-      engagement: Math.round(Math.max(engagementScore * 0.2, engagement))
-    });
+  for (let h = 0; h < hrs; h++) {
+    const val = engagementScore * (h < 3
+      ? 0.2 + 0.8 * (h / 3)
+      : h < 8
+        ? (0.9 + Math.random()*0.1)*(1 - 0.03*(h-3))
+        : 0.7 * Math.pow(1 - (0.04+Math.random()*0.03), h-8)
+    );
+    data.push({ time: `${h}h`, engagement: Math.round(Math.max(engagementScore*0.2, val)) });
   }
-  
   return data;
 }
 
-// Enhanced suggestion generation with more specific recommendations
-export function generateSuggestions(postContent: string): PostSuggestion[] {
-  const analysis = analyzePost(postContent);
+export function generateSuggestions(content: string): PostSuggestion[] {
+  const analysis = analyzePost(content);
   const suggestions: PostSuggestion[] = [];
-  
-  // Length suggestion
-  if (postContent.length < OPTIMAL_LENGTH.min) {
+
+  if (content.length < OPTIMAL_LENGTH.min) {
     suggestions.push({
-      id: 'length-short',
+      id: 'len-short',
       type: 'improvement',
-      title: 'Increase post length',
-      description: `Your post is ${Math.round((postContent.length/OPTIMAL_LENGTH.min)*100)}% of the recommended minimum length. Add more details or examples.`
-    });
-  } else if (postContent.length > OPTIMAL_LENGTH.max) {
-    suggestions.push({
-      id: 'length-long',
-      type: 'warning',
-      title: 'Consider shortening your post',
-      description: `Your post is ${Math.round((postContent.length/OPTIMAL_LENGTH.max)*100)}% of the recommended maximum length. Consider splitting into multiple posts.`
+      title: 'Post too short',
+      description: `Only ${Math.round((content.length/OPTIMAL_LENGTH.min)*100)}% of min length.`
     });
   }
-  
-  // Engagement triggers suggestion
+  if (content.length > OPTIMAL_LENGTH.max) {
+    suggestions.push({
+      id: 'len-long',
+      type: 'warning',
+      title: 'Post too long',
+      description: `At ${Math.round((content.length/OPTIMAL_LENGTH.max)*100)}% of max length.`
+    });
+  }
   if (analysis.engagementScore < 60) {
     suggestions.push({
-      id: 'engagement-low',
+      id: 'low-eng',
       type: 'improvement',
-      title: 'Add engagement triggers',
-      description: 'Include questions or calls-to-action to increase comments and shares.'
+      title: 'Boost engagement',
+      description: 'Add questions or CTAs to invite comments.'
     });
   }
-  
-  // Sentiment suggestion
-  const sentiment = analyzeSentiment(postContent);
-  if (sentiment < -0.2) {
+  const tagCount = (content.match(/#\w+/g) || []).length;
+  if (tagCount < HASHTAG_OPTIMUM.min) {
     suggestions.push({
-      id: 'sentiment-negative',
-      type: 'warning',
-      title: 'Negative tone detected',
-      description: 'Consider balancing negative statements with positive solutions or outcomes.'
+      id: 'few-tags',
+      type: 'tip',
+      title: 'Add more hashtags',
+      description: `Use at least ${HASHTAG_OPTIMUM.min} hashtags.`
     });
   }
-  
-  // Add more sophisticated suggestions...
-  
+
   return suggestions;
-}
-
-// Enhanced post comparison with better margin calculation
-export function comparePostsPerformance(
-  post1: string, 
-  post2: string, 
-  advancedParams?: AdvancedAnalysisParams
-) {
-  const metrics1 = analyzePost(post1, advancedParams);
-  const metrics2 = analyzePost(post2, advancedParams);
-
-  // Enhanced scoring formula
-  const post1Score = (metrics1.engagementScore * 0.45) + 
-                     (metrics1.reachScore * 0.3) + 
-                     (metrics1.viralityScore * 0.25);
-  const post2Score = (metrics2.engagementScore * 0.45) + 
-                     (metrics2.reachScore * 0.3) + 
-                     (metrics2.viralityScore * 0.25);
-
-  // Enhanced margin calculation
-  const margin = Math.abs(post1Score - post2Score) / 
-                Math.min(post1Score, post2Score) * 100;
-
-  return {
-    winner: post1Score > post2Score ? 1 : post2Score > post1Score ? 2 : 0,
-    margin: Number(margin.toFixed(1)),
-    metrics1,
-    metrics2
-  };
-}
-
-// Utility exports for testing
-export const analyzers = {
-  calculateReadingTime,
-  analyzeContentStructure,
-  analyzeEmojis,
-  analyzeSentiment,
-  analyzeEngagementTriggers,
-  getTextFingerprint,
-  analyzeHookStrength,
-  analyzeStorytellingElements,
-  analyzeValueProposition
-};
-
-// Internal implementations
-const analysisCache = new Map<string, PostMetrics>();
-const baseScores = {
-  engagement: 50,
-  reach: 50,
-  virality: 50
-};
-
-function calculateLengthMultiplier(length: number): number {
-  const optimalRangeCenter = (OPTIMAL_LENGTH.min + OPTIMAL_LENGTH.max) / 2;
-  const optimalRangeWidth = (OPTIMAL_LENGTH.max - OPTIMAL_LENGTH.min) / 2;
-  
-  const distanceFromCenter = Math.abs(length - optimalRangeCenter);
-  const normalizedDistance = distanceFromCenter / optimalRangeWidth;
-  
-  return Math.min(1.5, Math.max(0.7, 1.2 - Math.pow(normalizedDistance, 1.5) * 0.5));
-}
-
-function calculateFollowerImpact(followerRange: string): number {
-  const impacts = {
-    '0-500': 0.4, '500-1K': 0.6, '1K-5K': 1.0,
-    '5K-10K': 1.7, '10K-50K': 2.2, '50K+': 3.0
-  };
-  return impacts[followerRange] || 1.0;
-}
-
-function calculateEngagementImpact(engagementLevel: string): number {
-  const impacts = {
-    'High': 1.8, 'Medium': 1.0, 'Low': 0.4
-  };
-  return impacts[engagementLevel] || 1.0;
-}
-
-function calculateEngagementScore(
-  base: number,
-  multipliers: Record<string, number>,
-  advancedMultiplier: number
-): number {
-  return Math.min(100, Math.round(
-    base *
-    multipliers.length *
-    multipliers.sentiment *
-    multipliers.engagement *
-    multipliers.emojis *
-    multipliers.hookStrength *
-    multipliers.storytelling *
-    multipliers.valueProposition *
-    multipliers.industryRelevance *
-    advancedMultiplier
-  ));
-}
-
-function calculateReachScore(
-  base: number,
-  multipliers: Record<string, number>,
-  advancedMultiplier: number
-): number {
-  return Math.min(100, Math.round(
-    base *
-    multipliers.length *
-    multipliers.emojis *
-    multipliers.hookStrength *
-    multipliers.industryRelevance *
-    advancedMultiplier * 0.9
-  ));
-}
-
-function calculateViralityScore(
-  base: number,
-  multipliers: Record<string, number>,
-  advancedMultiplier: number
-): number {
-  return Math.min(100, Math.round(
-    base *
-    multipliers.engagement *
-    multipliers.sentiment *
-    multipliers.emojis *
-    multipliers.storytelling *
-    multipliers.valueProposition *
-    advancedMultiplier * 1.1
-  ));
-}
-
-function estimateLikes(engagementScore: number, multipliers: Record<string, number>): number {
-  return Math.floor(
-    Math.pow(engagementScore, 1.15) * 
-    0.5 * 
-    multipliers.sentiment
-  );
-}
-
-function estimateComments(engagementScore: number, multipliers: Record<string, number>): number {
-  return Math.floor(
-    Math.pow(engagementScore, 1.35) * 
-    0.08 * 
-    multipliers.engagement
-  );
-}
-
-function estimateShares(viralityScore: number, multipliers: Record<string, number>): number {
-  return Math.floor(
-    Math.pow(viralityScore, 1.25) * 
-    0.12 * 
-    multipliers.sentiment
-  );
-}
-function countEmojis(text: string): number {
-  const emojiRegex = /[\u{1F600}-\u{1F6FF}]/gu;
-  const emojis = text.match(emojiRegex) || [];
-  return emojis.length;
 }
