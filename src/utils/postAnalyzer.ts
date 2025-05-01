@@ -33,7 +33,6 @@ const OPTIMAL_LENGTH = { min: 150, max: 1300, ideal: 750 }; //// Added ideal
 const HASHTAG_OPTIMUM = { min: 3, max: 5, ideal: 4 };
 
 type WeightedTerm = { term: string; weight: number }; //// Generic weighted type
-
 const POSITIVE_FACTORS: WeightedTerm[] = [
   { term: 'thank', weight: 1.2 },
   { term: 'excited', weight: 1.5 },
@@ -109,6 +108,7 @@ const NEGATIVE_FACTORS: WeightedTerm[] = [
   { term: 'difficult road', weight: 1.4 }, //// expanded
   { term: 'learning the hard way', weight: 1.5 }, //// expanded
 ];
+
 const ENGAGEMENT_TRIGGERS: WeightedTerm[] = [
   { term: 'share your thoughts', weight: 1.8 },
   { term: 'comment below', weight: 1.7 },
@@ -128,6 +128,7 @@ const ENGAGEMENT_TRIGGERS: WeightedTerm[] = [
   { term: 'tell your story', weight: 1.8 }, //// expanded
   { term: 'how do you feel', weight: 1.7 }, //// expanded
 ];
+
 const EMOJI_WEIGHTS: WeightedTerm[] = [
   { term: '🎉', weight: 1.6 },
   { term: '🔥', weight: 1.7 },
@@ -143,6 +144,7 @@ const EMOJI_WEIGHTS: WeightedTerm[] = [
   { term: '🫶', weight: 1.4 }, //// expanded
   { term: '🤝', weight: 1.4 }, //// expanded
 ];
+
 const STORYTELLING_TERMS: WeightedTerm[] = [
   { term: 'journey', weight: 1.7 },
   { term: 'story', weight: 1.6 },
@@ -159,6 +161,7 @@ const STORYTELLING_TERMS: WeightedTerm[] = [
   { term: 'pivot', weight: 1.5 }, //// expanded
   { term: 'narrative', weight: 1.5 }, //// expanded
 ];
+
 const VALUE_INDICATORS: WeightedTerm[] = [
   { term: 'valuable', weight: 1.6 },
   { term: 'insight', weight: 1.5 },
@@ -175,6 +178,7 @@ const VALUE_INDICATORS: WeightedTerm[] = [
   { term: 'roadmap', weight: 1.5 }, //// expanded
   { term: 'resource', weight: 1.4 }, //// expanded
 ];
+
 const INDUSTRY_KEYWORDS: WeightedTerm[] = [
   { term: 'tech', weight: 1.5 },
   { term: 'AI', weight: 1.6 },
@@ -193,14 +197,6 @@ const INDUSTRY_KEYWORDS: WeightedTerm[] = [
   { term: 'leadership', weight: 1.5 }, //// expanded
   { term: 'ecommerce', weight: 1.5 }, //// expanded
   { term: 'biotech', weight: 1.6 }, //// expanded
-  { term: 'HR tech', weight: 1.4 }, //// expanded
-  { term: 'logistics', weight: 1.4 }, //// expanded
-  { term: 'sustainability', weight: 1.5 }, //// expanded
-  { term: 'robotics', weight: 1.5 }, //// expanded
-  { term: 'data science', weight: 1.6 }, //// expanded
-  { term: 'product management', weight: 1.5 }, //// expanded
-  { term: 'venture capital', weight: 1.4 }, //// expanded
-  { term: 'space tech', weight: 1.5 }, //// expanded
 ];
 
 
@@ -261,7 +257,6 @@ export function analyzeEngagementTriggers(text: string): number {
   const w = weightedMatchCount(ENGAGEMENT_TRIGGERS, text);
   return 1 + Math.min(1, w * 0.1);
 }
-
 const HOOK_PHRASES: WeightedTerm[] = [
   { term: 'did you know', weight: 1.5 },
   { term: 'what if', weight: 1.6 },
@@ -271,28 +266,59 @@ const HOOK_PHRASES: WeightedTerm[] = [
   { term: 'curious', weight: 1.3 },
   { term: 'guess what', weight: 1.5 },
   { term: 'breaking news', weight: 1.6 },
-  //// expanded list below
-  { term: 'picture this', weight: 1.4 }, //// 
-  { term: 'you won’t believe', weight: 1.7 }, //// 
-  { term: 'this might surprise you', weight: 1.5 }, //// 
-  { term: 'little known fact', weight: 1.4 }, //// 
-  { term: 'the truth is', weight: 1.3 }, //// 
-  { term: 'here’s the deal', weight: 1.3 }, //// 
-  { term: 'important update', weight: 1.5 }, //// 
-  { term: 'shocking discovery', weight: 1.7 }, //// 
-  { term: 'the real reason', weight: 1.6 }, //// 
-  { term: 'must see', weight: 1.5 }, //// 
-  { term: 'startling fact', weight: 1.6 }, //// 
-  { term: 'once in a lifetime', weight: 1.7 }, //// 
-  { term: 'a new study reveals', weight: 1.5 }, //// 
-  { term: 'scientists say', weight: 1.4 }, //// 
-  { term: 'many people don’t know', weight: 1.5 }, //// 
-  { term: 'this changes everything', weight: 1.7 }, //// 
-  { term: 'experts agree', weight: 1.4 }, //// 
-  { term: 'new research shows', weight: 1.5 }, //// 
-  { term: 'revealed', weight: 1.5 }, //// 
-  { term: 'you need to see this', weight: 1.6 }, //// 
+  { term: 'picture this', weight: 1.4 },
+  { term: 'you won’t believe', weight: 1.7 },
+  { term: 'this might surprise you', weight: 1.5 },
+  { term: 'little known fact', weight: 1.4 },
+  { term: 'the truth is', weight: 1.3 },
+  { term: 'here’s the deal', weight: 1.3 },
+  { term: 'important update', weight: 1.5 },
+  { term: 'shocking discovery', weight: 1.7 },
+  { term: 'the real reason', weight: 1.6 },
+  { term: 'must see', weight: 1.5 },
+  { term: 'startling fact', weight: 1.6 },
+  { term: 'once in a lifetime', weight: 1.7 },
+  { term: 'a new study reveals', weight: 1.5 },
+  { term: 'scientists say', weight: 1.4 },
+  { term: 'many people don’t know', weight: 1.5 },
+  { term: 'this changes everything', weight: 1.7 },
+  { term: 'experts agree', weight: 1.4 },
+  { term: 'new research shows', weight: 1.5 },
+  { term: 'revealed', weight: 1.5 },
+  { term: 'you need to see this', weight: 1.6 },
+  
+  // Expanded List
+  { term: 'unbelievable but true', weight: 1.6 }, //// expanded
+  { term: 'you won’t guess', weight: 1.5 }, //// expanded
+  { term: 'did you ever wonder', weight: 1.4 }, //// expanded
+  { term: 'it’s time to know', weight: 1.5 }, //// expanded
+  { term: 'this will blow your mind', weight: 1.7 }, //// expanded
+  { term: 'get ready for', weight: 1.4 }, //// expanded
+  { term: 'this is huge', weight: 1.6 }, //// expanded
+  { term: 'here’s why', weight: 1.5 }, //// expanded
+  { term: 'a shocking reveal', weight: 1.7 }, //// expanded
+  { term: 'you won’t believe your eyes', weight: 1.6 }, //// expanded
+  { term: 'did you know this about', weight: 1.5 }, //// expanded
+  { term: 'prepare to be amazed', weight: 1.6 }, //// expanded
+  { term: 'don’t miss out', weight: 1.5 }, //// expanded
+  { term: 'here’s the kicker', weight: 1.4 }, //// expanded
+  { term: 'it’s a game-changer', weight: 1.7 }, //// expanded
+  { term: 'breaking news alert', weight: 1.6 }, //// expanded
+  { term: 'game-changing discovery', weight: 1.7 }, //// expanded
+  { term: 'hidden truth', weight: 1.5 }, //// expanded
+  { term: 'here’s the surprise', weight: 1.6 }, //// expanded
+  { term: 'wait until you hear this', weight: 1.7 }, //// expanded
+  { term: 'a shocking truth', weight: 1.6 }, //// expanded
+  { term: 'don’t believe this', weight: 1.7 }, //// expanded
+  { term: 'get ready to be shocked', weight: 1.7 }, //// expanded
+  { term: 'take a moment to think', weight: 1.5 }, //// expanded
+  { term: 'new insights reveal', weight: 1.5 }, //// expanded
+  { term: 'prepare to be stunned', weight: 1.7 }, //// expanded
+  { term: 'it’s going to blow your mind', weight: 1.7 }, //// expanded
+  { term: 'you’ll be amazed by this', weight: 1.6 }, //// expanded
+  { term: 'this is something you didn’t know', weight: 1.6 }, //// expanded
 ];
+
 
 
 export function analyzeHookStrength(text: string): number {

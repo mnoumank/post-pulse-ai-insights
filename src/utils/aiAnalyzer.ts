@@ -14,6 +14,8 @@ interface AIAnalysisResponse {
 export interface AIPostMetrics extends PostMetrics {
   recommendedHashtags: string[];
   isAIEnhanced: boolean;
+  
+
 }
 
 export async function analyzePostWithAI(
