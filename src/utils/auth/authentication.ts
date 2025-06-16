@@ -4,14 +4,17 @@ import { User } from "./types";
 import { getCurrentUser } from "./profiles";
 
 export async function login(email: string, password: string): Promise<User> {
-  // Special handling for demo account
+  // Enhanced demo account handling - bypass Supabase entirely
   if (email === "demo@example.com" && password === "password123") {
-    return {
+    // Store demo session in localStorage to persist across page reloads
+    const demoUser = {
       id: "demo-user-id",
       name: "Demo User",
       email: "demo@example.com",
       avatarUrl: undefined,
     };
+    localStorage.setItem('demo_session', JSON.stringify(demoUser));
+    return demoUser;
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -54,6 +57,7 @@ export async function register(email: string, password: string, name: string): P
       data: {
         full_name: name,
       },
+      emailRedirectTo: `${window.location.origin}/`,
     },
   });
 
@@ -74,6 +78,9 @@ export async function register(email: string, password: string, name: string): P
 }
 
 export async function logout(): Promise<void> {
+  // Clear demo session if it exists
+  localStorage.removeItem('demo_session');
+  
   const { error } = await supabase.auth.signOut();
   
   if (error) {
@@ -82,6 +89,12 @@ export async function logout(): Promise<void> {
 }
 
 export async function isLoggedIn(): Promise<boolean> {
+  // Check for demo session first
+  const demoSession = localStorage.getItem('demo_session');
+  if (demoSession) {
+    return true;
+  }
+  
   const user = await getCurrentUser();
   return user !== null;
 }

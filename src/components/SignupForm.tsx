@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
@@ -60,6 +61,41 @@ export function SignupForm() {
     }
   };
 
+  const getFieldConfig = (fieldName: string) => {
+    switch (fieldName) {
+      case 'name':
+        return {
+          type: 'text',
+          placeholder: 'Your name',
+          label: 'Name'
+        };
+      case 'email':
+        return {
+          type: 'email',
+          placeholder: 'your@email.com',
+          label: 'Email'
+        };
+      case 'password':
+        return {
+          type: 'password',
+          placeholder: '••••••••',
+          label: 'Password'
+        };
+      case 'confirmPassword':
+        return {
+          type: 'password',
+          placeholder: '••••••••',
+          label: 'Confirm Password'
+        };
+      default:
+        return {
+          type: 'text',
+          placeholder: '',
+          label: fieldName
+        };
+    }
+  };
+
   return (
     <PageTransition>
       <Card className="w-full max-w-md mx-auto">
@@ -85,33 +121,36 @@ export function SignupForm() {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {['name', 'email', 'password', 'confirmPassword'].map((fieldName) => (
-                <FormField
-                  key={fieldName}
-                  control={form.control}
-                  name={fieldName as any}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{fieldName.charAt(0).toUpperCase() + fieldName.slice(1).replace(/([A-Z])/g, ' $1')}</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={fieldName.includes('password') ? 'password' : 'text'}
-                            placeholder={fieldName.includes('password') ? '••••••••' : `Your ${fieldName}`}
-                            {...field}
-                            className={`${
-                              form.formState.errors[fieldName as keyof typeof form.formState.errors]
-                                ? 'border-destructive focus-visible:ring-destructive'
-                                : ''
-                            }`}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage className="text-xs" />
-                    </FormItem>
-                  )}
-                />
-              ))}
+              {['name', 'email', 'password', 'confirmPassword'].map((fieldName) => {
+                const config = getFieldConfig(fieldName);
+                return (
+                  <FormField
+                    key={fieldName}
+                    control={form.control}
+                    name={fieldName as any}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{config.label}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              type={config.type}
+                              placeholder={config.placeholder}
+                              {...field}
+                              className={`${
+                                form.formState.errors[fieldName as keyof typeof form.formState.errors]
+                                  ? 'border-destructive focus-visible:ring-destructive'
+                                  : ''
+                              }`}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                );
+              })}
               
               <Button 
                 type="submit" 

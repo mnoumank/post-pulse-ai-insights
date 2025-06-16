@@ -3,6 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 
 export async function getCurrentUser(): Promise<User | null> {
+  // Check for demo session first
+  const demoSession = localStorage.getItem('demo_session');
+  if (demoSession) {
+    try {
+      return JSON.parse(demoSession);
+    } catch (error) {
+      console.error("Error parsing demo session:", error);
+      localStorage.removeItem('demo_session');
+    }
+  }
+
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   
   if (sessionError) {

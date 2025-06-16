@@ -38,8 +38,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
 
+    // Only set up Supabase auth listener for non-demo accounts
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Don't override demo session
+        const demoSession = localStorage.getItem('demo_session');
+        if (demoSession) {
+          return;
+        }
+
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           try {
             const user = await getCurrentUser();
@@ -64,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const user = await login(email, password);
       setUser(user);
+      if (email === "demo@example.com") {
+        toast.success("Welcome to the demo! You can now explore all features.");
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -79,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const user = await register(email, password, name);
       setUser(user);
+      toast.success("Account created successfully! Please check your email to verify your account.");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
