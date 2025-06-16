@@ -30,10 +30,11 @@ export async function analyzePostWithAI(
   industry?: string
 ): Promise<AIAnalysisResponse | null> {
   try {
-    const response = await fetch('/api/rest/v1/pg/functions/analyze-post-ai', {
+    const response = await fetch('/api/rest/v1/functions/analyze-post-ai/invoke', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjem11bWV5YnVpbGJ3b2doY3dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MDYwMzMsImV4cCI6MjA2MDM4MjAzM30.0XOVeH7svDmsXRgjmiMWdqCOXLu3-_GP4JaQVFx48ZQ`,
       },
       body: JSON.stringify({
         postContent,

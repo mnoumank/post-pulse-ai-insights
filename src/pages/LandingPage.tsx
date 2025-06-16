@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowRight, BarChart2, CheckCircle, LineChart, TrendingUp, Users, Zap, Target } from 'lucide-react';
+import { ArrowRight, BarChart2, CheckCircle, LineChart, TrendingUp, Users, Zap, Target, Heart, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -65,15 +65,15 @@ export default function LandingPage() {
               </div>
               
               <div className="relative lg:ml-8">
-                {/* Professional LinkedIn-style mockup */}
+                {/* LinkedIn-style mockup with professional imagery */}
                 <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
                   {/* LinkedIn-style header */}
-                  <div className="bg-blue-600 h-20 relative">
-                    <div className="absolute -bottom-10 left-6">
-                      <div className="w-20 h-20 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 h-24 relative">
+                    <div className="absolute -bottom-12 left-6">
+                      <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
                         <img 
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face" 
-                          alt="Professional profile" 
+                          src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face" 
+                          alt="Professional LinkedIn user" 
                           className="w-full h-full object-cover"
                         />
                       </div>
@@ -81,54 +81,111 @@ export default function LandingPage() {
                   </div>
                   
                   {/* Content area */}
-                  <div className="pt-12 p-6">
-                    <div className="mb-4">
-                      <h3 className="font-semibold text-gray-900">Alex Johnson</h3>
-                      <p className="text-sm text-gray-600">Marketing Director at TechCorp</p>
+                  <div className="pt-16 p-6">
+                    <div className="mb-6">
+                      <h3 className="font-semibold text-lg text-gray-900">Sarah Chen</h3>
+                      <p className="text-sm text-gray-600">Senior Marketing Director at TechFlow • 12.5K followers</p>
+                      <div className="flex items-center mt-1 text-xs text-gray-500">
+                        <span>5h • 🌐</span>
+                      </div>
                     </div>
                     
-                    {/* Post comparison */}
-                    <div className="space-y-4">
-                      <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <p className="text-sm text-gray-700">Just launched our new product! Check it out...</p>
-                        <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-                          <span>12 likes</span>
-                          <span>3 comments</span>
+                    {/* Before/After Post Comparison */}
+                    <div className="space-y-6">
+                      {/* Original Post */}
+                      <div className="relative">
+                        <div className="absolute -top-2 -left-2 bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium">
+                          Before AI
+                        </div>
+                        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                          <p className="text-sm text-gray-700 mb-3">Just launched our new product. Check it out and let me know what you think.</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                              <div className="flex items-center space-x-1">
+                                <ThumbsUp className="h-3 w-3" />
+                                <span>8</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <MessageCircle className="h-3 w-3" />
+                                <span>2</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Share2 className="h-3 w-3" />
+                                <span>0</span>
+                              </div>
+                            </div>
+                            <div className="text-xs text-red-600 font-medium">Low Engagement</div>
+                          </div>
                         </div>
                       </div>
                       
-                      <div className="p-4 border-2 border-green-400 rounded-lg bg-green-50 relative">
-                        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                      {/* AI Optimized Post */}
+                      <div className="relative">
+                        <div className="absolute -top-2 -left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center">
+                          <Zap className="h-3 w-3 mr-1" />
                           AI Optimized
                         </div>
-                        <p className="text-sm text-gray-700">🚀 Excited to unveil our game-changing product! After months of innovation, we've created something that will revolutionize how teams collaborate...</p>
-                        <div className="mt-2 flex items-center space-x-4 text-xs text-green-700">
-                          <span className="font-semibold">187 likes (+1458%)</span>
-                          <span className="font-semibold">23 comments (+667%)</span>
-                          <span className="font-semibold">12 shares</span>
+                        <div className="p-4 border-2 border-green-400 rounded-lg bg-green-50 relative">
+                          <p className="text-sm text-gray-700 mb-3">
+                            🚀 Thrilled to unveil our game-changing product after 6 months of relentless innovation! 
+                            <br/><br/>
+                            Our team tackled the #1 pain point that 73% of professionals face daily...
+                            <br/><br/>
+                            What's your biggest workflow challenge? Drop a comment below! 👇
+                            <br/><br/>
+                            #Innovation #ProductLaunch #TechSolutions
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4 text-xs text-green-700">
+                              <div className="flex items-center space-x-1">
+                                <ThumbsUp className="h-3 w-3" />
+                                <span className="font-semibold">247</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <MessageCircle className="h-3 w-3" />
+                                <span className="font-semibold">31</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Share2 className="h-3 w-3" />
+                                <span className="font-semibold">18</span>
+                              </div>
+                            </div>
+                            <div className="text-xs text-green-600 font-medium">High Engagement</div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                {/* Floating stats */}
-                <div className="absolute -right-4 top-1/4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900">+243%</div>
-                      <div className="text-xs text-gray-600">Engagement</div>
+                {/* Floating AI insights */}
+                <div className="absolute -right-6 top-1/3 bg-white rounded-xl shadow-xl p-4 border border-gray-200 max-w-48">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs font-semibold text-gray-900">AI Analysis</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Engagement</span>
+                      <span className="text-xs font-bold text-green-600">+2,987%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Reach</span>
+                      <span className="text-xs font-bold text-blue-600">+1,450%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">Virality</span>
+                      <span className="text-xs font-bold text-purple-600">+890%</span>
                     </div>
                   </div>
                 </div>
                 
-                <div className="absolute -left-4 bottom-1/4 bg-white rounded-lg shadow-lg p-4 border border-gray-200">
+                <div className="absolute -left-6 bottom-1/3 bg-white rounded-xl shadow-xl p-4 border border-gray-200">
                   <div className="flex items-center space-x-2">
-                    <BarChart2 className="h-5 w-5 text-blue-500" />
+                    <TrendingUp className="h-5 w-5 text-blue-500" />
                     <div>
                       <div className="text-sm font-semibold text-gray-900">Real-time</div>
-                      <div className="text-xs text-gray-600">Analysis</div>
+                      <div className="text-xs text-gray-600">AI Insights</div>
                     </div>
                   </div>
                 </div>
