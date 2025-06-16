@@ -10,11 +10,19 @@ interface AIAnalysisResponse {
     description: string;
   }[];
   recommendedHashtags: string[];
+  analysis?: {
+    strengths: string[];
+    weaknesses: string[];
+    tone: string;
+    readability: string;
+    callToAction: string;
+  };
 }
 
 export interface AIPostMetrics extends PostMetrics {
   recommendedHashtags: string[];
   isAIEnhanced: boolean;
+  analysis?: AIAnalysisResponse['analysis'];
 }
 
 export async function analyzePostWithAI(
@@ -22,7 +30,7 @@ export async function analyzePostWithAI(
   industry?: string
 ): Promise<AIAnalysisResponse | null> {
   try {
-    const response = await fetch('/api/rest/v1/pg/functions/analyze-post', {
+    const response = await fetch('/api/rest/v1/pg/functions/analyze-post-ai', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,7 +47,9 @@ export async function analyzePostWithAI(
       return null;
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('AI Analysis Result:', result);
+    return result;
   } catch (error) {
     console.error('Error during AI post analysis:', error);
     return null;
@@ -59,32 +69,33 @@ export function combineAnalysisResults(
     };
   }
 
-  // Combine scores with 40% weight on algorithmic and 60% on AI
+  // Combine scores with 30% weight on algorithmic and 70% on AI for better accuracy
   const combinedEngagementScore = Math.round(
-    algorithmicResults.engagementScore * 0.4 + aiResults.engagementScore * 0.6
+    algorithmicResults.engagementScore * 0.3 + aiResults.engagementScore * 0.7
   );
   
   const combinedReachScore = Math.round(
-    algorithmicResults.reachScore * 0.4 + aiResults.reachScore * 0.6
+    algorithmicResults.reachScore * 0.3 + aiResults.reachScore * 0.7
   );
   
   const combinedViralityScore = Math.round(
-    algorithmicResults.viralityScore * 0.4 + aiResults.viralityScore * 0.6
+    algorithmicResults.viralityScore * 0.3 + aiResults.viralityScore * 0.7
   );
 
-  // Scale likes, comments, shares proportionally
-  const engagementRatio = combinedEngagementScore / algorithmicResults.engagementScore;
-  const viralityRatio = combinedViralityScore / algorithmicResults.viralityScore;
+  // Scale likes, comments, shares based on AI scores
+  const engagementMultiplier = combinedEngagementScore / 50; // Base score of 50
+  const viralityMultiplier = combinedViralityScore / 50;
 
   return {
     engagementScore: combinedEngagementScore,
     reachScore: combinedReachScore,
     viralityScore: combinedViralityScore,
-    likes: Math.round(algorithmicResults.likes * engagementRatio),
-    comments: Math.round(algorithmicResults.comments * engagementRatio),
-    shares: Math.round(algorithmicResults.shares * viralityRatio),
-    recommendedHashtags: aiResults.recommendedHashtags,
+    likes: Math.round(algorithmicResults.likes * engagementMultiplier),
+    comments: Math.round(algorithmicResults.comments * engagementMultiplier),
+    shares: Math.round(algorithmicResults.shares * viralityMultiplier),
+    recommendedHashtags: aiResults.recommendedHashtags || [],
     isAIEnhanced: true,
+    analysis: aiResults.analysis,
   };
 }
 
