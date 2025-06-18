@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function CreatePostPage() {
   const [prompt, setPrompt] = useState('');
@@ -24,21 +25,15 @@ export default function CreatePostPage() {
 
     setIsGenerating(true);
     try {
-      const response = await fetch('/api/rest/v1/functions/generate-linkedin-post/invoke', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjem11bWV5YnVpbGJ3b2doY3dkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MDYwMzMsImV4cCI6MjA2MDM4MjAzM30.0XOVeH7svDmsXRgjmiMWdqCOXLu3-_GP4JaQVFx48ZQ`,
-        },
-        body: JSON.stringify({ prompt }),
+      const { data, error } = await supabase.functions.invoke('generate-linkedin-post', {
+        body: { prompt },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate post');
+      if (error) {
+        throw error;
       }
 
-      const result = await response.json();
-      setGeneratedPost(result.post);
+      setGeneratedPost(data.post);
       
       toast({
         title: 'Success',
