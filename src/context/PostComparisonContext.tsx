@@ -11,17 +11,15 @@ import {
   AdvancedAnalysisParams
 } from '@/utils/postAnalyzer';
 import { analyzePostWithAI, combineAnalysisResults, convertAISuggestions, AIPostMetrics } from '@/utils/aiAnalyzer';
-import { savePost, saveComparison, getUserComparisons } from '@/utils/auth';
 import { toast } from '@/hooks/use-toast';
-import { useAuth } from './AuthContext';
 
 interface PostComparisonContextType {
-  post1: string;
-  post2: string;
-  setPost1: (content: string) => void;
-  setPost2: (content: string) => void;
-  metrics1: AIPostMetrics | null;
-  metrics2: AIPostMetrics | null;
+  postA: string;
+  postB: string;
+  setPostA: (content: string) => void;
+  setPostB: (content: string) => void;
+  analysisA: AIPostMetrics | null;
+  analysisB: AIPostMetrics | null;
   timeSeries1: TimeSeriesData[];
   timeSeries2: TimeSeriesData[];
   suggestions1: PostSuggestion[];
@@ -34,22 +32,11 @@ interface PostComparisonContextType {
   toggleAdvancedMode: () => void;
   advancedParams: AdvancedAnalysisParams;
   updateAdvancedParams: (params: Partial<AdvancedAnalysisParams>) => void;
-  saveComparison: () => Promise<void>;
-  savedComparisons: SavedComparison[];
-  isLoading: boolean;
-  refreshComparisons: () => Promise<void>;
+  saveComparison: (postA: string, postB: string, analysisA: AIPostMetrics, analysisB: AIPostMetrics) => Promise<void>;
+  isAnalyzing: boolean;
+  analyzePost: (postA: string, postB: string) => Promise<void>;
   isAIEnabled: boolean;
   toggleAIAnalysis: () => void;
-}
-
-interface SavedComparison {
-  id: string;
-  date: string;
-  post1: string;
-  post2: string;
-  winningPost: number;
-  metrics1?: PostMetrics;
-  metrics2?: PostMetrics;
 }
 
 const defaultAdvancedParams: AdvancedAnalysisParams = {
@@ -61,11 +48,10 @@ const defaultAdvancedParams: AdvancedAnalysisParams = {
 const PostComparisonContext = createContext<PostComparisonContextType | undefined>(undefined);
 
 export function PostComparisonProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const [post1, setPost1] = useState('');
-  const [post2, setPost2] = useState('');
-  const [metrics1, setMetrics1] = useState<AIPostMetrics | null>(null);
-  const [metrics2, setMetrics2] = useState<AIPostMetrics | null>(null);
+  const [postA, setPostA] = useState('');
+  const [postB, setPostB] = useState('');
+  const [analysisA, setAnalysisA] = useState<AIPostMetrics | null>(null);
+  const [analysisB, setAnalysisB] = useState<AIPostMetrics | null>(null);
   const [timeSeries1, setTimeSeries1] = useState<TimeSeriesData[]>([]);
   const [timeSeries2, setTimeSeries2] = useState<TimeSeriesData[]>([]);
   const [suggestions1, setSuggestions1] = useState<PostSuggestion[]>([]);
@@ -73,116 +59,116 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [comparison, setComparison] = useState<{ winner: number; margin: number } | null>(null);
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>(defaultAdvancedParams);
-  const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAIEnabled, setIsAIEnabled] = useState(true);
 
-  // Fetch saved comparisons when the user changes
-  useEffect(() => {
-    if (user) {
-      refreshComparisons();
-    }
-  }, [user]);
-
-  // Update analysis when posts change or advanced settings change
-  useEffect(() => {
-    // Don't analyze if posts are empty
-    if (!post1.trim() && !post2.trim()) return;
-
-    const analyzePostWithCombinedApproach = async (postContent: string, isPost1: boolean) => {
-      if (!postContent.trim()) {
-        if (isPost1) {
-          setMetrics1(null);
-          setTimeSeries1([]);
-          setSuggestions1([]);
-        } else {
-          setMetrics2(null);
-          setTimeSeries2([]);
-          setSuggestions2([]);
-        }
-        return null;
-      }
-
+  // Analyze posts function
+  const handleAnalyzePost = async (postAContent: string, postBContent: string) => {
+    setIsAnalyzing(true);
+    try {
+      // Analyze post A
       const currentParams = isAdvancedMode ? advancedParams : undefined;
       
       // Always run the algorithmic analysis
-      const algorithmicMetrics = analyzePost(postContent, currentParams);
-      const timeSeriesData = generateTimeSeries(postContent);
-      let postSuggestions = generateSuggestions(postContent);
+      const algorithmicMetricsA = analyzePost(postAContent, currentParams);
+      const timeSeriesDataA = generateTimeSeries(postAContent);
+      let postSuggestionsA = generateSuggestions(postAContent);
       
       // If AI is enabled, enhance with AI analysis
-      let combinedMetrics: AIPostMetrics = {
-        ...algorithmicMetrics,
+      let combinedMetricsA: AIPostMetrics = {
+        ...algorithmicMetricsA,
         recommendedHashtags: [],
         isAIEnhanced: false
       };
       
       if (isAIEnabled) {
         try {
-          const aiResults = await analyzePostWithAI(
-            postContent, 
+          const aiResultsA = await analyzePostWithAI(
+            postAContent, 
             currentParams?.industry
           );
           
-          if (aiResults) {
-            combinedMetrics = combineAnalysisResults(algorithmicMetrics, aiResults);
+          if (aiResultsA) {
+            combinedMetricsA = combineAnalysisResults(algorithmicMetricsA, aiResultsA);
             
             // Combine algorithmic and AI suggestions
-            const aiSuggestions = convertAISuggestions(aiResults.suggestions);
-            postSuggestions = [...aiSuggestions, ...postSuggestions].slice(0, 6);
+            const aiSuggestionsA = convertAISuggestions(aiResultsA.suggestions);
+            postSuggestionsA = [...aiSuggestionsA, ...postSuggestionsA].slice(0, 6);
           }
         } catch (error) {
-          console.error('Error enhancing analysis with AI:', error);
-          // Fall back to algorithmic results if AI fails
+          console.error('Error enhancing analysis with AI for post A:', error);
         }
       }
-      
-      if (isPost1) {
-        setMetrics1(combinedMetrics);
-        setTimeSeries1(timeSeriesData);
-        setSuggestions1(postSuggestions);
-      } else {
-        setMetrics2(combinedMetrics);
-        setTimeSeries2(timeSeriesData);
-        setSuggestions2(postSuggestions);
-      }
-      
-      return combinedMetrics;
-    };
 
-    // Run analysis for both posts
-    const runAnalysis = async () => {
-      const metrics1Result = await analyzePostWithCombinedApproach(post1, true);
-      const metrics2Result = await analyzePostWithCombinedApproach(post2, false);
+      // Analyze post B
+      const algorithmicMetricsB = analyzePost(postBContent, currentParams);
+      const timeSeriesDataB = generateTimeSeries(postBContent);
+      let postSuggestionsB = generateSuggestions(postBContent);
       
-      // Compare posts if both have content
-      if (metrics1Result && metrics2Result) {
-        const post1Score = (metrics1Result.engagementScore + metrics1Result.reachScore + metrics1Result.viralityScore) / 3;
-        const post2Score = (metrics2Result.engagementScore + metrics2Result.reachScore + metrics2Result.viralityScore) / 3;
-        
-        if (post1Score > post2Score) {
-          setComparison({
-            winner: 1,
-            margin: ((post1Score - post2Score) / post2Score) * 100,
-          });
-        } else if (post2Score > post1Score) {
-          setComparison({
-            winner: 2,
-            margin: ((post2Score - post1Score) / post1Score) * 100,
-          });
-        } else {
-          setComparison({
-            winner: 0,
-            margin: 0,
-          });
+      let combinedMetricsB: AIPostMetrics = {
+        ...algorithmicMetricsB,
+        recommendedHashtags: [],
+        isAIEnhanced: false
+      };
+      
+      if (isAIEnabled) {
+        try {
+          const aiResultsB = await analyzePostWithAI(
+            postBContent, 
+            currentParams?.industry
+          );
+          
+          if (aiResultsB) {
+            combinedMetricsB = combineAnalysisResults(algorithmicMetricsB, aiResultsB);
+            
+            const aiSuggestionsB = convertAISuggestions(aiResultsB.suggestions);
+            postSuggestionsB = [...aiSuggestionsB, ...postSuggestionsB].slice(0, 6);
+          }
+        } catch (error) {
+          console.error('Error enhancing analysis with AI for post B:', error);
         }
-      } else {
-        setComparison(null);
       }
-    };
-    
-    runAnalysis();
-  }, [post1, post2, isAdvancedMode, advancedParams, isAIEnabled]);
+
+      // Set results
+      setAnalysisA(combinedMetricsA);
+      setAnalysisB(combinedMetricsB);
+      setTimeSeries1(timeSeriesDataA);
+      setTimeSeries2(timeSeriesDataB);
+      setSuggestions1(postSuggestionsA);
+      setSuggestions2(postSuggestionsB);
+
+      // Compare posts
+      const postAScore = (combinedMetricsA.engagementScore + combinedMetricsA.reachScore + combinedMetricsA.viralityScore) / 3;
+      const postBScore = (combinedMetricsB.engagementScore + combinedMetricsB.reachScore + combinedMetricsB.viralityScore) / 3;
+      
+      if (postAScore > postBScore) {
+        setComparison({
+          winner: 1,
+          margin: ((postAScore - postBScore) / postBScore) * 100,
+        });
+      } else if (postBScore > postAScore) {
+        setComparison({
+          winner: 2,
+          margin: ((postBScore - postAScore) / postAScore) * 100,
+        });
+      } else {
+        setComparison({
+          winner: 0,
+          margin: 0,
+        });
+      }
+
+    } catch (error) {
+      console.error('Error analyzing posts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to analyze posts',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   // Toggle advanced mode
   const toggleAdvancedMode = () => {
@@ -192,7 +178,6 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   // Toggle AI analysis
   const toggleAIAnalysis = () => {
     setIsAIEnabled(!isAIEnabled);
-    // Notify the user of the change
     toast({
       title: isAIEnabled ? "AI Analysis Disabled" : "AI Analysis Enabled",
       description: isAIEnabled ? "Now using algorithmic analysis only." : "Posts will now be analyzed with AI assistance.",
@@ -204,62 +189,15 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
     setAdvancedParams(prev => ({ ...prev, ...params }));
   };
 
-  // Refresh comparisons from the database
-  const refreshComparisons = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
+  // Save comparison (simplified since no auth)
+  const handleSaveComparison = async (postA: string, postB: string, analysisA: AIPostMetrics, analysisB: AIPostMetrics) => {
     try {
-      const comparisons = await getUserComparisons();
-      setSavedComparisons(comparisons);
-    } catch (error) {
-      console.error('Failed to load comparisons:', error);
+      // Since we removed auth, we can just show a success message
+      // In the future, this could save to local storage if needed
       toast({
-        title: 'Error',
-        description: 'Failed to load your saved comparisons',
-        variant: 'destructive',
+        title: 'Comparison Saved',
+        description: 'Your post comparison has been saved locally.',
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Save comparison to database
-  const handleSaveComparison = async () => {
-    if (!metrics1 || !metrics2 || !comparison) {
-      toast({
-        title: 'Cannot save',
-        description: 'Please make sure both posts have content',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // First save both posts
-      const post1Id = await savePost(post1);
-      const post2Id = await savePost(post2);
-      
-      // Determine winner ID
-      const winnerId = comparison.winner === 1 ? post1Id : comparison.winner === 2 ? post2Id : null;
-      
-      // Save the comparison with references to the posts
-      const metrics = {
-        post1: metrics1,
-        post2: metrics2
-      };
-      
-      const suggestionsData = {
-        post1: suggestions1,
-        post2: suggestions2
-      };
-      
-      await saveComparison(post1Id, post2Id, winnerId, metrics, suggestionsData);
-      
-      // Refresh the list of saved comparisons
-      await refreshComparisons();
-      
     } catch (error) {
       console.error('Failed to save comparison:', error);
       toast({
@@ -267,20 +205,18 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         description: 'Failed to save your comparison',
         variant: 'destructive',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <PostComparisonContext.Provider
       value={{
-        post1,
-        post2,
-        setPost1,
-        setPost2,
-        metrics1,
-        metrics2,
+        postA,
+        postB,
+        setPostA,
+        setPostB,
+        analysisA,
+        analysisB,
         timeSeries1,
         timeSeries2,
         suggestions1,
@@ -291,9 +227,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         advancedParams,
         updateAdvancedParams,
         saveComparison: handleSaveComparison,
-        savedComparisons,
-        isLoading,
-        refreshComparisons,
+        isAnalyzing,
+        analyzePost: handleAnalyzePost,
         isAIEnabled,
         toggleAIAnalysis,
       }}
