@@ -30,18 +30,18 @@ serve(async (req) => {
       );
     }
 
-    // Analyze the post content with OpenAI
+    // Updated prompt for more realistic scoring
     const analysisPrompt = `
-      Analyze this LinkedIn post for engagement potential and provide specific recommendations:
+      Analyze this LinkedIn post for engagement potential with REALISTIC scoring. Most good posts score 40-60, excellent posts score 60-80, exceptional posts score 80+.
 
       Post Content: "${postContent}"
       Industry: ${industry || 'General'}
 
       Please provide a JSON response with the following structure:
       {
-        "engagementScore": number (0-100),
-        "reachScore": number (0-100), 
-        "viralityScore": number (0-100),
+        "engagementScore": number (realistic 0-100, most posts 20-60),
+        "reachScore": number (realistic 0-100, most posts 15-55), 
+        "viralityScore": number (realistic 0-100, most posts 10-50),
         "suggestions": [
           {
             "title": "Specific improvement title",
@@ -58,13 +58,21 @@ serve(async (req) => {
         }
       }
 
-      Consider these LinkedIn best practices:
-      - Posts with emojis get 25% more engagement
-      - Questions increase comments by 100%
-      - Posts with 1-3 hashtags perform better
-      - Optimal length is 150-300 characters
-      - Personal stories drive 300% more engagement
-      - Visual content gets 2x more engagement
+      IMPORTANT SCORING GUIDELINES:
+      - Be conservative: A score over 70 should be rare and exceptional
+      - Consider real LinkedIn performance: most posts get modest engagement
+      - Factor in content quality, not just keyword presence
+      - Penalize generic or low-value content
+      - Reward authentic storytelling, clear value propositions, and genuine insights
+      - A post needs multiple strong elements to score above 60
+
+      LinkedIn best practices to consider:
+      - Authentic personal stories perform better than generic advice
+      - Questions increase comments but don't guarantee virality
+      - 1-3 hashtags optimal, more can hurt performance
+      - 150-800 characters is ideal length
+      - Value-driven content with specific insights scores higher
+      - Professional tone with personality works best
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -78,14 +86,14 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a LinkedIn content optimization expert. Analyze posts and provide detailed, actionable insights to improve engagement. Always respond with valid JSON only.'
+            content: 'You are a LinkedIn content optimization expert with years of real performance data. You provide realistic, conservative scoring that reflects actual LinkedIn engagement patterns. Be tough but fair in your analysis.'
           },
           {
             role: 'user',
             content: analysisPrompt
           }
         ],
-        temperature: 0.7,
+        temperature: 0.3, // Lower temperature for more consistent scoring
         max_tokens: 1500,
       }),
     });
@@ -106,23 +114,33 @@ serve(async (req) => {
     let analysisResult;
     try {
       analysisResult = JSON.parse(analysisText);
+      
+      // Validate and cap scores to ensure realism
+      analysisResult.engagementScore = Math.min(100, Math.max(0, analysisResult.engagementScore));
+      analysisResult.reachScore = Math.min(100, Math.max(0, analysisResult.reachScore));
+      analysisResult.viralityScore = Math.min(100, Math.max(0, analysisResult.viralityScore));
+      
     } catch (parseError) {
       console.error('Failed to parse AI response:', analysisText);
-      // Fallback response if JSON parsing fails
+      // Conservative fallback response
       analysisResult = {
-        engagementScore: 65,
-        reachScore: 60,
-        viralityScore: 55,
+        engagementScore: 35,
+        reachScore: 30,
+        viralityScore: 25,
         suggestions: [
           {
-            title: "Add Engaging Elements",
-            description: "Consider adding emojis, questions, or personal anecdotes to increase engagement"
+            title: "Improve Content Quality",
+            description: "Focus on providing specific value, personal insights, or actionable advice to increase engagement"
+          },
+          {
+            title: "Add Engagement Elements", 
+            description: "Consider adding a thoughtful question or call-to-action to encourage meaningful discussion"
           }
         ],
-        recommendedHashtags: ["#LinkedIn", "#Professional", "#Networking"],
+        recommendedHashtags: ["#LinkedIn", "#Professional"],
         analysis: {
-          strengths: ["Clear content"],
-          weaknesses: ["Could be more engaging"],
+          strengths: ["Clear communication"],
+          weaknesses: ["Could be more engaging", "Needs more specific value"],
           tone: "professional",
           readability: "medium",
           callToAction: "weak"

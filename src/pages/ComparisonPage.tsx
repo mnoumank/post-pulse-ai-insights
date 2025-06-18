@@ -1,51 +1,39 @@
 
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
-import { PostEditor } from '@/components/PostEditor';
-import { ComparisonSummary } from '@/components/ComparisonSummary';
-import { EngagementChart } from '@/components/EngagementChart';
-import { SuggestionCards } from '@/components/SuggestionCards';
-import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
-import { usePostComparison } from '@/context/PostComparisonContext';
 import { PageTransition } from '@/components/PageTransition';
+import { PostEditor } from '@/components/PostEditor';
+import { MetricsBarChart } from '@/components/MetricsBarChart';
+import { SuggestionCards } from '@/components/SuggestionCards';
+import { ComparisonSummary } from '@/components/ComparisonSummary';
+import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePostComparison } from '@/context/PostComparisonContext';
+import { 
+  analyzePost, 
+  generateSuggestions, 
+  comparePostsPerformance,
+  type AdvancedAnalysisParams 
+} from '@/utils/improvedPostAnalyzer';
 
 export default function ComparisonPage() {
-  const { 
-    postA, 
-    postB, 
-    setPostA, 
-    setPostB, 
-    analysisA, 
-    analysisB, 
-    timeSeries1,
-    timeSeries2,
-    suggestions1,
-    suggestions2,
-    comparison,
-    isAnalyzing, 
-    analyzePost,
-    saveComparison,
-    isAdvancedMode,
-    toggleAdvancedMode,
-    advancedParams,
-    updateAdvancedParams
-  } = usePostComparison();
+  const { post1, post2, setPost1, setPost2 } = usePostComparison();
+  const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>({
+    followerRange: '1K-5K',
+    industry: 'Technology',
+    engagementLevel: 'Medium',
+  });
 
-  const [activeTab, setActiveTab] = useState<'editor' | 'analysis'>('editor');
-
-  const handleAnalyze = async () => {
-    if (postA.trim() && postB.trim()) {
-      await analyzePost(postA, postB);
-      setActiveTab('analysis');
-    }
-  };
-
-  const handleSave = async () => {
-    if (analysisA && analysisB) {
-      await saveComparison(postA, postB, analysisA, analysisB);
-    }
-  };
+  // Generate metrics using improved analyzer
+  const metrics1 = post1 ? analyzePost(post1, advancedParams) : null;
+  const metrics2 = post2 ? analyzePost(post2, advancedParams) : null;
+  
+  // Generate suggestions using improved analyzer
+  const suggestions1 = post1 ? generateSuggestions(post1) : [];
+  const suggestions2 = post2 ? generateSuggestions(post2) : [];
+  
+  // Compare posts using improved analyzer
+  const comparison = post1 && post2 ? comparePostsPerformance(post1, post2, advancedParams) : null;
 
   return (
     <PageTransition>
@@ -56,82 +44,74 @@ export default function ComparisonPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
             <p className="text-muted-foreground mt-2">
-              Compare two versions of your post to see which performs better
+              Compare two LinkedIn posts side-by-side with improved AI analysis
             </p>
           </div>
 
           <div className="space-y-8">
+            {/* Advanced Analysis Panel */}
+            <AdvancedAnalysisPanel
+              params={advancedParams}
+              onParamsChange={setAdvancedParams}
+            />
+
             {/* Post Editors */}
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PostEditor
-                postNumber={1}
-                content={postA}
-                onChange={setPostA}
-                metrics={analysisA}
-                isWinner={comparison?.winner === 1}
+                title="Post A"
+                content={post1}
+                onChange={setPost1}
+                metrics={metrics1}
+                placeholder="Enter your first LinkedIn post here..."
               />
               <PostEditor
-                postNumber={2}
-                content={postB}
-                onChange={setPostB}
-                metrics={analysisB}
-                isWinner={comparison?.winner === 2}
+                title="Post B"
+                content={post2}
+                onChange={setPost2}
+                metrics={metrics2}
+                placeholder="Enter your second LinkedIn post here..."
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleAnalyze}
-                disabled={!postA.trim() || !postB.trim() || isAnalyzing}
-                className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAnalyzing ? 'Analyzing...' : 'Analyze Posts'}
-              </button>
-              
-              {analysisA && analysisB && (
-                <button
-                  onClick={handleSave}
-                  className="px-6 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
-                >
-                  Save Comparison
-                </button>
-              )}
-            </div>
-
-            {/* Analysis Results */}
-            {(analysisA && analysisB) && (
-              <div className="space-y-8">
-                <ComparisonSummary 
-                  comparison={comparison}
-                  metrics1={analysisA}
-                  metrics2={analysisB}
-                  onSave={handleSave}
-                  isSaving={false}
-                />
-                <EngagementChart 
-                  data1={timeSeries1}
-                  data2={timeSeries2}
-                />
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <SuggestionCards 
-                    suggestions={suggestions1}
-                    title="Post 1 Suggestions"
-                  />
-                  <SuggestionCards 
-                    suggestions={suggestions2}
-                    title="Post 2 Suggestions"
-                  />
-                </div>
-                <AdvancedAnalysisPanel 
-                  params={advancedParams}
-                  onChange={updateAdvancedParams}
-                  onAnalyze={handleAnalyze}
-                  isVisible={isAdvancedMode}
-                  onToggle={toggleAdvancedMode}
-                />
-              </div>
+            {/* Comparison Summary */}
+            {comparison && (
+              <ComparisonSummary comparison={comparison} />
             )}
+
+            {/* Metrics Comparison Chart */}
+            <MetricsBarChart 
+              metrics1={metrics1} 
+              metrics2={metrics2}
+              title="Performance Metrics Comparison (Improved Scoring)"
+            />
+
+            {/* Suggestions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SuggestionCards 
+                suggestions={suggestions1} 
+                title="Suggestions for Post A" 
+              />
+              <SuggestionCards 
+                suggestions={suggestions2} 
+                title="Suggestions for Post B" 
+              />
+            </div>
+
+            {/* Scoring Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>About the Improved Scoring System</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p><strong>Realistic Scoring:</strong> Scores above 70 are excellent, above 80 are exceptional. Most good posts score 40-60.</p>
+                  <p><strong>Weighted Factors:</strong> Engagement triggers and storytelling have the highest impact on scores.</p>
+                  <p><strong>Diminishing Returns:</strong> Adding more of the same factor (hashtags, emojis) has decreasing benefits.</p>
+                  <p><strong>Follower Impact:</strong> Account size moderately affects reach but doesn't dominate the scoring.</p>
+                  <p><strong>Industry Calibrated:</strong> Different industries have different baseline performance expectations.</p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>

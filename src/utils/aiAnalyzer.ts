@@ -1,5 +1,5 @@
 
-import { PostMetrics, PostSuggestion } from './postAnalyzer';
+import { PostMetrics, PostSuggestion } from './improvedPostAnalyzer';
 
 interface AIAnalysisResponse {
   engagementScore: number;
@@ -70,22 +70,23 @@ export function combineAnalysisResults(
     };
   }
 
-  // Combine scores with 30% weight on algorithmic and 70% on AI for better accuracy
+  // More conservative blending: 50% algorithmic, 50% AI
+  // This prevents AI from completely overriding the improved algorithmic scoring
   const combinedEngagementScore = Math.round(
-    algorithmicResults.engagementScore * 0.3 + aiResults.engagementScore * 0.7
+    algorithmicResults.engagementScore * 0.5 + aiResults.engagementScore * 0.5
   );
   
   const combinedReachScore = Math.round(
-    algorithmicResults.reachScore * 0.3 + aiResults.reachScore * 0.7
+    algorithmicResults.reachScore * 0.5 + aiResults.reachScore * 0.5
   );
   
   const combinedViralityScore = Math.round(
-    algorithmicResults.viralityScore * 0.3 + aiResults.viralityScore * 0.7
+    algorithmicResults.viralityScore * 0.5 + aiResults.viralityScore * 0.5
   );
 
-  // Scale likes, comments, shares based on AI scores
-  const engagementMultiplier = combinedEngagementScore / 50; // Base score of 50
-  const viralityMultiplier = combinedViralityScore / 50;
+  // More realistic engagement scaling based on combined scores
+  const engagementMultiplier = Math.max(0.5, combinedEngagementScore / 60); // Base of 60 instead of 50
+  const viralityMultiplier = Math.max(0.3, combinedViralityScore / 60);
 
   return {
     engagementScore: combinedEngagementScore,
