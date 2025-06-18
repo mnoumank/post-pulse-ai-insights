@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PostComparisonProvider } from "./context/PostComparisonContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import LandingPage from "./pages/LandingPage";
+import CreatePostPage from "./pages/CreatePostPage";
 import ComparisonPage from "./pages/ComparisonPage";
 import HistoryPage from "./pages/HistoryPage";
 import NotFound from "./pages/NotFound";
@@ -23,6 +24,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/create" element={<CreatePostPage />} />
               <Route path="/compare" element={<ComparisonPage />} />
               <Route path="/history" element={<HistoryPage />} />
               <Route path="*" element={<NotFound />} />

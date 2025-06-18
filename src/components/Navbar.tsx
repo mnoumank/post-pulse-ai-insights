@@ -19,6 +19,14 @@ export function Navbar() {
           
           <nav className="hidden md:flex gap-6">
             <Link
+              to="/create"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                location.pathname === '/create' ? 'text-primary' : 'text-muted-foreground'
+              }`}
+            >
+              Create Post
+            </Link>
+            <Link
               to="/compare"
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 location.pathname === '/compare' ? 'text-primary' : 'text-muted-foreground'
