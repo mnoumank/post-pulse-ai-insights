@@ -1,14 +1,14 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/Navbar';
-import { useAuth } from '@/context/AuthContext';
-import { ArrowRight, BarChart2, CheckCircle, LineChart, TrendingUp, Users, Zap, Target, Heart, MessageCircle, Share2, ThumbsUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BarChart2, Target, TrendingUp, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -16,320 +16,253 @@ export default function LandingPage() {
       
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-              <div className="space-y-6">
-                <div className="inline-flex items-center rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700">
-                  <Zap className="mr-2 h-4 w-4" />
-                  AI-Powered LinkedIn Optimization
-                </div>
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-gray-900">
-                  Transform Your LinkedIn Content with 
-                  <span className="text-blue-600"> AI Insights</span>
-                </h1>
-                <p className="text-xl text-gray-600 leading-relaxed">
-                  Stop guessing what will work. Our AI analyzes your LinkedIn posts before you publish, 
-                  predicting engagement and providing actionable recommendations to maximize your reach.
-                </p>
-                <div className="flex flex-col gap-4 min-[400px]:flex-row">
-                  <Button 
-                    size="lg" 
-                    onClick={() => navigate(user ? '/compare' : '/signup')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    {user ? 'Start Analyzing Posts' : 'Get Started Free'}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                  {!user && (
-                    <Button 
-                      variant="outline" 
-                      size="lg" 
-                      onClick={() => navigate('/login')}
-                      className="px-8 py-4 text-lg font-semibold border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
-                    >
-                      Sign In
-                    </Button>
-                  )}
-                </div>
-                <div className="flex items-center space-x-6 pt-4">
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm text-gray-600">10,000+ professionals</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-green-500" />
-                    <span className="text-sm text-gray-600">94% accuracy rate</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="relative lg:ml-8">
-                {/* LinkedIn-style mockup with professional imagery */}
-                <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
-                  {/* LinkedIn-style header */}
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 h-24 relative">
-                    <div className="absolute -bottom-12 left-6">
-                      <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg overflow-hidden">
-                        <img 
-                          src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face" 
-                          alt="Professional LinkedIn user" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Content area */}
-                  <div className="pt-16 p-6">
-                    <div className="mb-6">
-                      <h3 className="font-semibold text-lg text-gray-900">Sarah Chen</h3>
-                      <p className="text-sm text-gray-600">Senior Marketing Director at TechFlow • 12.5K followers</p>
-                      <div className="flex items-center mt-1 text-xs text-gray-500">
-                        <span>5h • 🌐</span>
-                      </div>
-                    </div>
-                    
-                    {/* Before/After Post Comparison */}
-                    <div className="space-y-6">
-                      {/* Original Post */}
-                      <div className="relative">
-                        <div className="absolute -top-2 -left-2 bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium">
-                          Before AI
-                        </div>
-                        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                          <p className="text-sm text-gray-700 mb-3">Just launched our new product. Check it out and let me know what you think.</p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
-                              <div className="flex items-center space-x-1">
-                                <ThumbsUp className="h-3 w-3" />
-                                <span>8</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <MessageCircle className="h-3 w-3" />
-                                <span>2</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Share2 className="h-3 w-3" />
-                                <span>0</span>
-                              </div>
-                            </div>
-                            <div className="text-xs text-red-600 font-medium">Low Engagement</div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* AI Optimized Post */}
-                      <div className="relative">
-                        <div className="absolute -top-2 -left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center">
-                          <Zap className="h-3 w-3 mr-1" />
-                          AI Optimized
-                        </div>
-                        <div className="p-4 border-2 border-green-400 rounded-lg bg-green-50 relative">
-                          <p className="text-sm text-gray-700 mb-3">
-                            🚀 Thrilled to unveil our game-changing product after 6 months of relentless innovation! 
-                            <br/><br/>
-                            Our team tackled the #1 pain point that 73% of professionals face daily...
-                            <br/><br/>
-                            What's your biggest workflow challenge? Drop a comment below! 👇
-                            <br/><br/>
-                            #Innovation #ProductLaunch #TechSolutions
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4 text-xs text-green-700">
-                              <div className="flex items-center space-x-1">
-                                <ThumbsUp className="h-3 w-3" />
-                                <span className="font-semibold">247</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <MessageCircle className="h-3 w-3" />
-                                <span className="font-semibold">31</span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Share2 className="h-3 w-3" />
-                                <span className="font-semibold">18</span>
-                              </div>
-                            </div>
-                            <div className="text-xs text-green-600 font-medium">High Engagement</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Floating AI insights */}
-                <div className="absolute -right-6 top-1/3 bg-white rounded-xl shadow-xl p-4 border border-gray-200 max-w-48">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs font-semibold text-gray-900">AI Analysis</span>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Engagement</span>
-                      <span className="text-xs font-bold text-green-600">+2,987%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Reach</span>
-                      <span className="text-xs font-bold text-blue-600">+1,450%</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-600">Virality</span>
-                      <span className="text-xs font-bold text-purple-600">+890%</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="absolute -left-6 bottom-1/3 bg-white rounded-xl shadow-xl p-4 border border-gray-200">
-                  <div className="flex items-center space-x-2">
-                    <TrendingUp className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900">Real-time</div>
-                      <div className="text-xs text-gray-600">AI Insights</div>
-                    </div>
-                  </div>
-                </div>
+        <section className="relative py-20 px-4 md:py-32 md:px-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+          <div className="container mx-auto text-center">
+            <div className="mx-auto max-w-4xl">
+              <Badge variant="outline" className="mb-4">
+                <Zap className="mr-1 h-3 w-3" />
+                AI-Powered LinkedIn Optimization
+              </Badge>
+              <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl">
+                Transform Your LinkedIn Posts with{' '}
+                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  AI-Powered Analysis
+                </span>
+              </h1>
+              <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
+                Compare different versions of your LinkedIn posts and discover which performs better. 
+                Get AI-driven insights on engagement, reach, and virality to maximize your professional impact.
+              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+                <Button size="lg" onClick={() => navigate('/compare')} className="h-12 px-8">
+                  Start Analyzing Posts
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => navigate('/history')} className="h-12 px-8">
+                  View Examples
+                </Button>
               </div>
             </div>
           </div>
         </section>
-        
-        {/* Features Section */}
-        <section className="w-full py-16 md:py-24 bg-white">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-16">
-              <div className="inline-flex items-center rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 mb-4">
-                Powerful Features
-              </div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-gray-900 mb-4">
-                Everything You Need for LinkedIn Success
-              </h2>
-              <p className="mx-auto max-w-3xl text-xl text-gray-600">
-                Advanced AI technology meets LinkedIn expertise to help you create content that drives real results.
+
+        {/* Post Comparison Preview */}
+        <section className="py-20 px-4 md:px-8">
+          <div className="container mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">See The Difference</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Compare two versions of the same post and see which one performs better with our AI analysis
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {/* Feature 1 */}
-              <div className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-200 transition-colors">
-                  <LineChart className="h-6 w-6 text-blue-600" />
+            <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+              {/* Post A */}
+              <Card className="relative">
+                <div className="absolute -top-3 left-4">
+                  <Badge variant="secondary">Original Post</Badge>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">AI-Powered Predictions</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Get accurate engagement forecasts before you post. Our AI analyzes millions of LinkedIn posts to predict performance.
-                </p>
-              </div>
-              
-              {/* Feature 2 */}
-              <div className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-green-200 transition-colors">
-                  <BarChart2 className="h-6 w-6 text-green-600" />
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                      JP
+                    </div>
+                    <div>
+                      <p className="font-semibold">John Professional</p>
+                      <p className="text-sm text-muted-foreground">Senior Developer</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-4">
+                    Just finished a project. Used React and Node.js. It was challenging but fun.
+                  </p>
+                  <div className="flex gap-4 text-sm text-muted-foreground">
+                    <span>👍 12 likes</span>
+                    <span>💬 2 comments</span>
+                    <span>🔄 1 share</span>
+                  </div>
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                    <p className="text-sm text-red-800">
+                      <strong>AI Score: 3.2/10</strong> - Low engagement potential
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Post B */}
+              <Card className="relative border-green-200 bg-green-50/50">
+                <div className="absolute -top-3 left-4">
+                  <Badge className="bg-green-600">Optimized Post</Badge>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Smart Comparisons</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Test multiple versions side-by-side to find the perfect wording, format, and timing for maximum impact.
-                </p>
-              </div>
-              
-              {/* Feature 3 */}
-              <div className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-purple-200 transition-colors">
-                  <CheckCircle className="h-6 w-6 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Actionable Insights</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Receive specific recommendations on hashtags, timing, content structure, and engagement strategies.
-                </p>
-              </div>
-              
-              {/* Feature 4 */}
-              <div className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-orange-200 transition-colors">
-                  <TrendingUp className="h-6 w-6 text-orange-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Performance Tracking</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Monitor your content's success over time and refine your strategy based on real performance data.
-                </p>
-              </div>
-              
-              {/* Feature 5 */}
-              <div className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-indigo-200 transition-colors">
-                  <Users className="h-6 w-6 text-indigo-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Industry Intelligence</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Tailored insights based on your industry, role, and target audience for maximum relevance.
-                </p>
-              </div>
-              
-              {/* Feature 6 */}
-              <div className="group p-8 rounded-2xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
-                <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-teal-200 transition-colors">
-                  <Target className="h-6 w-6 text-teal-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Content Optimization</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Automatically optimize your posts for LinkedIn's algorithm to increase visibility and reach.
-                </p>
-              </div>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                      JP
+                    </div>
+                    <div>
+                      <p className="font-semibold">John Professional</p>
+                      <p className="text-sm text-muted-foreground">Senior Developer</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="mb-4">
+                    🚀 Just shipped a game-changing project that reduced load times by 60%!
+                    
+                    The challenge? Building a real-time collaboration tool that could handle 1000+ concurrent users.
+                    
+                    The solution? A React frontend with a Node.js microservices backend.
+                    
+                    Key lessons learned:
+                    ✅ Performance optimization is everything
+                    ✅ User feedback shapes the best features
+                    ✅ Sometimes the simple solution wins
+                    
+                    What's your biggest project win this quarter? 👇
+                    
+                    #WebDevelopment #React #NodeJS #TechLeadership
+                  </p>
+                  <div className="flex gap-4 text-sm text-muted-foreground">
+                    <span>👍 247 likes</span>
+                    <span>💬 18 comments</span>
+                    <span>🔄 12 shares</span>
+                  </div>
+                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+                    <p className="text-sm text-green-800">
+                      <strong>AI Score: 8.7/10</strong> - High engagement potential
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            
-            <div className="text-center mt-16">
-              <Button 
-                size="lg" 
-                onClick={() => navigate(user ? '/compare' : '/signup')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                {user ? 'Start Optimizing Now' : 'Join 10,000+ Professionals'}
-                <ArrowRight className="ml-2 h-5 w-5" />
+
+            <div className="text-center mt-8">
+              <Button onClick={() => navigate('/compare')} size="lg">
+                Try It Yourself
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         </section>
 
-        {/* Social Proof Section */}
-        <section className="w-full py-16 bg-gray-50">
-          <div className="container px-4 md:px-6">
+        {/* Features Section */}
+        <section className="py-20 px-4 md:px-8 bg-muted/30">
+          <div className="container mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Trusted by LinkedIn Professionals Worldwide</h2>
-              <div className="flex justify-center items-center space-x-8 flex-wrap gap-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Users className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-gray-600">10,000+ Users</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-gray-600">2M+ Posts Analyzed</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Target className="h-4 w-4 text-purple-600" />
-                  </div>
-                  <span className="text-gray-600">94% Accuracy Rate</span>
-                </div>
-              </div>
+              <h2 className="text-3xl font-bold mb-4">Why PostPulse AI?</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Our AI analyzes your posts across multiple dimensions to give you actionable insights
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              <Card>
+                <CardHeader>
+                  <BarChart2 className="h-10 w-10 text-primary mb-2" />
+                  <CardTitle>Engagement Analysis</CardTitle>
+                  <CardDescription>
+                    Get detailed insights on likes, comments, and shares potential
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Hook effectiveness scoring
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Call-to-action optimization
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Emotional impact analysis
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <Target className="h-10 w-10 text-primary mb-2" />
+                  <CardTitle>Reach Optimization</CardTitle>
+                  <CardDescription>
+                    Maximize your post's visibility and algorithmic performance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Hashtag recommendations
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Timing suggestions
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Algorithm-friendly formatting
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <TrendingUp className="h-10 w-10 text-primary mb-2" />
+                  <CardTitle>Virality Potential</CardTitle>
+                  <CardDescription>
+                    Discover what makes content shareable and memorable
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Shareability scoring
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Trend alignment analysis
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      Content structure optimization
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 px-4 md:px-8">
+          <div className="container mx-auto text-center">
+            <div className="mx-auto max-w-2xl">
+              <h2 className="mb-4 text-3xl font-bold">
+                Ready to Boost Your LinkedIn Presence?
+              </h2>
+              <p className="mb-8 text-muted-foreground">
+                Start optimizing your LinkedIn posts today with AI-powered insights.
+                No sign-up required - just start analyzing!
+              </p>
+              <Button size="lg" onClick={() => navigate('/compare')} className="h-12 px-8">
+                Get Started Now
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </div>
         </section>
       </main>
       
-      <footer className="w-full border-t bg-white py-8">
-        <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
-          <p className="text-sm text-gray-600">
+      <footer className="border-t py-6 md:py-0">
+        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
+          <p className="text-sm text-muted-foreground">
             © 2025 PostPulse AI. All rights reserved.
           </p>
-          <div className="flex gap-6 text-sm text-gray-600">
-            <a href="#" className="hover:text-blue-600 transition-colors">Terms</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Contact</a>
-          </div>
         </div>
       </footer>
     </div>

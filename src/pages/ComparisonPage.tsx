@@ -1,124 +1,105 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PostEditor } from '@/components/PostEditor';
+import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { EngagementChart } from '@/components/EngagementChart';
 import { SuggestionCards } from '@/components/SuggestionCards';
-import { MetricsBarChart } from '@/components/MetricsBarChart';
-import { ComparisonSummary } from '@/components/ComparisonSummary';
+import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
 import { usePostComparison } from '@/context/PostComparisonContext';
-import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Sparkles } from 'lucide-react';
+import { PageTransition } from '@/components/PageTransition';
 
 export default function ComparisonPage() {
   const { 
-    post1, post2, setPost1, setPost2, 
-    metrics1, metrics2, 
-    timeSeries1, timeSeries2,
-    suggestions1, suggestions2,
-    comparison,
-    saveComparison,
-    isLoading,
-    isAIEnabled,
-    toggleAIAnalysis
+    postA, 
+    postB, 
+    setPostA, 
+    setPostB, 
+    analysisA, 
+    analysisB, 
+    isAnalyzing, 
+    analyzePost,
+    saveComparison 
   } = usePostComparison();
-  
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    if (user === null) {
-      navigate('/login');
+
+  const [activeTab, setActiveTab] = useState<'editor' | 'analysis'>('editor');
+
+  const handleAnalyze = async () => {
+    if (postA.trim() && postB.trim()) {
+      await analyzePost(postA, postB);
+      setActiveTab('analysis');
     }
-  }, [user, navigate]);
+  };
+
+  const handleSave = async () => {
+    if (analysisA && analysisB) {
+      await saveComparison(postA, postB, analysisA, analysisB);
+    }
+  };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      
-      <main className="flex-1 container py-8">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
+    <PageTransition>
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        
+        <main className="flex-1 container py-8">
+          <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
             <p className="text-muted-foreground mt-2">
-              Write two versions of your post to see which one is predicted to perform better
+              Compare two versions of your post to see which performs better
             </p>
           </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id="ai-mode" 
-                checked={isAIEnabled}
-                onCheckedChange={toggleAIAnalysis}
+
+          <div className="space-y-8">
+            {/* Post Editors */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              <PostEditor
+                title="Post Version A"
+                value={postA}
+                onChange={setPostA}
+                placeholder="Enter your first post version here..."
               />
-              <Label htmlFor="ai-mode" className="flex items-center cursor-pointer">
-                <Sparkles className="h-4 w-4 mr-1 text-blue-500" />
-                AI Analysis
-              </Label>
+              <PostEditor
+                title="Post Version B"
+                value={postB}
+                onChange={setPostB}
+                placeholder="Enter your second post version here..."
+              />
             </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleAnalyze}
+                disabled={!postA.trim() || !postB.trim() || isAnalyzing}
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isAnalyzing ? 'Analyzing...' : 'Analyze Posts'}
+              </button>
+              
+              {analysisA && analysisB && (
+                <button
+                  onClick={handleSave}
+                  className="px-6 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+                >
+                  Save Comparison
+                </button>
+              )}
+            </div>
+
+            {/* Analysis Results */}
+            {(analysisA && analysisB) && (
+              <div className="space-y-8">
+                <ComparisonSummary analysisA={analysisA} analysisB={analysisB} />
+                <EngagementChart analysisA={analysisA} analysisB={analysisB} />
+                <SuggestionCards analysisA={analysisA} analysisB={analysisB} />
+                <AdvancedAnalysisPanel analysisA={analysisA} analysisB={analysisB} />
+              </div>
+            )}
           </div>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <PostEditor 
-              postNumber={1} 
-              content={post1} 
-              onChange={setPost1} 
-              metrics={metrics1} 
-              isWinner={comparison?.winner === 1}
-            />
-          </div>
-          <div>
-            <PostEditor 
-              postNumber={2} 
-              content={post2} 
-              onChange={setPost2} 
-              metrics={metrics2} 
-              isWinner={comparison?.winner === 2}
-            />
-          </div>
-        </div>
-        
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2">
-            <EngagementChart data1={timeSeries1} data2={timeSeries2} />
-          </div>
-          <div>
-            <ComparisonSummary 
-              comparison={comparison} 
-              metrics1={metrics1} 
-              metrics2={metrics2} 
-              onSave={saveComparison}
-              isSaving={isLoading}
-            />
-          </div>
-        </div>
-        
-        <div className="mt-8 grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div>
-            <MetricsBarChart metrics1={metrics1} metrics2={metrics2} />
-          </div>
-          <div>
-            <SuggestionCards suggestions={suggestions1} title="Post 1 Insights" />
-          </div>
-          <div>
-            <SuggestionCards suggestions={suggestions2} title="Post 2 Insights" />
-          </div>
-        </div>
-      </main>
-      
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
-          <p className="text-sm text-muted-foreground">
-            © 2025 PostPulse AI. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>
+        </main>
+      </div>
+    </PageTransition>
   );
 }
