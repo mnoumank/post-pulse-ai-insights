@@ -18,9 +18,18 @@ export default function ComparisonPage() {
     setPostB, 
     analysisA, 
     analysisB, 
+    timeSeries1,
+    timeSeries2,
+    suggestions1,
+    suggestions2,
+    comparison,
     isAnalyzing, 
     analyzePost,
-    saveComparison 
+    saveComparison,
+    isAdvancedMode,
+    toggleAdvancedMode,
+    advancedParams,
+    updateAdvancedParams
   } = usePostComparison();
 
   const [activeTab, setActiveTab] = useState<'editor' | 'analysis'>('editor');
@@ -55,16 +64,18 @@ export default function ComparisonPage() {
             {/* Post Editors */}
             <div className="grid lg:grid-cols-2 gap-6">
               <PostEditor
-                title="Post Version A"
-                value={postA}
+                postNumber={1}
+                content={postA}
                 onChange={setPostA}
-                placeholder="Enter your first post version here..."
+                metrics={analysisA}
+                isWinner={comparison?.winner === 1}
               />
               <PostEditor
-                title="Post Version B"
-                value={postB}
+                postNumber={2}
+                content={postB}
                 onChange={setPostB}
-                placeholder="Enter your second post version here..."
+                metrics={analysisB}
+                isWinner={comparison?.winner === 2}
               />
             </div>
 
@@ -91,10 +102,34 @@ export default function ComparisonPage() {
             {/* Analysis Results */}
             {(analysisA && analysisB) && (
               <div className="space-y-8">
-                <ComparisonSummary analysisA={analysisA} analysisB={analysisB} />
-                <EngagementChart analysisA={analysisA} analysisB={analysisB} />
-                <SuggestionCards analysisA={analysisA} analysisB={analysisB} />
-                <AdvancedAnalysisPanel analysisA={analysisA} analysisB={analysisB} />
+                <ComparisonSummary 
+                  comparison={comparison}
+                  metrics1={analysisA}
+                  metrics2={analysisB}
+                  onSave={handleSave}
+                  isSaving={false}
+                />
+                <EngagementChart 
+                  data1={timeSeries1}
+                  data2={timeSeries2}
+                />
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <SuggestionCards 
+                    suggestions={suggestions1}
+                    title="Post 1 Suggestions"
+                  />
+                  <SuggestionCards 
+                    suggestions={suggestions2}
+                    title="Post 2 Suggestions"
+                  />
+                </div>
+                <AdvancedAnalysisPanel 
+                  params={advancedParams}
+                  onChange={updateAdvancedParams}
+                  onAnalyze={handleAnalyze}
+                  isVisible={isAdvancedMode}
+                  onToggle={toggleAdvancedMode}
+                />
               </div>
             )}
           </div>
