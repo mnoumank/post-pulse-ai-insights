@@ -37,6 +37,12 @@ export default function ComparisonPage() {
   // Generate comparison using improved analyzer if we have both posts
   const localComparison = postA && postB ? comparePostsPerformance(postA, postB, advancedParams) : null;
 
+  // Extract simple comparison data for ComparisonSummary
+  const simpleComparison = localComparison ? {
+    winner: localComparison.winner,
+    margin: localComparison.margin
+  } : null;
+
   return (
     <PageTransition>
       <div className="flex min-h-screen flex-col">
@@ -79,9 +85,9 @@ export default function ComparisonPage() {
             </div>
 
             {/* Comparison Summary */}
-            {localComparison && (
+            {simpleComparison && aiMetrics1 && aiMetrics2 && (
               <ComparisonSummary 
-                comparison={localComparison}
+                comparison={simpleComparison}
                 metrics1={aiMetrics1}
                 metrics2={aiMetrics2}
                 onSave={async () => {}}
