@@ -11,7 +11,7 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
-import { PostMetrics } from '@/utils/postAnalyzer';
+import { PostMetrics } from '@/utils/improvedPostAnalyzer';
 
 interface MetricsBarChartProps {
   metrics1: PostMetrics | null;

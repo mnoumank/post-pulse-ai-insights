@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { 
   analyzePost, 
@@ -9,7 +8,7 @@ import {
   TimeSeriesData,
   PostSuggestion,
   AdvancedAnalysisParams
-} from '@/utils/postAnalyzer';
+} from '@/utils/improvedPostAnalyzer';
 import { analyzePostWithAI, combineAnalysisResults, convertAISuggestions, AIPostMetrics } from '@/utils/aiAnalyzer';
 import { toast } from '@/hooks/use-toast';
 
@@ -65,16 +64,20 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   // Analyze posts function
   const handleAnalyzePost = async (postAContent: string, postBContent: string) => {
     setIsAnalyzing(true);
+    console.log('Starting analysis with improved metrics system...');
+    
     try {
-      // Analyze post A
+      // Use improved analysis parameters
       const currentParams = isAdvancedMode ? advancedParams : undefined;
       
-      // Always run the algorithmic analysis
+      // Always run the improved algorithmic analysis
       const algorithmicMetricsA = analyzePost(postAContent, currentParams);
       const timeSeriesDataA = generateTimeSeries(postAContent);
       let postSuggestionsA = generateSuggestions(postAContent);
       
-      // If AI is enabled, enhance with AI analysis
+      console.log('Post A algorithmic metrics:', algorithmicMetricsA);
+      
+      // If AI is enabled, enhance with AI analysis (but don't let it override the improved scores too much)
       let combinedMetricsA: AIPostMetrics = {
         ...algorithmicMetricsA,
         recommendedHashtags: [],
@@ -90,6 +93,7 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
           
           if (aiResultsA) {
             combinedMetricsA = combineAnalysisResults(algorithmicMetricsA, aiResultsA);
+            console.log('Post A combined metrics:', combinedMetricsA);
             
             // Combine algorithmic and AI suggestions
             const aiSuggestionsA = convertAISuggestions(aiResultsA.suggestions);
@@ -97,6 +101,7 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
           }
         } catch (error) {
           console.error('Error enhancing analysis with AI for post A:', error);
+          // Continue with algorithmic analysis only
         }
       }
 
@@ -104,6 +109,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
       const algorithmicMetricsB = analyzePost(postBContent, currentParams);
       const timeSeriesDataB = generateTimeSeries(postBContent);
       let postSuggestionsB = generateSuggestions(postBContent);
+      
+      console.log('Post B algorithmic metrics:', algorithmicMetricsB);
       
       let combinedMetricsB: AIPostMetrics = {
         ...algorithmicMetricsB,
@@ -120,12 +127,14 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
           
           if (aiResultsB) {
             combinedMetricsB = combineAnalysisResults(algorithmicMetricsB, aiResultsB);
+            console.log('Post B combined metrics:', combinedMetricsB);
             
             const aiSuggestionsB = convertAISuggestions(aiResultsB.suggestions);
             postSuggestionsB = [...aiSuggestionsB, ...postSuggestionsB].slice(0, 6);
           }
         } catch (error) {
           console.error('Error enhancing analysis with AI for post B:', error);
+          // Continue with algorithmic analysis only
         }
       }
 
@@ -137,26 +146,14 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
       setSuggestions1(postSuggestionsA);
       setSuggestions2(postSuggestionsB);
 
-      // Compare posts
-      const postAScore = (combinedMetricsA.engagementScore + combinedMetricsA.reachScore + combinedMetricsA.viralityScore) / 3;
-      const postBScore = (combinedMetricsB.engagementScore + combinedMetricsB.reachScore + combinedMetricsB.viralityScore) / 3;
+      // Use the improved comparison function
+      const comparisonResult = comparePostsPerformance(postAContent, postBContent, currentParams);
+      console.log('Comparison result:', comparisonResult);
       
-      if (postAScore > postBScore) {
-        setComparison({
-          winner: 1,
-          margin: ((postAScore - postBScore) / postBScore) * 100,
-        });
-      } else if (postBScore > postAScore) {
-        setComparison({
-          winner: 2,
-          margin: ((postBScore - postAScore) / postAScore) * 100,
-        });
-      } else {
-        setComparison({
-          winner: 0,
-          margin: 0,
-        });
-      }
+      setComparison({
+        winner: comparisonResult.winner,
+        margin: comparisonResult.margin,
+      });
 
     } catch (error) {
       console.error('Error analyzing posts:', error);
