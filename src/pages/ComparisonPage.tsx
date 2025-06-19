@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PageTransition } from '@/components/PageTransition';
 import { PostEditor } from '@/components/PostEditor';
@@ -9,38 +9,50 @@ import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePostComparison } from '@/context/PostComparisonContext';
-import { 
-  analyzePost, 
-  generateSuggestions, 
-  comparePostsPerformance,
-  type AdvancedAnalysisParams 
-} from '@/utils/improvedPostAnalyzer';
-import { AIPostMetrics } from '@/utils/aiAnalyzer';
 
 export default function ComparisonPage() {
-  const { postA, postB, setPostA, setPostB, analysisA, analysisB, suggestions1, suggestions2, comparison, advancedParams, updateAdvancedParams } = usePostComparison();
+  const { 
+    postA, 
+    postB, 
+    setPostA, 
+    setPostB, 
+    analysisA, 
+    analysisB, 
+    suggestions1, 
+    suggestions2, 
+    comparison, 
+    advancedParams, 
+    updateAdvancedParams,
+    analyzePost,
+    isAnalyzing
+  } = usePostComparison();
+  
   const [isAdvancedVisible, setIsAdvancedVisible] = useState(false);
 
-  // Convert PostMetrics to AIPostMetrics for compatibility
-  const convertToAIMetrics = (metrics: any): AIPostMetrics | null => {
-    if (!metrics) return null;
-    return {
-      ...metrics,
-      recommendedHashtags: metrics.recommendedHashtags || [],
-      isAIEnhanced: metrics.isAIEnhanced || false,
-    };
-  };
+  // Auto-analyze posts when content changes
+  useEffect(() => {
+    if (postA.trim() && postB.trim()) {
+      console.log('Auto-analyzing posts:', { postA: postA.substring(0, 50), postB: postB.substring(0, 50) });
+      analyzePost(postA, postB);
+    }
+  }, [postA, postB, advancedParams, analyzePost]);
 
-  const aiMetrics1 = convertToAIMetrics(analysisA);
-  const aiMetrics2 = convertToAIMetrics(analysisB);
-
-  // Generate comparison using improved analyzer if we have both posts
-  const localComparison = postA && postB ? comparePostsPerformance(postA, postB, advancedParams) : null;
+  // Log current state for debugging
+  useEffect(() => {
+    console.log('ComparisonPage state:', { 
+      hasPostA: !!postA, 
+      hasPostB: !!postB, 
+      hasAnalysisA: !!analysisA, 
+      hasAnalysisB: !!analysisB,
+      hasComparison: !!comparison,
+      isAnalyzing
+    });
+  }, [postA, postB, analysisA, analysisB, comparison, isAnalyzing]);
 
   // Extract simple comparison data for ComparisonSummary
-  const simpleComparison = localComparison ? {
-    winner: localComparison.winner,
-    margin: localComparison.margin
+  const simpleComparison = comparison ? {
+    winner: comparison.winner,
+    margin: comparison.margin
   } : null;
 
   return (
@@ -61,7 +73,11 @@ export default function ComparisonPage() {
             <AdvancedAnalysisPanel
               params={advancedParams}
               onChange={updateAdvancedParams}
-              onAnalyze={() => {}}
+              onAnalyze={() => {
+                if (postA.trim() && postB.trim()) {
+                  analyzePost(postA, postB);
+                }
+              }}
               isVisible={isAdvancedVisible}
               onToggle={() => setIsAdvancedVisible(!isAdvancedVisible)}
             />
@@ -72,32 +88,41 @@ export default function ComparisonPage() {
                 postNumber={1}
                 content={postA}
                 onChange={setPostA}
-                metrics={aiMetrics1}
-                isWinner={localComparison?.winner === 1}
+                metrics={analysisA}
+                isWinner={comparison?.winner === 1}
               />
               <PostEditor
                 postNumber={2}
                 content={postB}
                 onChange={setPostB}
-                metrics={aiMetrics2}
-                isWinner={localComparison?.winner === 2}
+                metrics={analysisB}
+                isWinner={comparison?.winner === 2}
               />
             </div>
 
+            {/* Loading State */}
+            {isAnalyzing && (
+              <Card>
+                <CardContent className="text-center py-6">
+                  <p className="text-muted-foreground">Analyzing posts...</p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Comparison Summary */}
-            {simpleComparison && aiMetrics1 && aiMetrics2 && (
+            {simpleComparison && analysisA && analysisB && (
               <ComparisonSummary 
                 comparison={simpleComparison}
-                metrics1={aiMetrics1}
-                metrics2={aiMetrics2}
+                metrics1={analysisA}
+                metrics2={analysisB}
                 onSave={async () => {}}
               />
             )}
 
             {/* Metrics Comparison Chart */}
             <MetricsBarChart 
-              metrics1={aiMetrics1} 
-              metrics2={aiMetrics2}
+              metrics1={analysisA} 
+              metrics2={analysisB}
               title="Performance Metrics Comparison (Improved Scoring)"
             />
 
