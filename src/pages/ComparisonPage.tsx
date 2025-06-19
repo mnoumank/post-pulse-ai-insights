@@ -15,25 +15,27 @@ import {
   comparePostsPerformance,
   type AdvancedAnalysisParams 
 } from '@/utils/improvedPostAnalyzer';
+import { AIPostMetrics } from '@/utils/aiAnalyzer';
 
 export default function ComparisonPage() {
-  const { post1, post2, setPost1, setPost2 } = usePostComparison();
-  const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>({
-    followerRange: '1K-5K',
-    industry: 'Technology',
-    engagementLevel: 'Medium',
-  });
+  const { postA, postB, setPostA, setPostB, analysisA, analysisB, suggestions1, suggestions2, comparison, advancedParams, updateAdvancedParams } = usePostComparison();
+  const [isAdvancedVisible, setIsAdvancedVisible] = useState(false);
 
-  // Generate metrics using improved analyzer
-  const metrics1 = post1 ? analyzePost(post1, advancedParams) : null;
-  const metrics2 = post2 ? analyzePost(post2, advancedParams) : null;
-  
-  // Generate suggestions using improved analyzer
-  const suggestions1 = post1 ? generateSuggestions(post1) : [];
-  const suggestions2 = post2 ? generateSuggestions(post2) : [];
-  
-  // Compare posts using improved analyzer
-  const comparison = post1 && post2 ? comparePostsPerformance(post1, post2, advancedParams) : null;
+  // Convert PostMetrics to AIPostMetrics for compatibility
+  const convertToAIMetrics = (metrics: any): AIPostMetrics | null => {
+    if (!metrics) return null;
+    return {
+      ...metrics,
+      recommendedHashtags: metrics.recommendedHashtags || [],
+      isAIEnhanced: metrics.isAIEnhanced || false,
+    };
+  };
+
+  const aiMetrics1 = convertToAIMetrics(analysisA);
+  const aiMetrics2 = convertToAIMetrics(analysisB);
+
+  // Generate comparison using improved analyzer if we have both posts
+  const localComparison = postA && postB ? comparePostsPerformance(postA, postB, advancedParams) : null;
 
   return (
     <PageTransition>
@@ -52,36 +54,44 @@ export default function ComparisonPage() {
             {/* Advanced Analysis Panel */}
             <AdvancedAnalysisPanel
               params={advancedParams}
-              onParamsChange={setAdvancedParams}
+              onChange={updateAdvancedParams}
+              onAnalyze={() => {}}
+              isVisible={isAdvancedVisible}
+              onToggle={() => setIsAdvancedVisible(!isAdvancedVisible)}
             />
 
             {/* Post Editors */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PostEditor
                 title="Post A"
-                content={post1}
-                onChange={setPost1}
-                metrics={metrics1}
+                content={postA}
+                onChange={setPostA}
+                metrics={aiMetrics1}
                 placeholder="Enter your first LinkedIn post here..."
               />
               <PostEditor
                 title="Post B"
-                content={post2}
-                onChange={setPost2}
-                metrics={metrics2}
+                content={postB}
+                onChange={setPostB}
+                metrics={aiMetrics2}
                 placeholder="Enter your second LinkedIn post here..."
               />
             </div>
 
             {/* Comparison Summary */}
-            {comparison && (
-              <ComparisonSummary comparison={comparison} />
+            {localComparison && (
+              <ComparisonSummary 
+                comparison={localComparison}
+                metrics1={aiMetrics1}
+                metrics2={aiMetrics2}
+                onSave={async () => {}}
+              />
             )}
 
             {/* Metrics Comparison Chart */}
             <MetricsBarChart 
-              metrics1={metrics1} 
-              metrics2={metrics2}
+              metrics1={aiMetrics1} 
+              metrics2={aiMetrics2}
               title="Performance Metrics Comparison (Improved Scoring)"
             />
 

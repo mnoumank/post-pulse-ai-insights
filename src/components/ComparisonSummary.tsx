@@ -3,9 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Save, Share2 } from 'lucide-react';
-import { PostMetrics } from '@/utils/postAnalyzer';
-import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { AIPostMetrics } from '@/utils/aiAnalyzer';
 import { toast } from '@/hooks/use-toast';
 
 interface ComparisonSummaryProps {
@@ -13,8 +11,8 @@ interface ComparisonSummaryProps {
     winner: number;
     margin: number;
   } | null;
-  metrics1: PostMetrics | null;
-  metrics2: PostMetrics | null;
+  metrics1: AIPostMetrics | null;
+  metrics2: AIPostMetrics | null;
   onSave: () => Promise<void>;
   isSaving?: boolean;
 }
@@ -26,8 +24,6 @@ export function ComparisonSummary({
   onSave,
   isSaving = false
 }: ComparisonSummaryProps) {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   
   // If no comparison available yet, show waiting state
   if (!comparison || !metrics1 || !metrics2) {
@@ -87,17 +83,19 @@ export function ComparisonSummary({
   }
   
   const handleSave = async () => {
-    if (!user) {
+    try {
+      await onSave();
       toast({
-        title: "Authentication required",
-        description: "Please log in to save your comparison",
+        title: "Comparison Saved",
+        description: "Your post comparison has been saved.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save your comparison",
         variant: "destructive",
       });
-      navigate('/login');
-      return;
     }
-    
-    await onSave();
   };
 
   return (
@@ -111,11 +109,18 @@ export function ComparisonSummary({
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <h3 className="text-lg font-medium">
-            Post {comparison.winner} is predicted to perform better
+            {comparison.winner === 0 ? "Posts are performing similarly" : `Post ${comparison.winner} is predicted to perform better`}
           </h3>
-          <p className="text-muted-foreground">
-            Expected to outperform by approximately {Math.round(comparison.margin)}%, with {strengthsText}.
-          </p>
+          {comparison.winner > 0 && (
+            <p className="text-muted-foreground">
+              Expected to outperform by approximately {Math.round(comparison.margin)}%{strengthsText ? `, with ${strengthsText}` : ''}.
+            </p>
+          )}
+          {comparison.winner === 0 && (
+            <p className="text-muted-foreground">
+              Both posts have very similar performance potential.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
