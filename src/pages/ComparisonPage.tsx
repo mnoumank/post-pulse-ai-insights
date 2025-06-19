@@ -8,9 +8,9 @@ import { SuggestionCards } from '@/components/SuggestionCards';
 import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePostComparison } from '@/context/PostComparisonContext';
+import { PostComparisonProvider, usePostComparison } from '@/context/PostComparisonContext';
 
-export default function ComparisonPage() {
+function ComparisonPageContent() {
   const { 
     postA, 
     postB, 
@@ -60,7 +60,7 @@ export default function ComparisonPage() {
       <div className="flex min-h-screen flex-col">
         <Navbar />
         
-        <main className="flex-1 container py-8">
+        <main className="flex-1 container py-8 max-w-7xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
             <p className="text-muted-foreground mt-2">
@@ -102,60 +102,86 @@ export default function ComparisonPage() {
 
             {/* Loading State */}
             {isAnalyzing && (
-              <Card>
-                <CardContent className="text-center py-6">
-                  <p className="text-muted-foreground">Analyzing posts...</p>
+              <Card className="w-full">
+                <CardContent className="text-center py-8">
+                  <div className="animate-pulse">
+                    <div className="h-2 bg-muted rounded w-1/3 mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Analyzing posts with improved metrics...</p>
+                  </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Comparison Summary */}
-            {simpleComparison && analysisA && analysisB && (
-              <ComparisonSummary 
-                comparison={simpleComparison}
-                metrics1={analysisA}
-                metrics2={analysisB}
-                onSave={async () => {}}
-              />
+            {/* Results Section - Only show when we have analysis */}
+            {analysisA && analysisB && !isAnalyzing && (
+              <div className="space-y-6">
+                {/* Comparison Summary */}
+                {simpleComparison && (
+                  <ComparisonSummary 
+                    comparison={simpleComparison}
+                    metrics1={analysisA}
+                    metrics2={analysisB}
+                    onSave={async () => {}}
+                  />
+                )}
+
+                {/* Metrics Comparison Chart */}
+                <MetricsBarChart 
+                  metrics1={analysisA} 
+                  metrics2={analysisB}
+                  title="Performance Metrics Comparison (Improved Scoring)"
+                />
+
+                {/* Suggestions */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <SuggestionCards 
+                    suggestions={suggestions1} 
+                    title="Suggestions for Post A" 
+                  />
+                  <SuggestionCards 
+                    suggestions={suggestions2} 
+                    title="Suggestions for Post B" 
+                  />
+                </div>
+
+                {/* Scoring Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>About the Improved Scoring System</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      <p><strong>Realistic Scoring:</strong> Scores above 70 are excellent, above 80 are exceptional. Most good posts score 40-60.</p>
+                      <p><strong>Weighted Factors:</strong> Engagement triggers and storytelling have the highest impact on scores.</p>
+                      <p><strong>Diminishing Returns:</strong> Adding more of the same factor (hashtags, emojis) has decreasing benefits.</p>
+                      <p><strong>Follower Impact:</strong> Account size moderately affects reach but doesn't dominate the scoring.</p>
+                      <p><strong>Industry Calibrated:</strong> Different industries have different baseline performance expectations.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
-            {/* Metrics Comparison Chart */}
-            <MetricsBarChart 
-              metrics1={analysisA} 
-              metrics2={analysisB}
-              title="Performance Metrics Comparison (Improved Scoring)"
-            />
-
-            {/* Suggestions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SuggestionCards 
-                suggestions={suggestions1} 
-                title="Suggestions for Post A" 
-              />
-              <SuggestionCards 
-                suggestions={suggestions2} 
-                title="Suggestions for Post B" 
-              />
-            </div>
-
-            {/* Scoring Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>About the Improved Scoring System</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm text-muted-foreground space-y-2">
-                  <p><strong>Realistic Scoring:</strong> Scores above 70 are excellent, above 80 are exceptional. Most good posts score 40-60.</p>
-                  <p><strong>Weighted Factors:</strong> Engagement triggers and storytelling have the highest impact on scores.</p>
-                  <p><strong>Diminishing Returns:</strong> Adding more of the same factor (hashtags, emojis) has decreasing benefits.</p>
-                  <p><strong>Follower Impact:</strong> Account size moderately affects reach but doesn't dominate the scoring.</p>
-                  <p><strong>Industry Calibrated:</strong> Different industries have different baseline performance expectations.</p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Empty State */}
+            {!analysisA && !analysisB && !isAnalyzing && (
+              <Card className="w-full">
+                <CardContent className="text-center py-12">
+                  <p className="text-muted-foreground text-lg mb-2">Ready to Compare</p>
+                  <p className="text-sm text-muted-foreground">Enter content in both posts above to see the analysis</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </main>
       </div>
     </PageTransition>
+  );
+}
+
+export default function ComparisonPage() {
+  return (
+    <PostComparisonProvider>
+      <ComparisonPageContent />
+    </PostComparisonProvider>
   );
 }
