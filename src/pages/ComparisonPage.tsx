@@ -28,14 +28,23 @@ function ComparisonPageContent() {
   } = usePostComparison();
   
   const [isAdvancedVisible, setIsAdvancedVisible] = useState(false);
+  const [lastAnalyzedA, setLastAnalyzedA] = useState('');
+  const [lastAnalyzedB, setLastAnalyzedB] = useState('');
 
-  // Auto-analyze posts when content changes
+  // Only auto-analyze when content actually changes and both posts have content
   useEffect(() => {
-    if (postA.trim() && postB.trim()) {
-      console.log('Auto-analyzing posts:', { postA: postA.substring(0, 50), postB: postB.substring(0, 50) });
+    const shouldAnalyze = postA.trim() && 
+                         postB.trim() && 
+                         (postA !== lastAnalyzedA || postB !== lastAnalyzedB) &&
+                         !isAnalyzing;
+
+    if (shouldAnalyze) {
+      console.log('Auto-analyzing posts due to content change');
+      setLastAnalyzedA(postA);
+      setLastAnalyzedB(postB);
       analyzePost(postA, postB);
     }
-  }, [postA, postB, advancedParams, analyzePost]);
+  }, [postA, postB, analyzePost, lastAnalyzedA, lastAnalyzedB, isAnalyzing]);
 
   // Log current state for debugging
   useEffect(() => {

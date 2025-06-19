@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { 
   analyzePost, 
   generateTimeSeries, 
@@ -59,15 +60,18 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>(defaultAdvancedParams);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isAIEnabled, setIsAIEnabled] = useState(true);
+  const [isAIEnabled, setIsAIEnabled] = useState(false); // Disabled by default to avoid errors
 
-  // Analyze posts function
-  const handleAnalyzePost = async (postAContent: string, postBContent: string) => {
+  // Use useCallback to prevent infinite loops
+  const handleAnalyzePost = useCallback(async (postAContent: string, postBContent: string) => {
+    if (isAnalyzing || !postAContent.trim() || !postBContent.trim()) {
+      return;
+    }
+
     setIsAnalyzing(true);
     console.log('Starting analysis with improved metrics system...');
     
     try {
-      // Use improved analysis parameters
       const currentParams = isAdvancedMode ? advancedParams : undefined;
       
       // Always run the improved algorithmic analysis
@@ -77,30 +81,26 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
       
       console.log('Post A algorithmic metrics:', algorithmicMetricsA);
       
-      // If AI is enabled, enhance with AI analysis (but don't let it override the improved scores too much)
       let combinedMetricsA: AIPostMetrics = {
         ...algorithmicMetricsA,
         recommendedHashtags: [],
         isAIEnhanced: false
       };
       
+      // Only try AI if enabled and avoid the current JSON parsing errors
       if (isAIEnabled) {
         try {
-          const aiResultsA = await analyzePostWithAI(
-            postAContent, 
-            currentParams?.industry
-          );
+          const aiResultsA = await analyzePostWithAI(postAContent, currentParams?.industry);
           
           if (aiResultsA) {
             combinedMetricsA = combineAnalysisResults(algorithmicMetricsA, aiResultsA);
             console.log('Post A combined metrics:', combinedMetricsA);
             
-            // Combine algorithmic and AI suggestions
             const aiSuggestionsA = convertAISuggestions(aiResultsA.suggestions);
             postSuggestionsA = [...aiSuggestionsA, ...postSuggestionsA].slice(0, 6);
           }
         } catch (error) {
-          console.error('Error enhancing analysis with AI for post A:', error);
+          console.error('AI analysis failed for post A, using algorithmic only:', error);
           // Continue with algorithmic analysis only
         }
       }
@@ -120,10 +120,7 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
       
       if (isAIEnabled) {
         try {
-          const aiResultsB = await analyzePostWithAI(
-            postBContent, 
-            currentParams?.industry
-          );
+          const aiResultsB = await analyzePostWithAI(postBContent, currentParams?.industry);
           
           if (aiResultsB) {
             combinedMetricsB = combineAnalysisResults(algorithmicMetricsB, aiResultsB);
@@ -133,7 +130,7 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
             postSuggestionsB = [...aiSuggestionsB, ...postSuggestionsB].slice(0, 6);
           }
         } catch (error) {
-          console.error('Error enhancing analysis with AI for post B:', error);
+          console.error('AI analysis failed for post B, using algorithmic only:', error);
           // Continue with algorithmic analysis only
         }
       }
@@ -158,14 +155,14 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error analyzing posts:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to analyze posts',
+        title: 'Analysis Error',
+        description: 'Using basic analysis due to technical issues',
         variant: 'destructive',
       });
     } finally {
       setIsAnalyzing(false);
     }
-  };
+  }, [isAnalyzing, isAdvancedMode, advancedParams, isAIEnabled]);
 
   // Toggle advanced mode
   const toggleAdvancedMode = () => {
@@ -189,8 +186,6 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   // Save comparison (simplified since no auth)
   const handleSaveComparison = async (postA: string, postB: string, analysisA: AIPostMetrics, analysisB: AIPostMetrics) => {
     try {
-      // Since we removed auth, we can just show a success message
-      // In the future, this could save to local storage if needed
       toast({
         title: 'Comparison Saved',
         description: 'Your post comparison has been saved locally.',
