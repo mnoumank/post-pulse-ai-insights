@@ -63,18 +63,18 @@ export default function ComparisonPage() {
             {/* Post Editors */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PostEditor
-                title="Post A"
+                postNumber={1}
                 content={postA}
                 onChange={setPostA}
                 metrics={aiMetrics1}
-                placeholder="Enter your first LinkedIn post here..."
+                isWinner={localComparison?.winner === 1}
               />
               <PostEditor
-                title="Post B"
+                postNumber={2}
                 content={postB}
                 onChange={setPostB}
                 metrics={aiMetrics2}
-                placeholder="Enter your second LinkedIn post here..."
+                isWinner={localComparison?.winner === 2}
               />
             </div>
 
