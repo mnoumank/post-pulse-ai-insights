@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, Share2 } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { AIPostMetrics } from '@/utils/aiAnalyzer';
 import { toast } from '@/hooks/use-toast';
 
@@ -123,18 +123,14 @@ export function ComparisonSummary({
           )}
         </div>
 
-        <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+        <div className="flex justify-center">
           <Button 
             onClick={handleSave} 
-            className="flex-1"
+            className="w-full max-w-xs"
             disabled={isSaving}
           >
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save Comparison'}
-          </Button>
-          <Button variant="outline" className="flex-1">
-            <Share2 className="mr-2 h-4 w-4" />
-            Share Results
           </Button>
         </div>
       </CardContent>

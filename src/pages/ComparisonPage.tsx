@@ -81,18 +81,31 @@ function ComparisonPageContent() {
         
         <main className="flex-1 container py-8 max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
-            <p className="text-muted-foreground mt-2">
-              Real-time post comparison with improved realistic scoring
-            </p>
-            {/* Scoring system status indicator */}
-            <div className="mt-4 flex items-center gap-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                ✓ Improved Scoring System Active
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                Realistic scores: 40-60 good, 60-80 excellent, 80+ exceptional
-              </Badge>
+            <div className="flex items-start gap-6">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
+                <p className="text-muted-foreground mt-2">
+                  Real-time post comparison with improved realistic scoring
+                </p>
+                {/* Scoring system status indicator */}
+                <div className="mt-4 flex items-center gap-2">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    ✓ Improved Scoring System Active
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Realistic scores: 40-60 good, 60-80 excellent, 80+ exceptional
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* Professional headshot */}
+              <div className="flex-shrink-0">
+                <img 
+                  src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=120&h=120&fit=crop&crop=face" 
+                  alt="Professional LinkedIn consultant"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -143,7 +156,14 @@ function ComparisonPageContent() {
             {/* Results Section - Real-time updates */}
             {analysisA && analysisB && !isAnalyzing && (
               <div className="space-y-6">
-                {/* Comparison Summary */}
+                {/* Dynamic Performance Line Chart - now comes first */}
+                <PerformanceLineChart 
+                  metrics1={analysisA} 
+                  metrics2={analysisB}
+                  title="Real-time Performance Comparison"
+                />
+
+                {/* Comparison Summary - now below the chart */}
                 {simpleComparison && (
                   <ComparisonSummary 
                     comparison={simpleComparison}
@@ -152,13 +172,6 @@ function ComparisonPageContent() {
                     onSave={async () => {}}
                   />
                 )}
-
-                {/* Dynamic Performance Line Chart - replaces bar chart */}
-                <PerformanceLineChart 
-                  metrics1={analysisA} 
-                  metrics2={analysisB}
-                  title="Real-time Performance Comparison"
-                />
 
                 {/* Suggestions */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -171,23 +184,6 @@ function ComparisonPageContent() {
                     title="Suggestions for Post B" 
                   />
                 </div>
-
-                {/* Scoring System Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Improved Scoring System Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="text-sm text-muted-foreground space-y-2">
-                      <p><strong>✓ Realistic Baseline:</strong> Base scores start low (15-25) instead of inflated values</p>
-                      <p><strong>✓ Weighted Scoring:</strong> Engagement triggers and storytelling have highest impact</p>
-                      <p><strong>✓ Diminishing Returns:</strong> Multiple hashtags/emojis have decreasing benefits</p>
-                      <p><strong>✓ Industry Calibration:</strong> Different industries have realistic performance expectations</p>
-                      <p><strong>✓ Length Optimization:</strong> 150-800 characters is the sweet spot</p>
-                      <p><strong>✓ Real-time Updates:</strong> Scores update instantly as you type</p>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             )}
 
