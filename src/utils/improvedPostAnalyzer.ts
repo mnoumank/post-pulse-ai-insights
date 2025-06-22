@@ -1,4 +1,3 @@
-
 // Improved LinkedIn Post Analysis with realistic scoring
 // This replaces the overly generous scoring in postAnalyzer.ts
 
@@ -29,11 +28,11 @@ export interface AdvancedAnalysisParams {
   engagementLevel: string;
 }
 
-// Realistic base scores (much lower)
+// Slightly higher base scores (increased by ~5-8 points)
 const BASE_SCORES = {
-  engagement: 25,
-  reach: 20,
-  virality: 15,
+  engagement: 32, // was 25
+  reach: 28,     // was 20
+  virality: 22,  // was 15
 };
 
 // Content quality factors
@@ -79,33 +78,33 @@ function logScale(value: number, maxValue: number = 1.0): number {
   return Math.log(1 + value) / Math.log(1 + maxValue);
 }
 
-// Weighted combination instead of multiplication
+// Weighted combination with increased bonus potential (was 30, now 35)
 function weightedScore(baseScore: number, factors: { weight: number; value: number }[]): number {
   const totalWeight = factors.reduce((sum, f) => sum + f.weight, 0);
   const weightedSum = factors.reduce((sum, f) => sum + (f.weight * f.value), 0);
-  return baseScore + (weightedSum / totalWeight) * 30; // Max 30 point bonus
+  return baseScore + (weightedSum / totalWeight) * 35; // Increased from 30 to 35
 }
 
-// Content length analysis with realistic curves
+// Content length analysis with slightly more generous curves
 function analyzeContentLength(text: string): number {
   const length = text.length;
   
-  // Optimal range: 150-800 characters (tighter than before)
-  if (length < 50) return 0.3; // Too short
-  if (length < 150) return 0.5 + (length - 50) / 100 * 0.3; // Growing
-  if (length <= 800) return 0.8 + 0.2 * Math.cos((length - 150) / 650 * Math.PI); // Peak zone
-  if (length <= 1500) return 0.8 - (length - 800) / 700 * 0.4; // Declining
-  return 0.4; // Too long
+  // Optimal range: 150-800 characters with more generous scoring
+  if (length < 50) return 0.35; // was 0.3, slightly less harsh
+  if (length < 150) return 0.55 + (length - 50) / 100 * 0.3; // was 0.5, slightly higher base
+  if (length <= 800) return 0.85 + 0.15 * Math.cos((length - 150) / 650 * Math.PI); // was 0.8, higher peak
+  if (length <= 1500) return 0.85 - (length - 800) / 700 * 0.4; // was 0.8, higher starting point
+  return 0.45; // was 0.4, slightly less penalty
 }
 
-// Engagement trigger analysis with diminishing returns
+// Engagement trigger analysis with slightly higher max multiplier
 function analyzeEngagementTriggers(text: string): number {
   const lowerText = text.toLowerCase();
   const triggers = ENGAGEMENT_TRIGGERS.filter(trigger => lowerText.includes(trigger));
   const uniqueTriggers = new Set(triggers).size;
   
-  // Logarithmic scaling - first trigger is worth more than subsequent ones
-  return logScale(uniqueTriggers, 3) * 0.8; // Max 0.8 multiplier
+  // Increased max multiplier from 0.8 to 0.9
+  return logScale(uniqueTriggers, 3) * 0.9;
 }
 
 // Hook strength analysis
@@ -131,25 +130,25 @@ function analyzeHookStrength(text: string): number {
   return Math.min(1.0, score);
 }
 
-// Storytelling elements analysis
+// Storytelling elements analysis with slightly higher multipliers
 function analyzeStorytelling(text: string): number {
   const lowerText = text.toLowerCase();
   const storyElements = STORYTELLING_ELEMENTS.filter(element => lowerText.includes(element));
   const personalPronouns = (lowerText.match(/\b(i|me|my|mine)\b/g) || []).length;
   
-  const storyScore = logScale(storyElements.length, 5) * 0.6;
-  const personalScore = logScale(personalPronouns, 15) * 0.4;
+  const storyScore = logScale(storyElements.length, 5) * 0.65; // was 0.6, increased
+  const personalScore = logScale(personalPronouns, 15) * 0.45; // was 0.4, increased
   
   return storyScore + personalScore;
 }
 
-// Value proposition analysis
+// Value proposition analysis with higher multiplier
 function analyzeValueProposition(text: string): number {
   const lowerText = text.toLowerCase();
   const valueIndicators = VALUE_INDICATORS.filter(indicator => lowerText.includes(indicator));
   const hasStats = /\d+%|\d+ percent|\d+x/i.test(text);
   
-  return logScale(valueIndicators.length, 4) * 0.7 + (hasStats ? 0.3 : 0);
+  return logScale(valueIndicators.length, 4) * 0.75 + (hasStats ? 0.35 : 0); // was 0.7 and 0.3, increased both
 }
 
 // Follower count impact (much more realistic)
@@ -178,7 +177,7 @@ function getIndustryMultiplier(industry: string): { engagement: number; reach: n
   };
 }
 
-// Main analysis function with improved scoring
+// Main analysis function with slightly more generous scoring
 export function analyzePost(postContent: string, advancedParams?: AdvancedAnalysisParams): PostMetrics {
   const cleanContent = postContent.trim().toLowerCase();
   
@@ -200,17 +199,17 @@ export function analyzePost(postContent: string, advancedParams?: AdvancedAnalys
   const storytellingFactor = analyzeStorytelling(postContent);
   const valueFactor = analyzeValueProposition(postContent);
   
-  // Hashtag analysis (more conservative)
+  // Hashtag analysis with slightly more generous scoring
   const hashtagCount = (postContent.match(/#\w+/g) || []).length;
-  let hashtagFactor = 0.5; // Default penalty for no hashtags
+  let hashtagFactor = 0.55; // was 0.5, slightly less penalty for no hashtags
   if (hashtagCount >= 1 && hashtagCount <= 3) hashtagFactor = 1.0; // Optimal
-  else if (hashtagCount >= 4 && hashtagCount <= 5) hashtagFactor = 0.8; // Good
-  else if (hashtagCount > 5) hashtagFactor = 0.6; // Too many
+  else if (hashtagCount >= 4 && hashtagCount <= 5) hashtagFactor = 0.85; // was 0.8, less penalty
+  else if (hashtagCount > 5) hashtagFactor = 0.65; // was 0.6, less penalty
   
-  // Structure analysis
+  // Structure analysis with slightly higher bonus
   const hasLineBreaks = postContent.includes('\n');
   const hasBullets = /^\s*[\-\•\*]/m.test(postContent);
-  const structureFactor = 0.7 + (hasLineBreaks ? 0.15 : 0) + (hasBullets ? 0.15 : 0);
+  const structureFactor = 0.75 + (hasLineBreaks ? 0.15 : 0) + (hasBullets ? 0.15 : 0); // was 0.7, increased base
   
   // Advanced parameters
   const followerMultiplier = advancedParams ? getFollowerMultiplier(advancedParams.followerRange) : 1.0;
