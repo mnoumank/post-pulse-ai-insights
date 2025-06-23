@@ -3,7 +3,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Sparkles, Hash } from 'lucide-react';
+import { Sparkles, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { AIPostMetrics } from '@/utils/aiAnalyzer';
 
@@ -112,16 +112,6 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
     setShowPlaceholder(e.target.value.length === 0);
   };
 
-  const insertSample = () => {
-    let randomIndex;
-    do {
-      randomIndex = Math.floor(Math.random() * samplePosts.length);
-    } while (content === samplePosts[randomIndex] && samplePosts.length > 1);
-    
-    onChange(samplePosts[randomIndex]);
-    setShowPlaceholder(false);
-  };
-
   const cleanupText = () => {
     if (!content.trim()) {
       toast("No content to clean up", {
@@ -197,15 +187,6 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
             )}
           </CardTitle>
           <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={insertSample} 
-              className="h-8 text-xs"
-            >
-              <RefreshCw className="h-3.5 w-3.5 mr-1" />
-              Sample
-            </Button>
             <Button 
               variant="ghost" 
               size="sm" 

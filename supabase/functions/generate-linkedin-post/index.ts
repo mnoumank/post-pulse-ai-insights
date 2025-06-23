@@ -30,23 +30,66 @@ serve(async (req) => {
       );
     }
 
+    // Detect if user wants a longer post/thread
+    const wantsLongerContent = prompt.toLowerCase().includes('thread') || 
+                              prompt.toLowerCase().includes('long') || 
+                              prompt.toLowerCase().includes('detailed') ||
+                              prompt.toLowerCase().includes('story') ||
+                              prompt.toLowerCase().includes('series');
+
     const linkedInPostPrompt = `
-      Create a professional and engaging LinkedIn post based on the following prompt or story: "${prompt}"
+      Create a professional and engaging LinkedIn post based on the following prompt: "${prompt}"
 
-      Please follow these LinkedIn best practices:
-      - Keep it between 150-300 words for optimal engagement
-      - Start with a hook that grabs attention
-      - Use storytelling when appropriate
-      - Include 1-3 relevant emojis naturally integrated
-      - End with a question or call-to-action to encourage engagement
-      - Use line breaks for better readability
-      - Be authentic and professional
-      - Include relevant insights or lessons learned
-      - Use 2-5 relevant hashtags at the end
+      ${wantsLongerContent ? 
+        `Since this appears to be a request for longer content, create a comprehensive LinkedIn post (400-800 words) that could work as a mini-article or detailed story. Structure it with:
+        - A compelling hook in the first 2 lines
+        - Multiple sections with clear breaks
+        - Numbered points or bullet points where appropriate
+        - Personal insights and lessons learned
+        - A strong call-to-action at the end` 
+        : 
+        `Create a concise but impactful LinkedIn post (150-300 words) that maximizes engagement.`
+      }
 
-      The post should sound natural and human, not overly promotional. Focus on providing value, sharing insights, or telling a compelling story that resonates with a professional audience.
+      Follow these LinkedIn best practices:
+      
+      **Content Structure:**
+      - Start with a hook that creates curiosity or relates to common professional experiences
+      - Use line breaks frequently (every 1-2 sentences) for mobile readability
+      - Include personal experiences or behind-the-scenes insights
+      - Share specific, actionable advice or lessons learned
+      - End with an engaging question that encourages meaningful comments
 
-      Generate only the post content, no additional commentary.
+      **Engagement Optimization:**
+      - Use 1-3 relevant emojis naturally (not at the start of every line)
+      - Include specific numbers/metrics when possible (e.g., "increased by 40%", "in 6 months")
+      - Share vulnerable moments or failures that led to growth
+      - Ask questions that require more than yes/no answers
+      - Use "you" language to directly address the reader
+
+      **Professional Tone:**
+      - Be authentic and conversational, not corporate-speak
+      - Share insights that provide genuine value to professionals
+      - Include industry-specific terminology when relevant
+      - Balance confidence with humility
+      - Make it relatable to a broad professional audience
+
+      **Format Guidelines:**
+      - Use short paragraphs (1-3 sentences max)
+      - Include 3-7 relevant hashtags at the end
+      - Bold key phrases using **text** when emphasizing important points
+      - Use bullet points or numbered lists for clarity when listing items
+
+      **Content Categories to Consider:**
+      - Career lessons and growth stories
+      - Industry insights and trends
+      - Leadership and management experiences
+      - Productivity and work-life balance tips
+      - Team building and collaboration
+      - Innovation and problem-solving
+      - Professional development and learning
+
+      Generate only the post content with hashtags, no additional commentary or quotation marks.
     `;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -60,7 +103,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional LinkedIn content creator who specializes in writing engaging, authentic posts that drive meaningful professional conversations. You understand LinkedIn audience preferences and best practices for maximum engagement.'
+            content: 'You are a LinkedIn content strategist and professional writer who specializes in creating viral LinkedIn posts. You understand the LinkedIn algorithm, professional audience psychology, and what drives meaningful engagement. Your posts consistently get high engagement rates and help professionals build their personal brands.'
           },
           {
             role: 'user',
@@ -68,7 +111,7 @@ serve(async (req) => {
           }
         ],
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 1200,
       }),
     });
 

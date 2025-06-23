@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,32 +14,44 @@ export default function LandingPage() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section */}
+        {/* Hero Section with Professional Headshot */}
         <section className="relative py-20 px-4 md:py-32 md:px-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-          <div className="container mx-auto text-center">
-            <div className="mx-auto max-w-4xl">
-              <Badge variant="outline" className="mb-4">
-                <Zap className="mr-1 h-3 w-3" />
-                AI-Powered LinkedIn Optimization
-              </Badge>
-              <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl">
-                Transform Your LinkedIn Posts with{' '}
-                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  AI-Powered Analysis
-                </span>
-              </h1>
-              <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
-                Compare different versions of your LinkedIn posts and discover which performs better. 
-                Get AI-driven insights on engagement, reach, and virality to maximize your professional impact.
-              </p>
-              <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-                <Button size="lg" onClick={() => navigate('/compare')} className="h-12 px-8">
-                  Start Analyzing Posts
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="lg" onClick={() => navigate('/history')} className="h-12 px-8">
-                  View Examples
-                </Button>
+          <div className="container mx-auto">
+            <div className="flex items-center justify-center gap-12 max-w-6xl mx-auto">
+              {/* Content */}
+              <div className="flex-1 text-center lg:text-left">
+                <Badge variant="outline" className="mb-4">
+                  <Zap className="mr-1 h-3 w-3" />
+                  AI-Powered LinkedIn Optimization
+                </Badge>
+                <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl">
+                  Transform Your LinkedIn Posts with{' '}
+                  <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                    AI-Powered Analysis
+                  </span>
+                </h1>
+                <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
+                  Compare different versions of your LinkedIn posts and discover which performs better. 
+                  Get AI-driven insights on engagement, reach, and virality to maximize your professional impact.
+                </p>
+                <div className="flex flex-col gap-4 sm:flex-row lg:justify-start justify-center">
+                  <Button size="lg" onClick={() => navigate('/compare')} className="h-12 px-8">
+                    Start Analyzing Posts
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="lg" onClick={() => navigate('/create')} className="h-12 px-8">
+                    Create AI Posts
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Professional headshot */}
+              <div className="hidden lg:block flex-shrink-0">
+                <img 
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face" 
+                  alt="LinkedIn Professional"
+                  className="w-72 h-72 rounded-full object-cover border-4 border-white shadow-2xl"
+                />
               </div>
             </div>
           </div>
