@@ -48,7 +48,7 @@ export default function LandingPage() {
               {/* Professional headshot */}
               <div className="hidden lg:block flex-shrink-0">
                 <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face" 
+                  src="/lovable-uploads/b81f954a-f473-4315-96a8-6bd5186a6bd2.png" 
                   alt="LinkedIn Professional"
                   className="w-72 h-72 rounded-full object-cover border-4 border-white shadow-2xl"
                 />
