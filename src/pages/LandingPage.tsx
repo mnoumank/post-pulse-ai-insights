@@ -50,7 +50,7 @@ export default function LandingPage() {
                 <img 
                   src="/lovable-uploads/b81f954a-f473-4315-96a8-6bd5186a6bd2.png" 
                   alt="LinkedIn Professional"
-                  className="w-72 h-72 rounded-full object-cover border-4 border-white shadow-2xl"
+                  className="w-72 h-72 rounded-full object-cover object-top border-4 border-white shadow-2xl"
                 />
               </div>
             </div>
