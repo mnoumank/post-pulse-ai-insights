@@ -1,16 +1,14 @@
-
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { 
-  analyzePost, 
   generateTimeSeries, 
   generateSuggestions, 
   comparePostsPerformance,
-  PostMetrics,
   TimeSeriesData,
   PostSuggestion,
   AdvancedAnalysisParams
 } from '@/utils/improvedPostAnalyzer';
-import { analyzePostWithAI, combineAnalysisResults, convertAISuggestions, AIPostMetrics } from '@/utils/aiAnalyzer';
+import { performHybridAnalysis, HybridAnalysisResult } from '@/utils/hybridAnalyzer';
+import { AIPostMetrics } from '@/utils/aiAnalyzer';
 import { toast } from '@/hooks/use-toast';
 
 interface PostComparisonContextType {
@@ -20,6 +18,8 @@ interface PostComparisonContextType {
   setPostB: (content: string) => void;
   analysisA: AIPostMetrics | null;
   analysisB: AIPostMetrics | null;
+  enhancedAnalysisA: HybridAnalysisResult | null;
+  enhancedAnalysisB: HybridAnalysisResult | null;
   timeSeries1: TimeSeriesData[];
   timeSeries2: TimeSeriesData[];
   suggestions1: PostSuggestion[];
@@ -37,6 +37,8 @@ interface PostComparisonContextType {
   analyzePost: (postA: string, postB: string) => Promise<void>;
   isAIEnabled: boolean;
   toggleAIAnalysis: () => void;
+  analysisMethod: 'enhanced' | 'legacy';
+  toggleAnalysisMethod: () => void;
 }
 
 const defaultAdvancedParams: AdvancedAnalysisParams = {
@@ -52,6 +54,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [postB, setPostB] = useState('');
   const [analysisA, setAnalysisA] = useState<AIPostMetrics | null>(null);
   const [analysisB, setAnalysisB] = useState<AIPostMetrics | null>(null);
+  const [enhancedAnalysisA, setEnhancedAnalysisA] = useState<HybridAnalysisResult | null>(null);
+  const [enhancedAnalysisB, setEnhancedAnalysisB] = useState<HybridAnalysisResult | null>(null);
   const [timeSeries1, setTimeSeries1] = useState<TimeSeriesData[]>([]);
   const [timeSeries2, setTimeSeries2] = useState<TimeSeriesData[]>([]);
   const [suggestions1, setSuggestions1] = useState<PostSuggestion[]>([]);
@@ -60,130 +64,152 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [advancedParams, setAdvancedParams] = useState<AdvancedAnalysisParams>(defaultAdvancedParams);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isAIEnabled, setIsAIEnabled] = useState(false); // Disabled by default to avoid errors
+  const [isAIEnabled, setIsAIEnabled] = useState(false);
+  const [analysisMethod, setAnalysisMethod] = useState<'enhanced' | 'legacy'>('enhanced');
 
-  // Use useCallback to prevent infinite loops
   const handleAnalyzePost = useCallback(async (postAContent: string, postBContent: string) => {
     if (isAnalyzing || !postAContent.trim() || !postBContent.trim()) {
       return;
     }
 
     setIsAnalyzing(true);
-    console.log('Starting analysis with improved metrics system...');
+    console.log(`Starting ${analysisMethod} analysis...`);
     
     try {
       const currentParams = isAdvancedMode ? advancedParams : undefined;
       
-      // Always run the improved algorithmic analysis
-      const algorithmicMetricsA = analyzePost(postAContent, currentParams);
+      if (analysisMethod === 'enhanced') {
+        // Use the new hybrid analysis system
+        const hybridOptionsA = {
+          useAI: isAIEnabled,
+          preferEnhanced: true,
+          confidenceThreshold: 0.6
+        };
+        
+        const hybridOptionsB = {
+          useAI: isAIEnabled,
+          preferEnhanced: true,
+          confidenceThreshold: 0.6
+        };
+        
+        // Analyze both posts with hybrid system
+        const [hybridResultA, hybridResultB] = await Promise.all([
+          performHybridAnalysis(postAContent, currentParams, hybridOptionsA),
+          performHybridAnalysis(postBContent, currentParams, hybridOptionsB)
+        ]);
+        
+        console.log('Hybrid Analysis A:', hybridResultA);
+        console.log('Hybrid Analysis B:', hybridResultB);
+        
+        // Set enhanced analysis results
+        setEnhancedAnalysisA(hybridResultA);
+        setEnhancedAnalysisB(hybridResultB);
+        
+        // Set legacy format for compatibility
+        setAnalysisA(hybridResultA.legacy);
+        setAnalysisB(hybridResultB.legacy);
+        
+        // Generate suggestions based on enhanced analysis
+        const enhancedSuggestionsA = generateEnhancedSuggestions(hybridResultA.enhanced);
+        const enhancedSuggestionsB = generateEnhancedSuggestions(hybridResultB.enhanced);
+        
+        setSuggestions1(enhancedSuggestionsA);
+        setSuggestions2(enhancedSuggestionsB);
+        
+        // Calculate comparison based on enhanced scores
+        const comparisonResult = compareEnhancedPosts(hybridResultA, hybridResultB);
+        setComparison(comparisonResult);
+        
+        // Show analysis method in toast
+        toast({
+          title: `Analysis Complete (${hybridResultA.analysisMethod})`,
+          description: isAIEnabled && hybridResultA.analysisMethod === 'hybrid' ? 
+            `AI contribution: ${(hybridResultA.aiContribution * 100).toFixed(0)}%` :
+            'Using enhanced virality prediction algorithm',
+        });
+        
+      } else {
+        // Use original improved analyzer for legacy mode
+        const { analyzePost } = await import('@/utils/improvedPostAnalyzer');
+        
+        const algorithmicMetricsA = analyzePost(postAContent, currentParams);
+        const algorithmicMetricsB = analyzePost(postBContent, currentParams);
+        
+        let combinedMetricsA: AIPostMetrics = {
+          ...algorithmicMetricsA,
+          recommendedHashtags: [],
+          isAIEnhanced: false
+        };
+        
+        let combinedMetricsB: AIPostMetrics = {
+          ...algorithmicMetricsB,
+          recommendedHashtags: [],
+          isAIEnhanced: false
+        };
+        
+        setAnalysisA(combinedMetricsA);
+        setAnalysisB(combinedMetricsB);
+        
+        const postSuggestionsA = generateSuggestions(postAContent);
+        const postSuggestionsB = generateSuggestions(postBContent);
+        
+        setSuggestions1(postSuggestionsA);
+        setSuggestions2(postSuggestionsB);
+        
+        const comparisonResult = comparePostsPerformance(postAContent, postBContent, currentParams);
+        setComparison({
+          winner: comparisonResult.winner,
+          margin: comparisonResult.margin,
+        });
+      }
+
+      // Generate time series data (common for both methods)
       const timeSeriesDataA = generateTimeSeries(postAContent);
-      let postSuggestionsA = generateSuggestions(postAContent);
-      
-      console.log('Post A algorithmic metrics:', algorithmicMetricsA);
-      
-      let combinedMetricsA: AIPostMetrics = {
-        ...algorithmicMetricsA,
-        recommendedHashtags: [],
-        isAIEnhanced: false
-      };
-      
-      // Only try AI if enabled and avoid the current JSON parsing errors
-      if (isAIEnabled) {
-        try {
-          const aiResultsA = await analyzePostWithAI(postAContent, currentParams?.industry);
-          
-          if (aiResultsA) {
-            combinedMetricsA = combineAnalysisResults(algorithmicMetricsA, aiResultsA);
-            console.log('Post A combined metrics:', combinedMetricsA);
-            
-            const aiSuggestionsA = convertAISuggestions(aiResultsA.suggestions);
-            postSuggestionsA = [...aiSuggestionsA, ...postSuggestionsA].slice(0, 6);
-          }
-        } catch (error) {
-          console.error('AI analysis failed for post A, using algorithmic only:', error);
-          // Continue with algorithmic analysis only
-        }
-      }
-
-      // Analyze post B
-      const algorithmicMetricsB = analyzePost(postBContent, currentParams);
       const timeSeriesDataB = generateTimeSeries(postBContent);
-      let postSuggestionsB = generateSuggestions(postBContent);
-      
-      console.log('Post B algorithmic metrics:', algorithmicMetricsB);
-      
-      let combinedMetricsB: AIPostMetrics = {
-        ...algorithmicMetricsB,
-        recommendedHashtags: [],
-        isAIEnhanced: false
-      };
-      
-      if (isAIEnabled) {
-        try {
-          const aiResultsB = await analyzePostWithAI(postBContent, currentParams?.industry);
-          
-          if (aiResultsB) {
-            combinedMetricsB = combineAnalysisResults(algorithmicMetricsB, aiResultsB);
-            console.log('Post B combined metrics:', combinedMetricsB);
-            
-            const aiSuggestionsB = convertAISuggestions(aiResultsB.suggestions);
-            postSuggestionsB = [...aiSuggestionsB, ...postSuggestionsB].slice(0, 6);
-          }
-        } catch (error) {
-          console.error('AI analysis failed for post B, using algorithmic only:', error);
-          // Continue with algorithmic analysis only
-        }
-      }
-
-      // Set results
-      setAnalysisA(combinedMetricsA);
-      setAnalysisB(combinedMetricsB);
       setTimeSeries1(timeSeriesDataA);
       setTimeSeries2(timeSeriesDataB);
-      setSuggestions1(postSuggestionsA);
-      setSuggestions2(postSuggestionsB);
-
-      // Use the improved comparison function
-      const comparisonResult = comparePostsPerformance(postAContent, postBContent, currentParams);
-      console.log('Comparison result:', comparisonResult);
-      
-      setComparison({
-        winner: comparisonResult.winner,
-        margin: comparisonResult.margin,
-      });
 
     } catch (error) {
       console.error('Error analyzing posts:', error);
       toast({
         title: 'Analysis Error',
-        description: 'Using basic analysis due to technical issues',
+        description: 'There was an issue analyzing the posts. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsAnalyzing(false);
     }
-  }, [isAnalyzing, isAdvancedMode, advancedParams, isAIEnabled]);
+  }, [isAnalyzing, isAdvancedMode, advancedParams, isAIEnabled, analysisMethod]);
 
-  // Toggle advanced mode
   const toggleAdvancedMode = () => {
     setIsAdvancedMode(!isAdvancedMode);
   };
 
-  // Toggle AI analysis
   const toggleAIAnalysis = () => {
     setIsAIEnabled(!isAIEnabled);
     toast({
       title: isAIEnabled ? "AI Analysis Disabled" : "AI Analysis Enabled",
-      description: isAIEnabled ? "Now using algorithmic analysis only." : "Posts will now be analyzed with AI assistance.",
+      description: isAIEnabled ? 
+        "Now using algorithmic analysis only." : 
+        "Posts will now be analyzed with AI assistance.",
     });
   };
 
-  // Update advanced parameters
+  const toggleAnalysisMethod = () => {
+    const newMethod = analysisMethod === 'enhanced' ? 'legacy' : 'enhanced';
+    setAnalysisMethod(newMethod);
+    toast({
+      title: `Switched to ${newMethod === 'enhanced' ? 'Enhanced' : 'Legacy'} Analysis`,
+      description: newMethod === 'enhanced' ? 
+        'Using new 8-factor virality prediction system' :
+        'Using original analysis algorithm',
+    });
+  };
+
   const updateAdvancedParams = (params: Partial<AdvancedAnalysisParams>) => {
     setAdvancedParams(prev => ({ ...prev, ...params }));
   };
 
-  // Save comparison (simplified since no auth)
   const handleSaveComparison = async (postA: string, postB: string, analysisA: AIPostMetrics, analysisB: AIPostMetrics) => {
     try {
       toast({
@@ -209,6 +235,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         setPostB,
         analysisA,
         analysisB,
+        enhancedAnalysisA,
+        enhancedAnalysisB,
         timeSeries1,
         timeSeries2,
         suggestions1,
@@ -223,6 +251,8 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         analyzePost: handleAnalyzePost,
         isAIEnabled,
         toggleAIAnalysis,
+        analysisMethod,
+        toggleAnalysisMethod,
       }}
     >
       {children}
@@ -236,4 +266,55 @@ export function usePostComparison() {
     throw new Error('usePostComparison must be used within a PostComparisonProvider');
   }
   return context;
+}
+
+// Helper functions for enhanced analysis
+function generateEnhancedSuggestions(enhanced: any): PostSuggestion[] {
+  const suggestions: PostSuggestion[] = [];
+  
+  // Convert enhanced analysis to suggestions
+  Object.entries(enhanced.detailedAnalysis).forEach(([key, analysis]: [string, any]) => {
+    if (analysis.score < 7 && analysis.suggestions.length > 0) {
+      suggestions.push({
+        id: `enhanced-${key}`,
+        type: analysis.score < 4 ? 'warning' : 'improvement',
+        title: analysis.suggestions[0].replace(/^(.)/, (c: string) => c.toUpperCase()),
+        description: analysis.description,
+      });
+    }
+  });
+  
+  // Add top strengths as tips
+  enhanced.topStrengths.slice(0, 2).forEach((strength: string, index: number) => {
+    suggestions.push({
+      id: `strength-${index}`,
+      type: 'tip',
+      title: `Strength: ${strength.split(':')[0]}`,
+      description: `This is performing well - maintain this approach in future posts.`,
+    });
+  });
+  
+  return suggestions.slice(0, 6); // Limit to 6 suggestions
+}
+
+function compareEnhancedPosts(resultA: HybridAnalysisResult, resultB: HybridAnalysisResult) {
+  const scoreA = resultA.enhanced.viralityScore;
+  const scoreB = resultB.enhanced.viralityScore;
+  
+  if (scoreA > scoreB) {
+    return {
+      winner: 1,
+      margin: ((scoreA - scoreB) / scoreB) * 100
+    };
+  } else if (scoreB > scoreA) {
+    return {
+      winner: 2,
+      margin: ((scoreB - scoreA) / scoreA) * 100
+    };
+  } else {
+    return {
+      winner: 0,
+      margin: 0
+    };
+  }
 }
