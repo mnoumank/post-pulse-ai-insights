@@ -1,7 +1,7 @@
 
 import { PostMetrics, PostSuggestion } from './improvedPostAnalyzer';
 
-interface AIAnalysisResponse {
+export interface AIAnalysisResponse {
   engagementScore: number;
   reachScore: number;
   viralityScore: number;
