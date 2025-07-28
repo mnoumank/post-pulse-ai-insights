@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Wand2, Copy, RefreshCw } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Wand2, Copy, RefreshCw, Eye, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { MarkdownPreview } from './MarkdownPreview';
 
 interface OptimizationSuggestion {
   type: string;
@@ -125,12 +127,35 @@ export const PostOptimizer: React.FC<PostOptimizerProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          <Textarea
-            placeholder="Your LinkedIn post content will appear here. You can edit it directly to see real-time virality updates."
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            className="min-h-[200px] font-mono text-sm"
-          />
+          <Tabs defaultValue="edit" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="edit" className="flex items-center gap-2">
+                <Edit className="h-4 w-4" />
+                Edit
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Preview
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="edit" className="mt-4">
+              <Textarea
+                placeholder="Your LinkedIn post content will appear here. You can edit it directly to see real-time virality updates."
+                value={content}
+                onChange={(e) => onContentChange(e.target.value)}
+                className="min-h-[200px] font-mono text-sm"
+              />
+            </TabsContent>
+            <TabsContent value="preview" className="mt-4">
+              <div className="min-h-[200px] p-4 border rounded-md bg-background">
+                {content.trim() ? (
+                  <MarkdownPreview content={content} />
+                ) : (
+                  <p className="text-muted-foreground">No content to preview. Switch to Edit tab to add content.</p>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
