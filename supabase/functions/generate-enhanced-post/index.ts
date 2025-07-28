@@ -114,7 +114,7 @@ serve(async (req) => {
       
       **Visual Appeal (10% weight):**
       - Use formatting symbols (→, •, ✓) for visual breaks
-      - Bold key phrases using **text** for emphasis
+      - Use bold sparingly (maximum 2-3 key phrases) with **text** for emphasis
       - Create scannable structure with clear sections
       - Include strategic whitespace
       
