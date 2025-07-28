@@ -86,16 +86,48 @@ serve(async (req) => {
     let hooksData;
     
     try {
-      hooksData = JSON.parse(aiResponse.choices[0].message.content);
-    } catch {
+      let content = aiResponse.choices[0].message.content;
+      
+      // Clean up the content if it's wrapped in markdown code blocks
+      if (content.includes('```json')) {
+        content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      }
+      
+      hooksData = JSON.parse(content);
+    } catch (parseError) {
+      console.error('JSON parsing failed:', parseError);
       // Fallback if JSON parsing fails
       const content = aiResponse.choices[0].message.content;
       hooksData = [
         {
           id: '1',
-          text: content.split('\n')[0] || "What if I told you there's a better way?",
+          text: "What if I told you there's a better way?",
           type: 'Provocative Question',
           description: 'Creates curiosity and engagement'
+        },
+        {
+          id: '2', 
+          text: "Here's what nobody tells you about success...",
+          type: 'Bold Statement',
+          description: 'Creates intrigue and promises valuable insight'
+        },
+        {
+          id: '3',
+          text: "I used to think I had it all figured out. I was wrong.",
+          type: 'Vulnerability',
+          description: 'Creates connection through personal admission'
+        },
+        {
+          id: '4',
+          text: "87% of professionals never reach their potential. Here's why:",
+          type: 'Statistic',
+          description: 'Uses data to create urgency and curiosity'
+        },
+        {
+          id: '5',
+          text: "Everyone says 'follow your passion.' That's terrible advice.",
+          type: 'Contrarian',
+          description: 'Challenges popular belief to spark debate'
         }
       ];
     }
