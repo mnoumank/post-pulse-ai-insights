@@ -87,7 +87,7 @@ export const ViralityDashboard: React.FC<ViralityDashboardProps> = ({
           <div className="space-y-4">
             {factorDetails.map((factor) => {
               const Icon = factor.icon;
-              const score = factors[factor.key as keyof ViralityFactors];
+              const score = factors[factor.key as keyof ViralityFactors] || 0;
               return (
                 <div key={factor.key} className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-1">
