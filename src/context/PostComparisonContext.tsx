@@ -10,6 +10,9 @@ import {
 import { performHybridAnalysis, HybridAnalysisResult } from '@/utils/hybridAnalyzer';
 import { AIPostMetrics } from '@/utils/aiAnalyzer';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { getCurrentUser } from '@/utils/auth/profiles';
+import { saveComparison as saveComparisonRecord } from '@/utils/auth/comparisons';
 
 interface PostComparisonContextType {
   postA: string;
@@ -210,20 +213,59 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
     setAdvancedParams(prev => ({ ...prev, ...params }));
   };
 
-  const handleSaveComparison = async (postA: string, postB: string, analysisA: AIPostMetrics, analysisB: AIPostMetrics) => {
-    try {
-      toast({
-        title: 'Comparison Saved',
-        description: 'Your post comparison has been saved locally.',
-      });
-    } catch (error) {
-      console.error('Failed to save comparison:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save your comparison',
-        variant: 'destructive',
-      });
+  const handleSaveComparison = async (postAText: string, postBText: string, analysisAData: AIPostMetrics, analysisBData: AIPostMetrics) => {
+    // Create two post records and then create a comparison linking them
+    const user = await getCurrentUser();
+    if (!user) {
+      throw new Error('You must be logged in to save a comparison');
     }
+
+    // Insert posts (always new records to keep history simple)
+    const { data: postsData, error: postsError } = await supabase
+      .from('posts')
+      .insert([
+        { user_id: user.id, content: postAText },
+        { user_id: user.id, content: postBText },
+      ])
+      .select();
+
+    if (postsError) {
+      console.error('Error creating posts for comparison:', postsError);
+      throw new Error(postsError.message);
+    }
+
+    const postAId = postsData?.[0]?.id;
+    const postBId = postsData?.[1]?.id;
+
+    if (!postAId || !postBId) {
+      throw new Error('Failed to create post records');
+    }
+
+    const computedWinnerId =
+      comparison?.winner === 1 ? postAId :
+      comparison?.winner === 2 ? postBId :
+      null;
+
+    // Prepare payloads
+    const metricsPayload = {
+      postA: analysisAData,
+      postB: analysisBData,
+      comparison: comparison,
+    };
+
+    const suggestionsPayload = {
+      postA: suggestions1,
+      postB: suggestions2,
+    };
+
+    // Save comparison record
+    await saveComparisonRecord(
+      postAId,
+      postBId,
+      computedWinnerId,
+      metricsPayload,
+      suggestionsPayload
+    );
   };
 
   return (

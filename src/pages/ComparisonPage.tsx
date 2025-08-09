@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { PageTransition } from '@/components/PageTransition';
@@ -6,8 +7,7 @@ import { PerformanceLineChart } from '@/components/PerformanceLineChart';
 import { SuggestionCards } from '@/components/SuggestionCards';
 import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { PostComparisonProvider, usePostComparison } from '@/context/PostComparisonContext';
 
 function ComparisonPageContent() {
@@ -24,12 +24,14 @@ function ComparisonPageContent() {
     advancedParams, 
     updateAdvancedParams,
     analyzePost,
-    isAnalyzing
+    isAnalyzing,
+    saveComparison
   } = usePostComparison();
   
   const [isAdvancedVisible, setIsAdvancedVisible] = useState(false);
   const [lastAnalyzedA, setLastAnalyzedA] = useState('');
   const [lastAnalyzedB, setLastAnalyzedB] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Auto-analyze when content changes - this ensures real-time updates
   useEffect(() => {
@@ -72,6 +74,16 @@ function ComparisonPageContent() {
     winner: comparison.winner,
     margin: comparison.margin
   } : null;
+
+  const handleSave = async () => {
+    if (!analysisA || !analysisB) return;
+    setIsSaving(true);
+    try {
+      await saveComparison(postA, postB, analysisA, analysisB);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <PageTransition>
@@ -146,7 +158,8 @@ function ComparisonPageContent() {
                     comparison={simpleComparison}
                     metrics1={analysisA}
                     metrics2={analysisB}
-                    onSave={async () => {}}
+                    onSave={handleSave}
+                    isSaving={isSaving}
                   />
                 )}
 
@@ -187,3 +200,4 @@ export default function ComparisonPage() {
     </PostComparisonProvider>
   );
 }
+

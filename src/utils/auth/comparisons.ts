@@ -53,7 +53,7 @@ export async function getUserComparisons(): Promise<any[]> {
     throw new Error("You must be logged in to view comparisons");
   }
   
-  // Get comparisons with post content
+  // Properly alias relationships to avoid collisions
   const { data, error } = await supabase
     .from('comparisons')
     .select(`
@@ -63,8 +63,8 @@ export async function getUserComparisons(): Promise<any[]> {
       winner_id,
       post_a_id,
       post_b_id,
-      posts!comparisons_post_a_id_fkey(id, content),
-      posts!comparisons_post_b_id_fkey(id, content)
+      post_a:posts!comparisons_post_a_id_fkey ( id, content ),
+      post_b:posts!comparisons_post_b_id_fkey ( id, content )
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
@@ -75,20 +75,13 @@ export async function getUserComparisons(): Promise<any[]> {
   }
   
   // Transform the data to a more usable format
-  return data.map(comp => {
-    // First, handle the posts data properly
-    const postsA = Array.isArray(comp.posts) 
-      ? comp.posts 
-      : (comp.posts ? [comp.posts] : []);
-      
-    const post1Content = postsA.find((p: any) => p.id === comp.post_a_id)?.content || '';
-    
-    // For post B, we need to handle it separately since it might be coming from a different key
-    const postsB = Array.isArray(comp.posts) 
-      ? comp.posts 
-      : (comp.posts ? [comp.posts] : []);
-      
-    const post2Content = postsB.find((p: any) => p.id === comp.post_b_id)?.content || '';
+  return (data || []).map((comp: any) => {
+    // post_a / post_b may be single object or array depending on join cardinality
+    const postA = Array.isArray(comp.post_a) ? comp.post_a[0] : comp.post_a;
+    const postB = Array.isArray(comp.post_b) ? comp.post_b[0] : comp.post_b;
+
+    const post1Content = postA?.content || '';
+    const post2Content = postB?.content || '';
     
     return {
       id: comp.id,
@@ -101,3 +94,4 @@ export async function getUserComparisons(): Promise<any[]> {
     };
   });
 }
+
