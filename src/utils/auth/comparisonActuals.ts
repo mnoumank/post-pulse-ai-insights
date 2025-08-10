@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables, TablesInsert } from "@/integrations/supabase/types";
 import { getCurrentUser } from "./profiles";
 
 export interface ComparisonActualsInput {
@@ -18,25 +19,7 @@ export interface ComparisonActualsInput {
   notes?: string;
 }
 
-export interface ComparisonActualsRow {
-  id: string;
-  user_id: string;
-  comparison_id: string;
-  post_a_url: string | null;
-  post_b_url: string | null;
-  post_a_likes: number | null;
-  post_a_comments: number | null;
-  post_a_shares: number | null;
-  post_a_impressions: number | null;
-  post_b_likes: number | null;
-  post_b_comments: number | null;
-  post_b_shares: number | null;
-  post_b_impressions: number | null;
-  actual_winner: number | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type ComparisonActualsRow = Tables<'comparison_actuals'>;
 
 export async function saveComparisonActuals(input: ComparisonActualsInput): Promise<ComparisonActualsRow | null> {
   const user = await getCurrentUser();
@@ -44,12 +27,12 @@ export async function saveComparisonActuals(input: ComparisonActualsInput): Prom
     throw new Error("You must be logged in to save reality check");
   }
 
-  const payload = {
+  const payload: TablesInsert<'comparison_actuals'> = {
     user_id: user.id,
     ...input,
   };
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('comparison_actuals')
     .upsert(payload, { onConflict: 'comparison_id' })
     .select()
@@ -69,7 +52,7 @@ export async function getComparisonActuals(comparisonId: string): Promise<Compar
     throw new Error("You must be logged in to view reality check");
   }
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('comparison_actuals')
     .select('*')
     .eq('comparison_id', comparisonId)
