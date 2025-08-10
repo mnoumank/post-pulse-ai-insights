@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      comparison_actuals: {
+        Row: {
+          actual_winner: number | null
+          comparison_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          post_a_comments: number | null
+          post_a_impressions: number | null
+          post_a_likes: number | null
+          post_a_shares: number | null
+          post_a_url: string | null
+          post_b_comments: number | null
+          post_b_impressions: number | null
+          post_b_likes: number | null
+          post_b_shares: number | null
+          post_b_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_winner?: number | null
+          comparison_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          post_a_comments?: number | null
+          post_a_impressions?: number | null
+          post_a_likes?: number | null
+          post_a_shares?: number | null
+          post_a_url?: string | null
+          post_b_comments?: number | null
+          post_b_impressions?: number | null
+          post_b_likes?: number | null
+          post_b_shares?: number | null
+          post_b_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_winner?: number | null
+          comparison_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          post_a_comments?: number | null
+          post_a_impressions?: number | null
+          post_a_likes?: number | null
+          post_a_shares?: number | null
+          post_a_url?: string | null
+          post_b_comments?: number | null
+          post_b_impressions?: number | null
+          post_b_likes?: number | null
+          post_b_shares?: number | null
+          post_b_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comparison_actuals_comparison_id_fkey"
+            columns: ["comparison_id"]
+            isOneToOne: true
+            referencedRelation: "comparisons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comparisons: {
         Row: {
           created_at: string
