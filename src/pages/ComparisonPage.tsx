@@ -90,15 +90,15 @@ function ComparisonPageContent() {
       <div className="flex min-h-screen flex-col">
         <Navbar />
         
-        <main className="flex-1 container py-8 max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
-            <p className="text-muted-foreground mt-2">
+        <main className="flex-1 container py-4 px-4 max-w-7xl mx-auto sm:py-8">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
               Real-time post comparison with AI-powered insights
             </p>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Advanced Analysis Panel */}
             <AdvancedAnalysisPanel
               params={advancedParams}
@@ -113,7 +113,7 @@ function ComparisonPageContent() {
             />
 
             {/* Post Editors */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <PostEditor
                 postNumber={1}
                 content={postA}
@@ -144,7 +144,7 @@ function ComparisonPageContent() {
 
             {/* Results Section */}
             {analysisA && analysisB && !isAnalyzing && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Performance Line Chart */}
                 <PerformanceLineChart 
                   metrics1={analysisA} 
@@ -164,7 +164,7 @@ function ComparisonPageContent() {
                 )}
 
                 {/* Suggestions */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <SuggestionCards 
                     suggestions={suggestions1} 
                     title="Suggestions for Post A" 

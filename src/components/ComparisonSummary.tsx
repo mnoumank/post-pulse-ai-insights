@@ -100,24 +100,24 @@ export function ComparisonSummary({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Comparison Summary</CardTitle>
-        <CardDescription>
+      <CardHeader className="px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-lg sm:text-xl">Comparison Summary</CardTitle>
+        <CardDescription className="text-sm">
           Analysis based on LinkedIn post engagement patterns
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-3 sm:px-6 pb-3 sm:pb-6">
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">
+          <h3 className="text-base sm:text-lg font-medium">
             {comparison.winner === 0 ? "Posts are performing similarly" : `Post ${comparison.winner} is predicted to perform better`}
           </h3>
           {comparison.winner > 0 && (
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Expected to outperform by approximately {Math.round(comparison.margin)}%{strengthsText ? `, with ${strengthsText}` : ''}.
             </p>
           )}
           {comparison.winner === 0 && (
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Both posts have very similar performance potential.
             </p>
           )}
@@ -126,7 +126,7 @@ export function ComparisonSummary({
         <div className="flex justify-center">
           <Button 
             onClick={handleSave} 
-            className="w-full max-w-xs"
+            className="w-full sm:max-w-xs"
             disabled={isSaving}
           >
             <Save className="mr-2 h-4 w-4" />

@@ -175,73 +175,81 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
 
   return (
     <Card className={`w-full ${isWinner ? 'border-2 border-green-500' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl flex items-center">
-            Post {postNumber} {isWinner && <Badge className="ml-2 bg-green-500">Winner</Badge>}
+      <CardHeader className="pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+          <CardTitle className="text-lg sm:text-xl flex flex-wrap items-center gap-2">
+            Post {postNumber} 
+            {isWinner && <Badge className="bg-green-500">Winner</Badge>}
             {metrics?.isAIEnhanced && (
-              <Badge variant="outline" className="ml-2 flex items-center">
+              <Badge variant="outline" className="flex items-center">
                 <Sparkles className="h-3 w-3 mr-1 text-blue-500" />
-                AI Enhanced
+                <span className="hidden sm:inline">AI Enhanced</span>
+                <span className="sm:hidden">AI</span>
               </Badge>
             )}
           </CardTitle>
-          <div className="flex gap-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={cleanupText} 
-              className="h-8 text-xs"
-            >
-              <Sparkles className="h-3.5 w-3.5 mr-1" />
-              Clean up
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={cleanupText} 
+            className="h-8 text-xs self-end sm:self-auto"
+          >
+            <Sparkles className="h-3.5 w-3.5 sm:mr-1" />
+            <span className="hidden sm:inline ml-1">Clean up</span>
+          </Button>
         </div>
         {metrics && (
-          <div className="flex gap-2 mt-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2 mt-2">
             <Badge variant="outline" className="text-xs">
-              Engagement: <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.engagementScore)}`}>{metrics.engagementScore}</span>
+              <span className="hidden sm:inline">Engagement: </span>
+              <span className="sm:hidden">Eng: </span>
+              <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.engagementScore)}`}>{metrics.engagementScore}</span>
             </Badge>
             <Badge variant="outline" className="text-xs">
-              Reach: <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.reachScore)}`}>{metrics.reachScore}</span>
+              <span className="hidden sm:inline">Reach: </span>
+              <span className="sm:hidden">Reach: </span>
+              <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.reachScore)}`}>{metrics.reachScore}</span>
             </Badge>
             <Badge variant="outline" className="text-xs">
-              Virality: <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.viralityScore)}`}>{metrics.viralityScore}</span>
+              <span className="hidden sm:inline">Virality: </span>
+              <span className="sm:hidden">Viral: </span>
+              <span className={`ml-1 px-1.5 rounded-sm text-white ${getScoreColor(metrics.viralityScore)}`}>{metrics.viralityScore}</span>
             </Badge>
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6">
         <div className="relative">
           <Textarea
             value={content}
             onChange={handleChange}
             placeholder=""
-            className="min-h-[240px] resize-y font-sans text-base leading-relaxed p-4"
+            className="min-h-[200px] sm:min-h-[240px] resize-y font-sans text-sm sm:text-base leading-relaxed p-3 sm:p-4"
           />
           {showPlaceholder && (
-            <div className="absolute top-0 left-0 p-4 text-gray-400 pointer-events-none">
+            <div className="absolute top-0 left-0 p-3 sm:p-4 text-gray-400 pointer-events-none text-sm sm:text-base">
               Type your LinkedIn post here...
             </div>
           )}
         </div>
       </CardContent>
       {metrics?.recommendedHashtags?.length > 0 && (
-        <CardFooter className="flex-col items-start pt-0">
-          <div className="flex items-center mb-2">
-            <Hash className="h-4 w-4 mr-1 text-blue-500" />
-            <span className="text-sm font-medium">AI Recommended Hashtags:</span>
+        <CardFooter className="flex-col items-start pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 w-full">
+            <div className="flex items-center">
+              <Hash className="h-4 w-4 mr-1 text-blue-500" />
+              <span className="text-sm font-medium">AI Recommended:</span>
+            </div>
             <Button 
               variant="link" 
               size="sm" 
               onClick={addRecommendedHashtags} 
-              className="text-xs ml-2 h-6 p-0"
+              className="text-xs h-6 p-0 self-start sm:ml-2"
             >
               Add to post
             </Button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {metrics.recommendedHashtags.map((tag, i) => (
               <Badge key={i} variant="secondary" className="text-xs">
                 {tag}

@@ -62,31 +62,33 @@ export function PerformanceLineChart({
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+      <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-lg sm:text-xl">{title}</CardTitle>
         <p className="text-sm text-muted-foreground">
           Dynamic performance tracking - updates as you type
         </p>
       </CardHeader>
-      <CardContent>
-        <div className="h-[350px]">
+      <CardContent className="px-3 sm:px-6">
+        <div className="h-[280px] sm:h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={data}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis 
                 dataKey="time" 
                 stroke="#888" 
-                fontSize={12}
-                tick={{ fontSize: 12 }}
+                fontSize={11}
+                tick={{ fontSize: 11 }}
+                interval={0}
               />
               <YAxis 
                 stroke="#888" 
-                fontSize={12}
-                tick={{ fontSize: 12 }}
+                fontSize={10}
+                tick={{ fontSize: 10 }}
                 domain={[0, 100]}
+                width={30}
               />
               <Tooltip
                 contentStyle={{
@@ -98,7 +100,8 @@ export function PerformanceLineChart({
                 labelStyle={{ fontWeight: 'bold', color: '#333' }}
               />
               <Legend 
-                wrapperStyle={{ paddingTop: '20px' }}
+                wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }}
+                iconSize={12}
               />
               
               {/* Post 1 Lines */}

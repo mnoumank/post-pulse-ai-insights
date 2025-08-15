@@ -55,22 +55,22 @@ export function SuggestionCards({ suggestions, title }: SuggestionCardsProps) {
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{title}</CardTitle>
+      <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-base sm:text-lg">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 pt-0">
+      <CardContent className="space-y-3 sm:space-y-4 pt-0 px-3 sm:px-6 pb-3 sm:pb-6">
         {suggestions.map((suggestion) => (
           <Card key={suggestion.id} className="overflow-hidden bg-muted/50">
-            <div className="flex p-4">
-              <div className="mr-3 flex-shrink-0">{getIcon(suggestion.type)}</div>
-              <div className="space-y-1">
-                <div className="flex items-center">
-                  <h4 className="font-medium">{suggestion.title}</h4>
-                  <Badge className={`ml-2 ${getBadgeColor(suggestion.type)}`}>
+            <div className="flex p-3 sm:p-4">
+              <div className="mr-2 sm:mr-3 flex-shrink-0">{getIcon(suggestion.type)}</div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
+                  <h4 className="font-medium text-sm sm:text-base">{suggestion.title}</h4>
+                  <Badge className={`self-start sm:ml-2 text-xs ${getBadgeColor(suggestion.type)}`}>
                     {suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{suggestion.description}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{suggestion.description}</p>
               </div>
             </div>
           </Card>
