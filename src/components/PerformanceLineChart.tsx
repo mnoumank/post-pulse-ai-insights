@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -7,8 +8,8 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  Legend
+  Legend, 
+  ResponsiveContainer 
 } from 'recharts';
 import { PostMetrics } from '@/utils/improvedPostAnalyzer';
 
@@ -21,163 +22,142 @@ interface PerformanceLineChartProps {
 export function PerformanceLineChart({ 
   metrics1, 
   metrics2, 
-  title = "Real-time Performance Comparison" 
+  title = "Performance Metrics Over Time" 
 }: PerformanceLineChartProps) {
-
   // If no metrics, show placeholder
   if (!metrics1 && !metrics2) {
     return (
-      <Card className="w-full bg-white border border-gray-200">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
+      <Card className="w-full">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
-        <CardContent className="h-[350px] flex items-center justify-center">
-          <p className="text-gray-500">Enter post content to see performance comparison</p>
+        <CardContent className="h-[350px] flex items-center justify-center bg-muted/30">
+          <p className="text-muted-foreground">Enter post content to see performance comparison</p>
         </CardContent>
       </Card>
     );
   }
 
   // Create time-series data for the line chart
-  const timePoints = [0, 2, 6, 12, 18, 24];
+  const timePoints = ['0h', '2h', '6h', '12h', '18h', '24h'];
   
-  const data = timePoints.map((time) => {
+  const data = timePoints.map((time, index) => {
     // Calculate cumulative engagement over time with realistic curves
-    const timeMultiplier = time === 0 ? 0.1 : 
-                          time === 2 ? 0.3 : 
-                          time === 6 ? 0.7 : 
-                          time === 12 ? 1.0 : 
-                          time === 18 ? 0.8 : 0.6;
-
-    const post1Score = metrics1 ? Math.round(metrics1.engagementScore * timeMultiplier) : 0;
-    const post2Score = metrics2 ? Math.round(metrics2.engagementScore * timeMultiplier) : 0;
+    const timeMultiplier = index === 0 ? 0.1 : 
+                          index === 1 ? 0.3 : 
+                          index === 2 ? 0.7 : 
+                          index === 3 ? 1.0 : 
+                          index === 4 ? 0.8 : 0.6;
 
     return {
-      time: `${time}h`,
-      'Post A': post1Score,
-      'Post B': post2Score,
+      time,
+      'Post 1 Engagement': metrics1 ? Math.round(metrics1.engagementScore * timeMultiplier) : 0,
+      'Post 2 Engagement': metrics2 ? Math.round(metrics2.engagementScore * timeMultiplier) : 0,
+      'Post 1 Reach': metrics1 ? Math.round(metrics1.reachScore * timeMultiplier * 0.9) : 0,
+      'Post 2 Reach': metrics2 ? Math.round(metrics2.reachScore * timeMultiplier * 0.9) : 0,
+      'Post 1 Virality': metrics1 ? Math.round(metrics1.viralityScore * timeMultiplier * 0.7) : 0,
+      'Post 2 Virality': metrics2 ? Math.round(metrics2.viralityScore * timeMultiplier * 0.7) : 0,
     };
   });
 
-  // Custom tooltip component
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white border border-gray-200 rounded-md shadow-sm p-3">
-          <p className="font-medium text-gray-900 mb-2">{`Time: ${label}`}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-sm text-gray-700">
-                {entry.name}: <span className="font-semibold">{entry.value}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Custom dot component
-  const CustomDot = (props: any) => {
-    const { cx, cy } = props;
-    return (
-      <circle
-        cx={cx}
-        cy={cy}
-        r={4}
-        fill={props.stroke}
-        stroke={props.stroke}
-        strokeWidth={2}
-      />
-    );
-  };
-
-  // Custom legend component
-  const CustomLegend = (props: any) => {
-    const { payload } = props;
-    return (
-      <div className="flex items-center justify-end gap-6 mb-4">
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-2">
-            <div 
-              className="w-4 h-0.5"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-sm font-medium text-gray-700">{entry.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
-    <Card className="w-full bg-white border border-gray-200">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
-        <p className="text-sm text-gray-600 mt-1">
-          Engagement Score Over Time
+    <Card className="w-full">
+      <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+        <CardTitle className="text-lg sm:text-xl">{title}</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Dynamic performance tracking - updates as you type
         </p>
       </CardHeader>
-      
-      <CardContent>
-        <CustomLegend payload={[
-          { value: 'Post A', color: '#0A66C2' },
-          { value: 'Post B', color: '#6E6E6E' }
-        ]} />
-        
-        <div className="h-[350px]">
+      <CardContent className="px-3 sm:px-6">
+        <div className="h-[280px] sm:h-[350px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={data}
-              margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+              margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
             >
-              <CartesianGrid 
-                strokeDasharray="0" 
-                stroke="#E0E0E0" 
-                horizontal={true}
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
               <XAxis 
                 dataKey="time" 
-                stroke="#333333" 
-                fontSize={12}
-                tick={{ fontSize: 12, fill: '#333333' }}
-                axisLine={{ stroke: '#E0E0E0' }}
-                tickLine={{ stroke: '#E0E0E0' }}
-                label={{ value: 'Time (hours)', position: 'insideBottom', offset: -10, style: { textAnchor: 'middle', fill: '#333333', fontSize: '12px' } }}
+                stroke="#888" 
+                fontSize={11}
+                tick={{ fontSize: 11 }}
+                interval={0}
               />
               <YAxis 
-                stroke="#333333" 
-                fontSize={12}
-                tick={{ fontSize: 12, fill: '#333333' }}
+                stroke="#888" 
+                fontSize={10}
+                tick={{ fontSize: 10 }}
                 domain={[0, 100]}
-                axisLine={{ stroke: '#E0E0E0' }}
-                tickLine={{ stroke: '#E0E0E0' }}
-                label={{ value: 'Engagement Score', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#333333', fontSize: '12px' } }}
+                width={30}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'white',
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                }}
+                labelStyle={{ fontWeight: 'bold', color: '#333' }}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }}
+                iconSize={12}
+              />
               
+              {/* Post 1 Lines */}
               <Line
                 type="monotone"
-                dataKey="Post A"
-                stroke="#0A66C2"
-                strokeWidth={2}
-                dot={<CustomDot />}
-                activeDot={{ r: 6, stroke: '#0A66C2', strokeWidth: 2, fill: '#0A66C2' }}
+                dataKey="Post 1 Engagement"
+                stroke="#0077B5"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6, stroke: '#0077B5', strokeWidth: 2 }}
               />
-              
               <Line
                 type="monotone"
-                dataKey="Post B"
-                stroke="#6E6E6E"
+                dataKey="Post 1 Reach"
+                stroke="#4A90B8"
                 strokeWidth={2}
-                dot={<CustomDot />}
-                activeDot={{ r: 6, stroke: '#6E6E6E', strokeWidth: 2, fill: '#6E6E6E' }}
+                strokeDasharray="5 5"
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="Post 1 Virality"
+                stroke="#7DAAC2"
+                strokeWidth={2}
+                strokeDasharray="2 2"
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+              
+              {/* Post 2 Lines */}
+              <Line
+                type="monotone"
+                dataKey="Post 2 Engagement"
+                stroke="#E74C3C"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6, stroke: '#E74C3C', strokeWidth: 2 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="Post 2 Reach"
+                stroke="#F39C12"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="Post 2 Virality"
+                stroke="#F7DC6F"
+                strokeWidth={2}
+                strokeDasharray="2 2"
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
               />
             </LineChart>
           </ResponsiveContainer>
