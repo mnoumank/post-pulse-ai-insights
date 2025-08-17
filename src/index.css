@@ -80,6 +80,27 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Premium Chart Colors */
+    --chart-bg: 240 10% 3.9%;
+    --chart-grid: 240 10% 15%;
+    --chart-text: 240 5% 64.9%;
+    
+    /* Gradient Colors */
+    --neon-blue-start: 199 89% 48%;
+    --neon-blue-end: 217 100% 68%;
+    --neon-cyan-start: 180 100% 50%;
+    --neon-cyan-end: 200 100% 70%;
+    
+    --fire-red-start: 0 100% 60%;
+    --fire-red-end: 25 100% 50%;
+    --fire-orange-start: 25 100% 50%;
+    --fire-orange-end: 45 100% 60%;
+    
+    --electric-purple-start: 270 100% 60%;
+    --electric-purple-end: 290 100% 70%;
+    --electric-pink-start: 320 100% 60%;
+    --electric-pink-end: 340 100% 70%;
   }
 }
 
@@ -90,5 +111,109 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Premium Chart Styles */
+  .premium-chart-container {
+    background: linear-gradient(135deg, hsl(var(--chart-bg)) 0%, hsl(240 8% 6%) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .premium-chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 20%, hsla(var(--neon-blue-start), 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, hsla(var(--fire-red-start), 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    animation: gradient-shift 8s ease-in-out infinite;
+  }
+  
+  .chart-grid-glow {
+    filter: drop-shadow(0 0 1px hsl(var(--chart-grid)));
+  }
+  
+  .legend-pill {
+    @apply inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-all duration-300 cursor-pointer;
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+  }
+  
+  .legend-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+  
+  .legend-pill.active {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+  
+  .premium-tooltip {
+    @apply rounded-xl border-0 shadow-2xl backdrop-blur-md;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: tooltip-appear 0.2s ease-out;
+  }
+  
+  .data-point-glow {
+    filter: drop-shadow(0 0 6px currentColor);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .winning-line {
+    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+  }
+}
+
+@layer utilities {
+  @keyframes gradient-shift {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+  
+  @keyframes tooltip-appear {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+  
+  @keyframes line-draw {
+    from { stroke-dashoffset: 1000; }
+    to { stroke-dashoffset: 0; }
+  }
+  
+  @keyframes confetti-burst {
+    0% { transform: scale(0) rotate(0deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+    100% { transform: scale(0.8) rotate(360deg); opacity: 0; }
+  }
+  
+  .animate-line-draw {
+    stroke-dasharray: 1000;
+    animation: line-draw 2s ease-out forwards;
+  }
+  
+  .animate-confetti {
+    animation: confetti-burst 1s ease-out;
   }
 }
