@@ -52,6 +52,14 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				chart: {
+					primary: 'hsl(var(--chart-primary))',
+					secondary: 'hsl(var(--chart-secondary))',
+					grid: 'hsl(var(--chart-grid))',
+					background: 'hsl(var(--chart-background))',
+					tooltip: 'hsl(var(--chart-tooltip))',
+					hover: 'hsl(var(--chart-hover))'
+				},
 				linkedin: {
 					DEFAULT: '#0077B5',
 					light: '#0073b1',
@@ -90,11 +98,42 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'draw-line': {
+					from: {
+						strokeDashoffset: '1000'
+					},
+					to: {
+						strokeDashoffset: '0'
+					}
+				},
+				'fade-in-scale': {
+					from: {
+						opacity: '0',
+						transform: 'scale(0.8)'
+					},
+					to: {
+						opacity: '1',
+						transform: 'scale(1)'
+					}
+				},
+				'pulse-dot': {
+					'0%, 100%': {
+						opacity: '1',
+						transform: 'scale(1)'
+					},
+					'50%': {
+						opacity: '0.8',
+						transform: 'scale(1.1)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'draw-line': 'draw-line 1.5s ease-out',
+				'fade-in-scale': 'fade-in-scale 0.3s ease-out',
+				'pulse-dot': 'pulse-dot 2s ease-in-out infinite'
 			}
 		}
 	},
