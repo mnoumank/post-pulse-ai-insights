@@ -24,11 +24,7 @@ interface PerformanceLineChartProps {
 
 interface VisibilityState {
   post1Engagement: boolean;
-  post1Reach: boolean;
-  post1Virality: boolean;
   post2Engagement: boolean;
-  post2Reach: boolean;
-  post2Virality: boolean;
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -88,11 +84,7 @@ export function PerformanceLineChart({
 }: PerformanceLineChartProps) {
   const [visibility, setVisibility] = useState<VisibilityState>({
     post1Engagement: true,
-    post1Reach: true,
-    post1Virality: true,
     post2Engagement: true,
-    post2Reach: true,
-    post2Virality: true,
   });
 
   const [highlightWinner, setHighlightWinner] = useState(false);
@@ -127,21 +119,13 @@ export function PerformanceLineChart({
 
     const post1Engagement = metrics1 ? Math.round(metrics1.engagementScore * timeMultiplier) : 0;
     const post2Engagement = metrics2 ? Math.round(metrics2.engagementScore * timeMultiplier) : 0;
-    const post1Reach = metrics1 ? Math.round(metrics1.reachScore * timeMultiplier * 0.9) : 0;
-    const post2Reach = metrics2 ? Math.round(metrics2.reachScore * timeMultiplier * 0.9) : 0;
-    const post1Virality = metrics1 ? Math.round(metrics1.viralityScore * timeMultiplier * 0.7) : 0;
-    const post2Virality = metrics2 ? Math.round(metrics2.viralityScore * timeMultiplier * 0.7) : 0;
 
     return {
       time,
       'Post 1 Engagement': post1Engagement,
       'Post 2 Engagement': post2Engagement,
-      'Post 1 Reach': post1Reach,
-      'Post 2 Reach': post2Reach,
-      'Post 1 Virality': post1Virality,
-      'Post 2 Virality': post2Virality,
       // Helper for winner detection
-      winner: Math.max(post1Engagement, post2Engagement, post1Reach, post2Reach, post1Virality, post2Virality)
+      winner: Math.max(post1Engagement, post2Engagement)
     };
   }), [metrics1, metrics2]);
 
@@ -151,11 +135,7 @@ export function PerformanceLineChart({
 
   const legendData = [
     { key: 'post1Engagement', label: 'Post 1 Engagement', color: 'hsl(var(--chart-primary))', visible: visibility.post1Engagement },
-    { key: 'post1Reach', label: 'Post 1 Reach', color: 'hsl(var(--chart-primary))', visible: visibility.post1Reach, opacity: 0.7 },
-    { key: 'post1Virality', label: 'Post 1 Virality', color: 'hsl(var(--chart-primary))', visible: visibility.post1Virality, opacity: 0.5 },
     { key: 'post2Engagement', label: 'Post 2 Engagement', color: 'hsl(var(--chart-secondary))', visible: visibility.post2Engagement },
-    { key: 'post2Reach', label: 'Post 2 Reach', color: 'hsl(var(--chart-secondary))', visible: visibility.post2Reach, opacity: 0.7 },
-    { key: 'post2Virality', label: 'Post 2 Virality', color: 'hsl(var(--chart-secondary))', visible: visibility.post2Virality, opacity: 0.5 },
   ];
 
   return (
@@ -199,7 +179,6 @@ export function PerformanceLineChart({
                 className="w-3 h-3 rounded-full mr-1" 
                 style={{ 
                   backgroundColor: item.visible ? item.color : 'transparent',
-                  opacity: item.opacity || 1,
                   border: !item.visible ? `2px solid ${item.color}` : 'none'
                 }}
               />
@@ -254,7 +233,7 @@ export function PerformanceLineChart({
               />
               <Tooltip content={<CustomTooltip />} />
               
-              {/* Post 1 Lines */}
+              {/* Post 1 Engagement */}
               {visibility.post1Engagement && (
                 <Line
                   type="monotone"
@@ -266,32 +245,8 @@ export function PerformanceLineChart({
                   className="animate-draw-line"
                 />
               )}
-              {visibility.post1Reach && (
-                <Line
-                  type="monotone"
-                  dataKey="Post 1 Reach"
-                  stroke="hsl(var(--chart-primary))"
-                  strokeWidth={2}
-                  strokeOpacity={0.7}
-                  strokeDasharray="5 5"
-                  dot={<CustomDot />}
-                  activeDot={{ r: 6 }}
-                />
-              )}
-              {visibility.post1Virality && (
-                <Line
-                  type="monotone"
-                  dataKey="Post 1 Virality"
-                  stroke="hsl(var(--chart-primary))"
-                  strokeWidth={2}
-                  strokeOpacity={0.5}
-                  strokeDasharray="2 2"
-                  dot={<CustomDot />}
-                  activeDot={{ r: 5 }}
-                />
-              )}
               
-              {/* Post 2 Lines */}
+              {/* Post 2 Engagement */}
               {visibility.post2Engagement && (
                 <Line
                   type="monotone"
@@ -301,30 +256,6 @@ export function PerformanceLineChart({
                   dot={<CustomDot />}
                   activeDot={{ r: 7, stroke: 'hsl(var(--chart-secondary))', strokeWidth: 2, fill: 'hsl(var(--chart-secondary))' }}
                   className="animate-draw-line"
-                />
-              )}
-              {visibility.post2Reach && (
-                <Line
-                  type="monotone"
-                  dataKey="Post 2 Reach"
-                  stroke="hsl(var(--chart-secondary))"
-                  strokeWidth={2}
-                  strokeOpacity={0.7}
-                  strokeDasharray="5 5"
-                  dot={<CustomDot />}
-                  activeDot={{ r: 6 }}
-                />
-              )}
-              {visibility.post2Virality && (
-                <Line
-                  type="monotone"
-                  dataKey="Post 2 Virality"
-                  stroke="hsl(var(--chart-secondary))"
-                  strokeWidth={2}
-                  strokeOpacity={0.5}
-                  strokeDasharray="2 2"
-                  dot={<CustomDot />}
-                  activeDot={{ r: 5 }}
                 />
               )}
             </LineChart>
