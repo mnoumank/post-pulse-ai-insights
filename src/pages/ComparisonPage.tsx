@@ -8,7 +8,11 @@ import { SuggestionCards } from '@/components/SuggestionCards';
 import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { PostComparisonProvider, usePostComparison } from '@/context/PostComparisonContext';
+import { useFeedbackTracker } from '@/hooks/useFeedbackTracker';
+import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { Trash2 } from 'lucide-react';
 
 function ComparisonPageContent() {
   const { 
@@ -25,8 +29,11 @@ function ComparisonPageContent() {
     updateAdvancedParams,
     analyzePost,
     isAnalyzing,
-    saveComparison
+    saveComparison,
+    clearPosts
   } = usePostComparison();
+
+  const { showFeedback, closeFeedback, trackOperation } = useFeedbackTracker();
   
   const [isAdvancedVisible, setIsAdvancedVisible] = useState(false);
   const [lastAnalyzedA, setLastAnalyzedA] = useState('');
@@ -44,9 +51,9 @@ function ComparisonPageContent() {
       console.log('Auto-analyzing posts - improved scoring system active');
       setLastAnalyzedA(postA);
       setLastAnalyzedB(postB);
-      analyzePost(postA, postB);
+      analyzePost(postA, postB).then(() => trackOperation());
     }
-  }, [postA, postB, analyzePost, lastAnalyzedA, lastAnalyzedB, isAnalyzing]);
+  }, [postA, postB, analyzePost, lastAnalyzedA, lastAnalyzedB, isAnalyzing, trackOperation]);
 
   // Debug logging to verify scoring system
   useEffect(() => {
@@ -91,11 +98,22 @@ function ComparisonPageContent() {
         <Navbar />
         
         <main className="flex-1 container py-4 px-4 max-w-7xl mx-auto sm:py-8">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
-            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-              Real-time post comparison with AI-powered insights
-            </p>
+          <div className="mb-6 sm:mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Compare LinkedIn Posts</h1>
+              <p className="text-muted-foreground mt-2 text-sm sm:text-base">
+                Real-time post comparison with AI-powered insights
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={clearPosts}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear Posts
+            </Button>
           </div>
 
           <div className="space-y-6 sm:space-y-8">
@@ -188,6 +206,12 @@ function ComparisonPageContent() {
             )}
           </div>
         </main>
+        
+        <FeedbackDialog 
+          open={showFeedback} 
+          onOpenChange={closeFeedback}
+          page="comparison"
+        />
       </div>
     </PageTransition>
   );

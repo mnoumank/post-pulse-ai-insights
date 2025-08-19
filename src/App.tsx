@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ContentPersistenceProvider } from "./context/ContentPersistenceContext";
 import LandingPage from "./pages/LandingPage";
 import CreatePostPage from "./pages/CreatePostPage";
 import ComparisonPage from "./pages/ComparisonPage";
@@ -21,19 +22,21 @@ const App = () => (
     <TooltipProvider>
       <ThemeProvider>
         <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/create" element={<CreatePostPage />} />
-              <Route path="/compare" element={<ComparisonPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-          <SpeedInsights />
-          <Analytics />
+          <ContentPersistenceProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/create" element={<CreatePostPage />} />
+                <Route path="/compare" element={<ComparisonPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+            <SpeedInsights />
+            <Analytics />
+          </ContentPersistenceProvider>
         </AuthProvider>
       </ThemeProvider>
     </TooltipProvider>

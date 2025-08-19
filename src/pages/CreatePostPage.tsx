@@ -13,15 +13,33 @@ import { ViralityDashboard } from '@/components/ViralityDashboard';
 import { PostOptimizer } from '@/components/PostOptimizer';
 import { ContentCategorySelector } from '@/components/ContentCategorySelector';
 import { analyzePostVirality } from '@/utils/enhancedViralityAnalyzer';
+import { useContentPersistence } from '@/context/ContentPersistenceContext';
+import { useFeedbackTracker } from '@/hooks/useFeedbackTracker';
+import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { Trash2 } from 'lucide-react';
 
 export default function CreatePostPage() {
-  const [userIdea, setUserIdea] = useState('');
-  const [selectedHook, setSelectedHook] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [generatedPost, setGeneratedPost] = useState('');
+  const { createPostState, updateCreatePostState, clearCreatePostState } = useContentPersistence();
+  const { showFeedback, closeFeedback, trackOperation } = useFeedbackTracker();
+  
+  const [userIdea, setUserIdea] = useState(createPostState.userIdea);
+  const [selectedHook, setSelectedHook] = useState(createPostState.selectedHook);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(createPostState.selectedCategory || null);
+  const [generatedPost, setGeneratedPost] = useState(createPostState.generatedPost);
+  const [activeTab, setActiveTab] = useState(createPostState.activeTab || 'idea');
   const [isGenerating, setIsGenerating] = useState(false);
   const [viralityData, setViralityData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState('idea');
+
+  // Update persistent storage when state changes
+  React.useEffect(() => {
+    updateCreatePostState({
+      userIdea,
+      selectedHook,
+      selectedCategory: selectedCategory || '',
+      generatedPost,
+      activeTab,
+    });
+  }, [userIdea, selectedHook, selectedCategory, generatedPost, activeTab, updateCreatePostState]);
 
   const analyzeContent = useCallback(async (content: string) => {
     if (!content.trim()) {
@@ -74,6 +92,9 @@ export default function CreatePostPage() {
       await analyzeContent(data.post);
       setActiveTab('optimize');
       
+      // Track successful operation for feedback
+      await trackOperation();
+      
       toast({
         title: 'Success',
         description: 'Virality-optimized LinkedIn post generated!',
@@ -95,6 +116,20 @@ export default function CreatePostPage() {
     analyzeContent(content);
   };
 
+  const handleClearAll = () => {
+    setUserIdea('');
+    setSelectedHook('');
+    setSelectedCategory(null);
+    setGeneratedPost('');
+    setActiveTab('idea');
+    setViralityData(null);
+    clearCreatePostState();
+    toast({
+      title: 'Cleared',
+      description: 'All content has been cleared.',
+    });
+  };
+
   React.useEffect(() => {
     if (generatedPost.trim()) {
       analyzeContent(generatedPost);
@@ -107,11 +142,22 @@ export default function CreatePostPage() {
         <Navbar />
         
         <main className="flex-1 container py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Create Viral LinkedIn Post</h1>
-            <p className="text-muted-foreground mt-2">
-              AI-powered content creation with real-time virality optimization
-            </p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Create Viral LinkedIn Post</h1>
+              <p className="text-muted-foreground mt-2">
+                AI-powered content creation with real-time virality optimization
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleClearAll}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear All
+            </Button>
           </div>
 
           <div className="max-w-7xl mx-auto">
@@ -213,6 +259,12 @@ export default function CreatePostPage() {
             </Tabs>
           </div>
         </main>
+        
+        <FeedbackDialog 
+          open={showFeedback} 
+          onOpenChange={closeFeedback}
+          page="create-post"
+        />
       </div>
     </PageTransition>
   );

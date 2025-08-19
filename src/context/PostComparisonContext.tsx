@@ -13,12 +13,14 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentUser } from '@/utils/auth/profiles';
 import { saveComparison as saveComparisonRecord } from '@/utils/auth/comparisons';
+import { useContentPersistence } from './ContentPersistenceContext';
 
 interface PostComparisonContextType {
   postA: string;
   postB: string;
   setPostA: (content: string) => void;
   setPostB: (content: string) => void;
+  clearPosts: () => void;
   analysisA: AIPostMetrics | null;
   analysisB: AIPostMetrics | null;
   enhancedAnalysisA: HybridAnalysisResult | null;
@@ -53,12 +55,13 @@ const defaultAdvancedParams: AdvancedAnalysisParams = {
 const PostComparisonContext = createContext<PostComparisonContextType | undefined>(undefined);
 
 export function PostComparisonProvider({ children }: { children: ReactNode }) {
-  const [postA, setPostA] = useState('');
-  const [postB, setPostB] = useState('');
-  const [analysisA, setAnalysisA] = useState<AIPostMetrics | null>(null);
-  const [analysisB, setAnalysisB] = useState<AIPostMetrics | null>(null);
-  const [enhancedAnalysisA, setEnhancedAnalysisA] = useState<HybridAnalysisResult | null>(null);
-  const [enhancedAnalysisB, setEnhancedAnalysisB] = useState<HybridAnalysisResult | null>(null);
+  const { comparisonState, updateComparisonState, clearComparisonState } = useContentPersistence();
+  const [postA, setPostA] = useState(comparisonState.postA);
+  const [postB, setPostB] = useState(comparisonState.postB);
+  const [analysisA, setAnalysisA] = useState<AIPostMetrics | null>(comparisonState.analysisResults?.analysisA || null);
+  const [analysisB, setAnalysisB] = useState<AIPostMetrics | null>(comparisonState.analysisResults?.analysisB || null);
+  const [enhancedAnalysisA, setEnhancedAnalysisA] = useState<HybridAnalysisResult | null>(comparisonState.analysisResults?.enhancedAnalysisA || null);
+  const [enhancedAnalysisB, setEnhancedAnalysisB] = useState<HybridAnalysisResult | null>(comparisonState.analysisResults?.enhancedAnalysisB || null);
   const [timeSeries1, setTimeSeries1] = useState<TimeSeriesData[]>([]);
   const [timeSeries2, setTimeSeries2] = useState<TimeSeriesData[]>([]);
   const [suggestions1, setSuggestions1] = useState<PostSuggestion[]>([]);
@@ -69,6 +72,32 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAIEnabled, setIsAIEnabled] = useState(false);
   const [analysisMethod, setAnalysisMethod] = useState<'enhanced' | 'legacy'>('enhanced');
+
+  // Update persistent storage when posts change
+  const handleSetPostA = (content: string) => {
+    setPostA(content);
+    updateComparisonState({ postA: content });
+  };
+
+  const handleSetPostB = (content: string) => {
+    setPostB(content);
+    updateComparisonState({ postB: content });
+  };
+
+  const clearPosts = () => {
+    setPostA('');
+    setPostB('');
+    setAnalysisA(null);
+    setAnalysisB(null);
+    setEnhancedAnalysisA(null);
+    setEnhancedAnalysisB(null);
+    setTimeSeries1([]);
+    setTimeSeries2([]);
+    setSuggestions1([]);
+    setSuggestions2([]);
+    setComparison(null);
+    clearComparisonState();
+  };
 
   const handleAnalyzePost = useCallback(async (postAContent: string, postBContent: string) => {
     if (isAnalyzing || !postAContent.trim() || !postBContent.trim()) {
@@ -111,6 +140,16 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         // Set legacy format for compatibility
         setAnalysisA(hybridResultA.legacy);
         setAnalysisB(hybridResultB.legacy);
+
+        // Update persistent storage with analysis results
+        updateComparisonState({
+          analysisResults: {
+            analysisA: hybridResultA.legacy,
+            analysisB: hybridResultB.legacy,
+            enhancedAnalysisA: hybridResultA,
+            enhancedAnalysisB: hybridResultB,
+          }
+        });
         
         // Generate suggestions based on enhanced analysis
         const enhancedSuggestionsA = generateEnhancedSuggestions(hybridResultA.enhanced);
@@ -152,6 +191,16 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
         
         setAnalysisA(combinedMetricsA);
         setAnalysisB(combinedMetricsB);
+
+        // Update persistent storage with analysis results
+        updateComparisonState({
+          analysisResults: {
+            analysisA: combinedMetricsA,
+            analysisB: combinedMetricsB,
+            enhancedAnalysisA: null,
+            enhancedAnalysisB: null,
+          }
+        });
         
         const postSuggestionsA = generateSuggestions(postAContent);
         const postSuggestionsB = generateSuggestions(postBContent);
@@ -273,8 +322,9 @@ export function PostComparisonProvider({ children }: { children: ReactNode }) {
       value={{
         postA,
         postB,
-        setPostA,
-        setPostB,
+        setPostA: handleSetPostA,
+        setPostB: handleSetPostB,
+        clearPosts,
         analysisA,
         analysisB,
         enhancedAnalysisA,

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -140,6 +140,33 @@ export type Database = {
           },
         ]
       }
+      feedback: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          page: string | null
+          rating: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          page?: string | null
+          rating?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          page?: string | null
+          rating?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           content: string
@@ -182,6 +209,36 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          feedback_shown_count: number | null
+          id: string
+          last_feedback_shown: string | null
+          never_show_feedback: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_shown_count?: number | null
+          id?: string
+          last_feedback_shown?: string | null
+          never_show_feedback?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_shown_count?: number | null
+          id?: string
+          last_feedback_shown?: string | null
+          never_show_feedback?: boolean | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
