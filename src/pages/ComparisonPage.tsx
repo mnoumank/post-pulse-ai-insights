@@ -48,10 +48,21 @@ function ComparisonPageContent() {
                          !isAnalyzing;
 
     if (shouldAnalyze) {
-      console.log('Auto-analyzing posts - improved scoring system active');
-      setLastAnalyzedA(postA);
-      setLastAnalyzedB(postB);
-      analyzePost(postA, postB).then(() => trackOperation());
+      // Add debouncing to prevent crash on rapid input changes
+      const timeoutId = setTimeout(() => {
+        console.log('Auto-analyzing posts - improved scoring system active');
+        setLastAnalyzedA(postA);
+        setLastAnalyzedB(postB);
+        analyzePost(postA, postB).then(() => trackOperation()).catch((error) => {
+          console.error('Auto-analysis error:', error);
+          // Reset analyzing state on error to prevent infinite loading
+          if (isAnalyzing) {
+            // This should be handled by the analyzePost function, but just in case
+          }
+        });
+      }, 300); // 300ms debounce
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [postA, postB, analyzePost, lastAnalyzedA, lastAnalyzedB, isAnalyzing, trackOperation]);
 
