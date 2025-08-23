@@ -10,6 +10,9 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ContentPersistenceProvider } from "./context/ContentPersistenceContext";
 import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import CreatePostPage from "./pages/CreatePostPage";
 import ComparisonPage from "./pages/ComparisonPage";
 import HistoryPage from "./pages/HistoryPage";
@@ -28,6 +31,9 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/create" element={<CreatePostPage />} />
                 <Route path="/compare" element={<ComparisonPage />} />
                 <Route path="/history" element={<HistoryPage />} />

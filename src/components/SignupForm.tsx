@@ -98,21 +98,21 @@ export function SignupForm() {
 
   return (
     <PageTransition>
-      <Card className="w-full max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl">Create an account</CardTitle>
-          <CardDescription>
-            Start optimizing your LinkedIn posts today
+      <Card className="w-full border-0 shadow-2xl bg-card/95 backdrop-blur-sm">
+        <CardHeader className="text-center pb-2">
+          <CardTitle className="text-2xl font-semibold text-foreground">Create your account</CardTitle>
+          <CardDescription className="text-base text-muted-foreground">
+            Join Post Pulse AI and optimize your content
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-8 pb-6">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <Alert variant="destructive" className="mb-4">
+              <Alert variant="destructive" className="mb-6 border-destructive/20 bg-destructive/5">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
@@ -120,7 +120,7 @@ export function SignupForm() {
           )}
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {['name', 'email', 'password', 'confirmPassword'].map((fieldName) => {
                 const config = getFieldConfig(fieldName);
                 return (
@@ -130,20 +130,18 @@ export function SignupForm() {
                     name={fieldName as any}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{config.label}</FormLabel>
+                        <FormLabel className="text-sm font-medium text-foreground">{config.label}</FormLabel>
                         <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={config.type}
-                              placeholder={config.placeholder}
-                              {...field}
-                              className={`${
-                                form.formState.errors[fieldName as keyof typeof form.formState.errors]
-                                  ? 'border-destructive focus-visible:ring-destructive'
-                                  : ''
-                              }`}
-                            />
-                          </div>
+                          <Input
+                            type={config.type}
+                            placeholder={config.placeholder}
+                            {...field}
+                            className={`h-12 text-base rounded-lg border-2 transition-all duration-200 ${
+                              form.formState.errors[fieldName as keyof typeof form.formState.errors]
+                                ? 'border-destructive focus-visible:ring-destructive'
+                                : 'border-input focus-visible:border-primary focus-visible:ring-primary/20'
+                            }`}
+                          />
                         </FormControl>
                         <FormMessage className="text-xs" />
                       </FormItem>
@@ -154,7 +152,7 @@ export function SignupForm() {
               
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full h-12 text-base font-semibold rounded-lg bg-primary hover:bg-primary/90 transition-all duration-200 shadow-lg hover:shadow-xl"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -168,21 +166,21 @@ export function SignupForm() {
                     Creating Account...
                   </>
                 ) : (
-                  'Sign Up'
+                  'Create Account'
                 )}
               </Button>
             </form>
           </Form>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="px-8 pt-0">
           <div className="text-sm text-muted-foreground text-center w-full">
             Already have an account?{' '}
             <Button 
               variant="link" 
-              className="p-0 h-auto" 
+              className="p-0 h-auto text-primary hover:text-primary/80 font-medium" 
               onClick={() => navigate('/login')}
             >
-              Log In
+              Sign In
             </Button>
           </div>
         </CardFooter>

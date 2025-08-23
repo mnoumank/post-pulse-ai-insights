@@ -22,6 +22,7 @@ import { motion } from 'framer-motion';
 import { PageTransition } from '@/components/PageTransition';
 import { loginRateLimit } from '@/utils/security/rateLimiting';
 import { generateCSRFToken, validateCSRFToken } from '@/utils/security/csrf';
+import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -32,6 +33,7 @@ export function LoginForm() {
   const { login, error, clearError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [csrfToken, setCsrfToken] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -154,9 +156,7 @@ export function LoginForm() {
                   variant="link" 
                   className="p-0 h-auto text-sm text-primary hover:text-primary/80"
                   type="button"
-                  onClick={() => toast.info("Password Reset", { 
-                    description: "Password reset feature coming soon. Use demo account for now." 
-                  })}
+                  onClick={() => setShowForgotPassword(true)}
                 >
                   Forgot password?
                 </Button>
@@ -214,6 +214,11 @@ export function LoginForm() {
           </div>
         </CardFooter>
       </Card>
+      
+      <ForgotPasswordDialog
+        open={showForgotPassword}
+        onOpenChange={setShowForgotPassword}
+      />
     </PageTransition>
   );
 }
