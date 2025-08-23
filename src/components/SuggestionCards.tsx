@@ -64,13 +64,13 @@ export function SuggestionCards({ suggestions, title }: SuggestionCardsProps) {
             <div className="flex p-3 sm:p-4">
               <div className="mr-2 sm:mr-3 flex-shrink-0">{getIcon(suggestion.type)}</div>
               <div className="space-y-1 min-w-0 flex-1 overflow-hidden">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
-                  <h4 className="font-medium text-sm sm:text-base break-words">{suggestion.title}</h4>
-                  <Badge className={`self-start sm:ml-2 text-xs ${getBadgeColor(suggestion.type)}`}>
+                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                  <h4 className="font-medium text-sm sm:text-base break-words hyphens-auto max-w-full">{suggestion.title}</h4>
+                  <Badge className={`self-start text-xs flex-shrink-0 ${getBadgeColor(suggestion.type)}`}>
                     {suggestion.type.charAt(0).toUpperCase() + suggestion.type.slice(1)}
                   </Badge>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground break-words overflow-wrap-anywhere">{suggestion.description}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground break-words hyphens-auto leading-relaxed max-w-full">{suggestion.description}</p>
               </div>
             </div>
           </Card>
