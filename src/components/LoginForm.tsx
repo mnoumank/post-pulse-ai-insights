@@ -49,14 +49,6 @@ export function LoginForm() {
     },
   });
 
-  const fillDemoAccount = () => {
-    form.setValue('email', 'demo@example.com');
-    form.setValue('password', 'password123');
-    
-    toast("Demo Account", {
-      description: "Demo credentials filled. Click Log In to continue."
-    });
-  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -185,22 +177,6 @@ export function LoginForm() {
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 px-8 pt-0">
-          <div className="relative w-full">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">or</span>
-            </div>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            className="w-full h-11 rounded-lg border-2 hover:bg-muted/50 transition-all duration-200" 
-            onClick={fillDemoAccount}
-          >
-            Try Demo Account
-          </Button>
           
           <div className="text-sm text-muted-foreground text-center pt-2">
             New to Post Pulse AI?{' '}

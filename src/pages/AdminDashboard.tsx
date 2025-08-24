@@ -39,7 +39,7 @@ export default function AdminDashboard() {
 
   // Check if user is admin (you can modify this logic based on your admin setup)
   useEffect(() => {
-    if (user?.email !== 'admin@postpulse.ai' && user?.email !== 'demo@example.com') {
+    if (user?.email !== 'admin@postpulse.ai') {
       navigate('/');
       toast.error('Access denied', {
         description: 'You do not have permission to access the admin dashboard.'
