@@ -35,12 +35,12 @@ export default function LandingPage() {
                   Get AI-driven insights on engagement, reach, and virality to maximize your professional impact.
                 </p>
                 <div className="flex flex-col gap-4 sm:flex-row lg:justify-start justify-center">
-                  <Button size="lg" onClick={() => navigate('/compare')} className="h-12 px-8">
-                    Start Analyzing Posts
+                  <Button size="lg" onClick={() => navigate('/signup')} className="h-12 px-8">
+                    Create Free Account
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="lg" onClick={() => navigate('/create')} className="h-12 px-8">
-                    Create AI Posts
+                  <Button variant="outline" size="lg" onClick={() => navigate('/login')} className="h-12 px-8">
+                    Log In
                   </Button>
                 </div>
               </div>
@@ -149,8 +149,8 @@ export default function LandingPage() {
             </div>
 
             <div className="text-center mt-8">
-              <Button onClick={() => navigate('/compare')} size="lg">
-                Try It Yourself
+              <Button onClick={() => navigate('/signup')} size="lg">
+                Get Started Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -257,11 +257,11 @@ export default function LandingPage() {
                 Ready to Boost Your LinkedIn Presence?
               </h2>
               <p className="mb-8 text-muted-foreground">
-                Start optimizing your LinkedIn posts today with AI-powered insights.
-                No sign-up required - just start analyzing!
+                Join thousands of professionals already using AI to optimize their LinkedIn presence.
+                Create your free account and start analyzing your posts in minutes!
               </p>
-              <Button size="lg" onClick={() => navigate('/compare')} className="h-12 px-8">
-                Get Started Now
+              <Button size="lg" onClick={() => navigate('/signup')} className="h-12 px-8">
+                Create Free Account
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
