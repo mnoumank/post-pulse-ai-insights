@@ -20,8 +20,6 @@ import { AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { PageTransition } from '@/components/PageTransition';
-import { loginRateLimit } from '@/utils/security/rateLimiting';
-import { generateCSRFToken, validateCSRFToken } from '@/utils/security/csrf';
 import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
 
 const formSchema = z.object({
@@ -32,14 +30,8 @@ const formSchema = z.object({
 export function LoginForm() {
   const { login, error, clearError } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [csrfToken, setCsrfToken] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = generateCSRFToken();
-    setCsrfToken(token);
-  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,15 +41,8 @@ export function LoginForm() {
     },
   });
 
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      validateCSRFToken(csrfToken);
-      
-      if (!loginRateLimit.checkRateLimit(values.email)) {
-        return;
-      }
-
       setIsLoading(true);
       clearError();
       
@@ -65,7 +50,6 @@ export function LoginForm() {
       navigate('/compare');
     } catch (err) {
       console.error('Login failed:', err);
-      loginRateLimit.recordAttempt(values.email);
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +80,6 @@ export function LoginForm() {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <input type="hidden" name="csrf_token" value={csrfToken} />
               <FormField
                 control={form.control}
                 name="email"

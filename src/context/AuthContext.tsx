@@ -5,9 +5,11 @@ import { getCurrentUser } from '@/utils/auth/profiles';
 import { User } from '@/utils/auth/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
@@ -20,40 +22,55 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        const user = await getCurrentUser();
-        setUser(user);
-      } catch (err) {
-        console.error('Authentication check failed:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-
+    // Set up auth state listener FIRST to avoid race conditions
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state changed:', event, session);
         
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          try {
-            const user = await getCurrentUser();
-            setUser(user);
-          } catch (error) {
-            console.error('Failed to get user after auth state change:', error);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
+        // Only synchronous state updates here to prevent deadlocks
+        setSession(session);
+        setUser(session?.user ? { 
+          id: session.user.id, 
+          email: session.user.email || '', 
+          name: session.user.user_metadata?.full_name || '',
+          avatarUrl: session.user.user_metadata?.avatar_url || undefined 
+        } : null);
+        
+        // Defer any Supabase calls with setTimeout to prevent auth deadlocks
+        if (session?.user) {
+          setTimeout(() => {
+            getCurrentUser().then((user) => {
+              if (user) setUser(user);
+            }).catch((error) => {
+              console.error('Failed to get user profile:', error);
+            });
+          }, 0);
         }
       }
     );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        setTimeout(() => {
+          getCurrentUser().then((user) => {
+            if (user) setUser(user);
+            setIsLoading(false);
+          }).catch((error) => {
+            console.error('Failed to get user profile:', error);
+            setIsLoading(false);
+          });
+        }, 0);
+      } else {
+        setIsLoading(false);
+      }
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -113,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        session,
         isLoading,
         error,
         login: handleLogin,

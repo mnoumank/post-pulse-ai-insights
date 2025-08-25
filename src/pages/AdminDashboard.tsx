@@ -36,16 +36,7 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is admin
-  useEffect(() => {
-    if (user?.email !== 'admin@postpulse.ai') {
-      navigate('/');
-      toast.error('Access denied', {
-        description: 'You do not have permission to access the admin dashboard.'
-      });
-    }
-  }, [user, navigate]);
-
+  // RLS policies will handle admin access - if user can't fetch data, they're not admin
   useEffect(() => {
     fetchUsers();
   }, []);

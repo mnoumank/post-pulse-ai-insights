@@ -40,20 +40,38 @@ export default function ResetPasswordPage() {
   });
 
   useEffect(() => {
-    // Check if we have the required tokens from the email link
+    // Handle both query string tokens and PKCE code flow
     const accessToken = searchParams.get('access_token');
     const refreshToken = searchParams.get('refresh_token');
+    const code = searchParams.get('code');
     
-    if (!accessToken || !refreshToken) {
+    // Parse tokens from hash fragment as fallback
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hashAccessToken = hashParams.get('access_token');
+    const hashRefreshToken = hashParams.get('refresh_token');
+    
+    if (code) {
+      // Handle PKCE flow - exchange code for session
+      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
+        if (error) {
+          setError('Invalid or expired reset link. Please request a new password reset.');
+        }
+      });
+    } else if (accessToken && refreshToken) {
+      // Handle direct token flow from query string
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+    } else if (hashAccessToken && hashRefreshToken) {
+      // Handle direct token flow from hash fragment
+      supabase.auth.setSession({
+        access_token: hashAccessToken,
+        refresh_token: hashRefreshToken,
+      });
+    } else {
       setError('Invalid or expired reset link. Please request a new password reset.');
-      return;
     }
-
-    // Set the session from the URL parameters
-    supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
   }, [searchParams]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
