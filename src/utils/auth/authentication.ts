@@ -1,22 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
-import { getCurrentUser } from "./profiles";
 
 export async function login(email: string, password: string): Promise<User> {
-  // Enhanced demo account handling - bypass Supabase entirely
-  if (email === "demo@example.com" && password === "password123") {
-    // Store demo session in localStorage to persist across page reloads
-    const demoUser = {
-      id: "demo-user-id",
-      name: "Demo User",
-      email: "demo@example.com",
-      avatarUrl: undefined,
-    };
-    localStorage.setItem('demo_session', JSON.stringify(demoUser));
-    return demoUser;
-  }
-
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -30,15 +16,42 @@ export async function login(email: string, password: string): Promise<User> {
     throw new Error("No user returned from login");
   }
 
-  // Get user profile from profiles table
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.user.id)
-    .single();
+  // Get or create user profile
+  let profileData = null;
+  try {
+    const { data: existingProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .maybeSingle();
 
-  if (profileError) {
-    console.error("Error fetching profile:", profileError);
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error("Error fetching profile:", profileError);
+    }
+
+    profileData = existingProfile;
+
+    // If no profile exists or email is missing, create/update it
+    if (!profileData || !profileData.email) {
+      const { data: upsertedProfile, error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email,
+          full_name: profileData?.full_name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+          avatar_url: profileData?.avatar_url || data.user.user_metadata?.avatar_url
+        })
+        .select()
+        .single();
+
+      if (upsertError) {
+        console.error("Error upserting profile:", upsertError);
+      } else {
+        profileData = upsertedProfile;
+      }
+    }
+  } catch (profileError) {
+    console.error("Profile handling error:", profileError);
   }
 
   return {
@@ -69,6 +82,19 @@ export async function register(email: string, password: string, name: string): P
     throw new Error("No user returned from registration");
   }
 
+  // Create profile with email immediately
+  try {
+    await supabase
+      .from('profiles')
+      .upsert({
+        id: data.user.id,
+        email: data.user.email,
+        full_name: name,
+      });
+  } catch (profileError) {
+    console.error("Error creating profile during registration:", profileError);
+  }
+
   return {
     id: data.user.id,
     name: name || data.user.email?.split('@')[0] || 'User',
@@ -78,23 +104,9 @@ export async function register(email: string, password: string, name: string): P
 }
 
 export async function logout(): Promise<void> {
-  // Clear demo session if it exists
-  localStorage.removeItem('demo_session');
-  
   const { error } = await supabase.auth.signOut();
   
   if (error) {
     throw new Error(error.message);
   }
-}
-
-export async function isLoggedIn(): Promise<boolean> {
-  // Check for demo session first
-  const demoSession = localStorage.getItem('demo_session');
-  if (demoSession) {
-    return true;
-  }
-  
-  const user = await getCurrentUser();
-  return user !== null;
 }

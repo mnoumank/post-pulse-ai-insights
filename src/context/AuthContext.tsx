@@ -40,6 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session);
+        
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           try {
             const user = await getCurrentUser();
@@ -93,8 +95,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
-      // Clear any demo session data
-      localStorage.removeItem('demo_session');
       await logout();
       setUser(null);
     } catch (err) {

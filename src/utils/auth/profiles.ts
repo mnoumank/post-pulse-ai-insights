@@ -3,17 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "./types";
 
 export async function getCurrentUser(): Promise<User | null> {
-  // Check for demo session first
-  const demoSession = localStorage.getItem('demo_session');
-  if (demoSession) {
-    try {
-      return JSON.parse(demoSession);
-    } catch (error) {
-      console.error("Error parsing demo session:", error);
-      localStorage.removeItem('demo_session');
-    }
-  }
-
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   
   if (sessionError) {
@@ -41,10 +30,37 @@ export async function getCurrentUser(): Promise<User | null> {
     .from('profiles')
     .select('*')
     .eq('id', userData.user.id)
-    .single();
+    .maybeSingle();
 
   if (profileError && profileError.code !== 'PGRST116') {
     console.error("Error fetching profile:", profileError);
+  }
+
+  // If no profile exists or email is missing, create/update it
+  if (!profileData || !profileData.email) {
+    try {
+      const { data: upsertedProfile, error: upsertError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userData.user.id,
+          email: userData.user.email,
+          full_name: profileData?.full_name || userData.user.user_metadata?.full_name || userData.user.email?.split('@')[0] || 'User',
+          avatar_url: profileData?.avatar_url || userData.user.user_metadata?.avatar_url
+        })
+        .select()
+        .single();
+
+      if (!upsertError && upsertedProfile) {
+        return {
+          id: userData.user.id,
+          name: upsertedProfile.full_name || userData.user.email?.split('@')[0] || 'User',
+          email: userData.user.email || '',
+          avatarUrl: upsertedProfile.avatar_url,
+        };
+      }
+    } catch (error) {
+      console.error("Error upserting profile:", error);
+    }
   }
 
   return {

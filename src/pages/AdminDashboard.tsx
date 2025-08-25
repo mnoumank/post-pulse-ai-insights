@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,9 +24,7 @@ interface UserData {
   id: string;
   email: string;
   created_at: string;
-  last_sign_in_at: string | null;
   full_name: string | null;
-  email_confirmed_at: string | null;
 }
 
 export default function AdminDashboard() {
@@ -37,7 +36,7 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is admin (you can modify this logic based on your admin setup)
+  // Check if user is admin
   useEffect(() => {
     if (user?.email !== 'admin@postpulse.ai') {
       navigate('/');
@@ -64,10 +63,10 @@ export default function AdminDashboard() {
       setIsLoading(true);
       setError(null);
 
-      // Get users from profiles table (which contains user info)
+      // Get users from profiles table (which now contains emails)
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, full_name, created_at')
         .order('created_at', { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -75,11 +74,9 @@ export default function AdminDashboard() {
       // Transform the data to match our UserData interface
       const userData: UserData[] = profilesData.map(profile => ({
         id: profile.id,
-        email: `User ${profile.id.slice(0, 8)}`, // Use shortened ID as placeholder
+        email: profile.email || 'N/A',
         created_at: profile.created_at,
-        last_sign_in_at: null, // This would need to come from auth.users
         full_name: profile.full_name,
-        email_confirmed_at: profile.created_at, // Assume confirmed if profile exists
       }));
 
       setUsers(userData);
@@ -93,13 +90,11 @@ export default function AdminDashboard() {
 
   const exportUsers = () => {
     const csvContent = [
-      ['Name', 'Email', 'Joined', 'Last Sign In', 'Email Confirmed'].join(','),
+      ['Name', 'Email', 'Joined'].join(','),
       ...filteredUsers.map(user => [
         user.full_name || 'N/A',
         user.email,
         new Date(user.created_at).toLocaleDateString(),
-        user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never',
-        user.email_confirmed_at ? 'Yes' : 'No'
       ].join(','))
     ].join('\n');
 
@@ -118,8 +113,7 @@ export default function AdminDashboard() {
     });
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Never';
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -180,15 +174,15 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Verified Emails</CardTitle>
+              <CardTitle className="text-sm font-medium">With Emails</CardTitle>
               <Mail className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {users.filter(u => u.email_confirmed_at).length}
+                {users.filter(u => u.email && u.email !== 'N/A').length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Email confirmations
+                Available for outreach
               </p>
             </CardContent>
           </Card>
@@ -223,7 +217,7 @@ export default function AdminDashboard() {
                 <div>
                   <CardTitle>User Management</CardTitle>
                   <CardDescription>
-                    View and manage registered users
+                    View and manage registered users - emails available for outreach
                   </CardDescription>
                 </div>
                 <Button onClick={exportUsers} className="gap-2">
@@ -258,14 +252,13 @@ export default function AdminDashboard() {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Joined</TableHead>
-                      <TableHead>Last Sign In</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                           {searchTerm ? 'No users found matching your search.' : 'No users found.'}
                         </TableCell>
                       </TableRow>
@@ -277,12 +270,11 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell>{user.email}</TableCell>
                           <TableCell>{formatDate(user.created_at)}</TableCell>
-                          <TableCell>{formatDate(user.last_sign_in_at)}</TableCell>
                           <TableCell>
                             <Badge 
-                              variant={user.email_confirmed_at ? "default" : "secondary"}
+                              variant={user.email && user.email !== 'N/A' ? "default" : "secondary"}
                             >
-                              {user.email_confirmed_at ? 'Verified' : 'Unverified'}
+                              {user.email && user.email !== 'N/A' ? 'Active' : 'No Email'}
                             </Badge>
                           </TableCell>
                         </TableRow>

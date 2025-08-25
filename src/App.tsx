@@ -13,6 +13,7 @@ import { AuthGuard } from "./components/AuthGuard";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreatePostPage from "./pages/CreatePostPage";
 import ComparisonPage from "./pages/ComparisonPage";
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
                 <Route path="/create" element={<AuthGuard><CreatePostPage /></AuthGuard>} />
                 <Route path="/compare" element={<AuthGuard><ComparisonPage /></AuthGuard>} />
