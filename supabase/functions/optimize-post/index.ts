@@ -12,11 +12,29 @@ serve(async (req) => {
   }
 
   try {
-    const { content, optimizationType } = await req.json();
+    const body = await req.text();
+    
+    // Basic security: limit request body size (100KB)
+    if (body.length > 100000) {
+      return new Response(
+        JSON.stringify({ error: 'Request body too large' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { content, optimizationType } = JSON.parse(body);
     
     if (!content || !optimizationType) {
       return new Response(
         JSON.stringify({ error: 'Content and optimization type are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Limit content length (10,000 characters)
+    if (content.length > 10000) {
+      return new Response(
+        JSON.stringify({ error: 'Content too long (max 10,000 characters)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

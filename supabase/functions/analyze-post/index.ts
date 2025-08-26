@@ -16,10 +16,28 @@ serve(async (req) => {
   }
 
   try {
-    const { postContent, industry } = await req.json();
+    const body = await req.text();
+    
+    // Basic security: limit request body size (100KB)
+    if (body.length > 100000) {
+      return new Response(
+        JSON.stringify({ error: 'Request body too large' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { postContent, industry } = JSON.parse(body);
     
     if (!postContent) {
       throw new Error('Post content is required');
+    }
+
+    // Limit post content length (10,000 characters)
+    if (postContent.length > 10000) {
+      return new Response(
+        JSON.stringify({ error: 'Post content too long (max 10,000 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const industryContext = industry ? `This post is targeted at the ${industry} industry.` : '';
