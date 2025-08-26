@@ -4,7 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/Navbar';
 import { useNavigate } from 'react-router-dom';
-import { BarChart2, Target, TrendingUp, Zap, CheckCircle2, ArrowRight } from 'lucide-react';
+import { BarChart2, Target, TrendingUp, Zap, CheckCircle2, ArrowRight, Users, Star, Quote, Play } from 'lucide-react';
+import { motion } from 'framer-motion';
+import dashboardMockup from '@/assets/dashboard-mockup.jpg';
+import trustLogos from '@/assets/trust-logos.jpg';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -14,266 +17,515 @@ export default function LandingPage() {
       <Navbar />
       
       <main className="flex-1">
-        {/* Hero Section with Professional Headshot */}
-        <section className="relative py-20 px-4 md:py-32 md:px-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        {/* Hero Section with Product Mockup */}
+        <section className="relative py-20 px-4 md:py-32 md:px-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5 overflow-hidden">
           <div className="container mx-auto">
             <div className="flex items-center justify-center gap-12 max-w-6xl mx-auto">
               {/* Content */}
               <div className="flex-1 text-center lg:text-left">
-                <Badge variant="outline" className="mb-4">
-                  <Zap className="mr-1 h-3 w-3" />
-                  AI-Powered LinkedIn Optimization
-                </Badge>
-                <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl">
-                  Transform Your LinkedIn Posts with{' '}
-                  <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    AI-Powered Analysis
-                  </span>
-                </h1>
-                <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
-                  Compare different versions of your LinkedIn posts and discover which performs better. 
-                  Get AI-driven insights on engagement, reach, and virality to maximize your professional impact.
-                </p>
-                <div className="flex flex-col gap-4 sm:flex-row lg:justify-start justify-center">
-                  <Button size="lg" onClick={() => navigate('/signup')} className="h-12 px-8">
-                    Create Free Account
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="lg" onClick={() => navigate('/login')} className="h-12 px-8">
-                    Log In
-                  </Button>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <Badge variant="outline" className="mb-4">
+                    <Zap className="mr-1 h-3 w-3" />
+                    AI-Powered LinkedIn Optimization
+                  </Badge>
+                  <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl leading-tight">
+                    Write LinkedIn posts that{' '}
+                    <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      go viral
+                    </span>
+                    <br />— with AI analysis
+                  </h1>
+                  <p className="mb-8 max-w-2xl text-xl text-muted-foreground leading-relaxed">
+                    Compare versions of your posts, predict engagement, and grow your reach. 
+                    <span className="font-semibold text-foreground"> Trusted by 500+ LinkedIn creators, marketers, and founders.</span>
+                  </p>
+                  <div className="flex flex-col gap-4 sm:flex-row lg:justify-start justify-center">
+                    <Button size="lg" onClick={() => navigate('/signup')} className="h-14 px-8 text-lg font-semibold bg-primary hover:bg-primary/90 shadow-lg">
+                      Start Free Analysis
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                    <Button variant="outline" size="lg" onClick={() => navigate('/signup')} className="h-14 px-8 text-lg">
+                      <Play className="mr-2 h-4 w-4" />
+                      See How It Works
+                    </Button>
+                  </div>
+                </motion.div>
               </div>
               
-              {/* Professional headshot */}
-              <div className="hidden lg:block flex-shrink-0">
-                <img 
-                  src="/lovable-uploads/b81f954a-f473-4315-96a8-6bd5186a6bd2.png" 
-                  alt="LinkedIn Professional"
-                  className="w-72 h-72 rounded-full object-cover object-top border-4 border-white shadow-2xl"
-                />
-              </div>
+              {/* Product Dashboard Mockup */}
+              <motion.div 
+                className="hidden lg:block flex-shrink-0"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <div className="relative">
+                  <img 
+                    src={dashboardMockup}
+                    alt="PostPulse AI Dashboard - LinkedIn Post Analysis"
+                    className="w-[500px] h-[375px] rounded-2xl shadow-2xl border border-border"
+                  />
+                  <div className="absolute -bottom-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                    ✨ AI Score: 8.7/10
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Trust Signals */}
+        <section className="py-12 px-4 md:px-8 bg-muted/30">
+          <div className="container mx-auto">
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <p className="text-sm text-muted-foreground mb-6">Trusted by creators and marketers worldwide</p>
+              <img 
+                src={trustLogos} 
+                alt="Trusted by leading companies" 
+                className="mx-auto h-12 opacity-60 grayscale"
+              />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="py-20 px-4 md:px-8">
+          <div className="container mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold mb-4">How It Works</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+                Get AI-powered insights for your LinkedIn posts in 3 simple steps
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {[
+                {
+                  step: "1",
+                  title: "Paste Your Post",
+                  description: "Copy your LinkedIn post content or write a new one directly in our editor",
+                  icon: "✏️"
+                },
+                {
+                  step: "2", 
+                  title: "Get AI Analysis",
+                  description: "Our AI analyzes engagement potential, reach, and virality in seconds",
+                  icon: "🤖"
+                },
+                {
+                  step: "3",
+                  title: "Optimize & Publish",
+                  description: "Apply suggestions, compare versions, and publish your best-performing content",
+                  icon: "🚀"
+                }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2 }}
+                  className="text-center"
+                >
+                  <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-2xl">
+                    {item.icon}
+                  </div>
+                  <div className="mb-2">
+                    <Badge variant="outline" className="mb-2">Step {item.step}</Badge>
+                    <h3 className="text-xl font-semibold">{item.title}</h3>
+                  </div>
+                  <p className="text-muted-foreground">{item.description}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* Post Comparison Preview */}
-        <section className="py-20 px-4 md:px-8">
+        <section className="py-20 px-4 md:px-8 bg-muted/20">
           <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">See The Difference</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Compare two versions of the same post and see which one performs better with our AI analysis
+            <motion.div 
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl font-bold mb-4">See The Difference AI Makes</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+                Compare two versions of the same post and see how our AI optimization dramatically improves performance
               </p>
-            </div>
+            </motion.div>
             
             <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
               {/* Post A */}
-              <Card className="relative">
-                <div className="absolute -top-3 left-4">
-                  <Badge variant="secondary">Original Post</Badge>
-                </div>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                      JP
-                    </div>
-                    <div>
-                      <p className="font-semibold">John Professional</p>
-                      <p className="text-sm text-muted-foreground">Senior Developer</p>
-                    </div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="relative h-full">
+                  <div className="absolute -top-3 left-4">
+                    <Badge variant="secondary">❌ Before AI</Badge>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">
-                    Just finished a project. Used React and Node.js. It was challenging but fun.
-                  </p>
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>👍 12 likes</span>
-                    <span>💬 2 comments</span>
-                    <span>🔄 1 share</span>
-                  </div>
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
-                    <p className="text-sm text-red-800">
-                      <strong>AI Score: 3.2/10</strong> - Low engagement potential
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                        JP
+                      </div>
+                      <div>
+                        <p className="font-semibold">John Professional</p>
+                        <p className="text-sm text-muted-foreground">Senior Developer</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 text-gray-600">
+                      Just finished a project. Used React and Node.js. It was challenging but fun.
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="flex gap-4 text-sm text-muted-foreground mb-4">
+                      <span>👍 12 likes</span>
+                      <span>💬 2 comments</span>
+                      <span>🔄 1 share</span>
+                    </div>
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-800 font-medium">
+                        🔻 AI Score: 3.2/10 - Low engagement potential
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
               {/* Post B */}
-              <Card className="relative border-green-200 bg-green-50/50">
-                <div className="absolute -top-3 left-4">
-                  <Badge className="bg-green-600">Optimized Post</Badge>
-                </div>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
-                      JP
-                    </div>
-                    <div>
-                      <p className="font-semibold">John Professional</p>
-                      <p className="text-sm text-muted-foreground">Senior Developer</p>
-                    </div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+              >
+                <Card className="relative border-green-200 bg-gradient-to-br from-green-50 to-green-50/50 h-full">
+                  <div className="absolute -top-3 left-4">
+                    <Badge className="bg-green-600">✨ After AI Optimization</Badge>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">
-                    🚀 Just shipped a game-changing project that reduced load times by 60%!
-                    
-                    The challenge? Building a real-time collaboration tool that could handle 1000+ concurrent users.
-                    
-                    The solution? A React frontend with a Node.js microservices backend.
-                    
-                    Key lessons learned:
-                    ✅ Performance optimization is everything
-                    ✅ User feedback shapes the best features
-                    ✅ Sometimes the simple solution wins
-                    
-                    What's your biggest project win this quarter? 👇
-                    
-                    #WebDevelopment #React #NodeJS #TechLeadership
-                  </p>
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>👍 247 likes</span>
-                    <span>💬 18 comments</span>
-                    <span>🔄 12 shares</span>
-                  </div>
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
-                    <p className="text-sm text-green-800">
-                      <strong>AI Score: 8.7/10</strong> - High engagement potential
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                        JP
+                      </div>
+                      <div>
+                        <p className="font-semibold">John Professional</p>
+                        <p className="text-sm text-muted-foreground">Senior Developer</p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 leading-relaxed">
+                      🚀 Just shipped a game-changing project that reduced load times by 60%!
+                      
+                      The challenge? Building a real-time collaboration tool that could handle 1000+ concurrent users.
+                      
+                      The solution? A React frontend with a Node.js microservices backend.
+                      
+                      Key lessons learned:
+                      ✅ Performance optimization is everything
+                      ✅ User feedback shapes the best features
+                      ✅ Sometimes the simple solution wins
+                      
+                      What's your biggest project win this quarter? 👇
+                      
+                      #WebDevelopment #React #NodeJS #TechLeadership
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="flex gap-4 text-sm text-muted-foreground mb-4">
+                      <span>👍 247 likes</span>
+                      <span>💬 18 comments</span>
+                      <span>🔄 12 shares</span>
+                    </div>
+                    <div className="p-3 bg-green-100 border border-green-300 rounded-lg">
+                      <p className="text-sm text-green-800 font-medium">
+                        🔥 AI Score: 8.7/10 - High viral potential
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
 
-            <div className="text-center mt-8">
-              <Button onClick={() => navigate('/signup')} size="lg">
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+            <motion.div 
+              className="text-center mt-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6 }}
+            >
+              <div className="inline-flex items-center gap-4 mb-6 text-2xl font-bold text-green-600">
+                <TrendingUp className="h-8 w-8" />
+                <span>20x More Engagement</span>
+              </div>
+              <div>
+                <Button onClick={() => navigate('/signup')} size="lg" className="h-12 px-8">
+                  Start Your Free Analysis
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </motion.div>
           </div>
         </section>
 
+        {/* Social Proof & Testimonials */}
+        <section className="py-20 px-4 md:px-8">
+          <div className="container mx-auto">
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl font-bold mb-4">Join 500+ Professionals Growing on LinkedIn</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+                See what creators, marketers, and founders are saying about PostPulse AI
+              </p>
+            </motion.div>
+            
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
+              {[
+                {
+                  quote: "PostPulse AI helped me increase my LinkedIn engagement by 400%. The insights are incredibly accurate and actionable.",
+                  name: "Sarah Chen",
+                  role: "Marketing Director",
+                  company: "TechFlow",
+                  rating: 5
+                },
+                {
+                  quote: "Finally, a tool that actually predicts what will perform well. My last 5 posts all scored 8+ and went viral.",
+                  name: "Marcus Rodriguez", 
+                  role: "Founder",
+                  company: "StartupLab",
+                  rating: 5
+                },
+                {
+                  quote: "The AI suggestions transformed my boring updates into engaging stories. My follower growth has been exponential.",
+                  name: "Jennifer Park",
+                  role: "Content Creator",
+                  company: "Personal Brand",
+                  rating: 5
+                }
+              ].map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2 }}
+                >
+                  <Card className="h-full">
+                    <CardHeader>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                      <Quote className="h-6 w-6 text-primary mb-2" />
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground mb-4 italic">"{testimonial.quote}"</p>
+                      <div>
+                        <p className="font-semibold">{testimonial.name}</p>
+                        <p className="text-sm text-muted-foreground">{testimonial.role} at {testimonial.company}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Stats */}
+            <motion.div 
+              className="grid md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">500+</div>
+                <div className="text-muted-foreground">Active Users</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">10K+</div>
+                <div className="text-muted-foreground">Posts Analyzed</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">400%</div>
+                <div className="text-muted-foreground">Avg. Engagement Boost</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">95%</div>
+                <div className="text-muted-foreground">Accuracy Rate</div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
         {/* Features Section */}
         <section className="py-20 px-4 md:px-8 bg-muted/30">
           <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Why PostPulse AI?</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Our AI analyzes your posts across multiple dimensions to give you actionable insights
+            <motion.div 
+              className="text-center mb-16"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl font-bold mb-4">Everything You Need to Dominate LinkedIn</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+                Our AI analyzes your posts across multiple dimensions to give you actionable, proven insights
               </p>
-            </div>
+            </motion.div>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <BarChart2 className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Engagement Analysis</CardTitle>
-                  <CardDescription>
-                    Get detailed insights on likes, comments, and shares potential
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Hook effectiveness scoring
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Call-to-action optimization
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Emotional impact analysis
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <Target className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Reach Optimization</CardTitle>
-                  <CardDescription>
-                    Maximize your post's visibility and algorithmic performance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Hashtag recommendations
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Timing suggestions
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Algorithm-friendly formatting
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <TrendingUp className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Virality Potential</CardTitle>
-                  <CardDescription>
-                    Discover what makes content shareable and memorable
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Shareability scoring
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Trend alignment analysis
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Content structure optimization
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
+              {[
+                {
+                  icon: BarChart2,
+                  title: "Engagement Analysis",
+                  description: "Get detailed insights on likes, comments, and shares potential",
+                  features: ["Hook effectiveness scoring", "Call-to-action optimization", "Emotional impact analysis"]
+                },
+                {
+                  icon: Target,
+                  title: "Reach Optimization", 
+                  description: "Maximize your post's visibility and algorithmic performance",
+                  features: ["Hashtag recommendations", "Timing suggestions", "Algorithm-friendly formatting"]
+                },
+                {
+                  icon: TrendingUp,
+                  title: "Virality Potential",
+                  description: "Discover what makes content shareable and memorable",
+                  features: ["Shareability scoring", "Trend alignment analysis", "Content structure optimization"]
+                }
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.2 }}
+                >
+                  <Card className="h-full hover-scale">
+                    <CardHeader>
+                      <feature.icon className="h-12 w-12 text-primary mb-4" />
+                      <CardTitle className="text-xl">{feature.title}</CardTitle>
+                      <CardDescription className="text-base">
+                        {feature.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 text-sm">
+                        {feature.features.map((item, i) => (
+                          <li key={i} className="flex items-center gap-3">
+                            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 px-4 md:px-8">
+        {/* Final CTA Section */}
+        <section className="py-20 px-4 md:px-8 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
           <div className="container mx-auto text-center">
-            <div className="mx-auto max-w-2xl">
-              <h2 className="mb-4 text-3xl font-bold">
-                Ready to Boost Your LinkedIn Presence?
+            <motion.div 
+              className="mx-auto max-w-3xl"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="mb-4 text-4xl font-bold">
+                Ready to Write Posts That{' '}
+                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  Go Viral?
+                </span>
               </h2>
-              <p className="mb-8 text-muted-foreground">
-                Join thousands of professionals already using AI to optimize their LinkedIn presence.
-                Create your free account and start analyzing your posts in minutes!
+              <p className="mb-8 text-xl text-muted-foreground">
+                Join 500+ professionals already using AI to optimize their LinkedIn presence.
+                Start analyzing your posts in under 60 seconds — completely free!
               </p>
-              <Button size="lg" onClick={() => navigate('/signup')} className="h-12 px-8">
-                Create Free Account
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Button size="lg" onClick={() => navigate('/signup')} className="h-14 px-10 text-lg font-semibold">
+                  Start Free Analysis Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  ✨ No credit card required • ✨ Results in 30 seconds
+                </p>
+              </div>
+            </motion.div>
           </div>
         </section>
       </main>
       
-      <footer className="border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
-          <p className="text-sm text-muted-foreground">
-            © 2025 PostPulse AI. All rights reserved.
-          </p>
+      <footer className="border-t py-8 bg-muted/20">
+        <div className="container">
+          <div className="grid md:grid-cols-4 gap-8">
+            {/* Brand */}
+            <div>
+              <h3 className="font-semibold text-lg mb-3">PostPulse AI</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Built by AI experts. Powered by GPT-4. Trusted by LinkedIn creators worldwide.
+              </p>
+            </div>
+            
+            {/* Product */}
+            <div>
+              <h4 className="font-semibold mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">API</a></li>
+              </ul>
+            </div>
+            
+            {/* Support */}
+            <div>
+              <h4 className="font-semibold mb-3">Support</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Status</a></li>
+              </ul>
+            </div>
+            
+            {/* FAQ */}
+            <div>
+              <h4 className="font-semibold mb-3">FAQ</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Do I need to connect LinkedIn?</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Is it really free?</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">How accurate is the AI?</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              © 2025 PostPulse AI. All rights reserved.
+            </p>
+            <div className="flex gap-6 text-sm text-muted-foreground">
+              <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
+              <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
