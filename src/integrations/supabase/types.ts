@@ -167,6 +167,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_usage_tracking: {
+        Row: {
+          comparisons_used: number
+          created_at: string
+          creates_used: number
+          id: string
+          ip_address: unknown
+          updated_at: string
+        }
+        Insert: {
+          comparisons_used?: number
+          created_at?: string
+          creates_used?: number
+          id?: string
+          ip_address: unknown
+          updated_at?: string
+        }
+        Update: {
+          comparisons_used?: number
+          created_at?: string
+          creates_used?: number
+          id?: string
+          ip_address?: unknown
+          updated_at?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           content: string
