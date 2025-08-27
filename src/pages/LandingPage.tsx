@@ -38,10 +38,10 @@ export default function LandingPage() {
                     <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                       go viral
                     </span>
-                    <br />— with AI analysis
+                    <br />with AI analysis
                   </h1>
                   <p className="mb-8 max-w-2xl text-xl text-muted-foreground leading-relaxed">
-                    Compare versions of your posts, predict engagement, and grow your reach. 
+                    The only tool that compares multiple LinkedIn drafts in real-time. Unlike generic AI tools, PostPulse is built specifically for LinkedIn success.
                     <span className="font-semibold text-foreground"> Trusted by LinkedIn creators, marketers, and founders.</span>
                   </p>
                   <div className="flex flex-col gap-4 sm:flex-row lg:justify-start justify-center">
@@ -49,11 +49,14 @@ export default function LandingPage() {
                       Start Free Analysis
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
-                    <Button variant="outline" size="lg" onClick={() => navigate('/signup')} className="h-14 px-8 text-lg">
+                    <Button variant="outline" size="lg" onClick={() => navigate('/create')} className="h-14 px-8 text-lg">
                       <Play className="mr-2 h-4 w-4" />
-                      See How It Works
+                      Try Demo (No Signup)
                     </Button>
                   </div>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    💡 Want LinkedIn growth tips? <button className="underline hover:text-foreground transition-colors">Get our weekly newsletter</button>
+                  </p>
                 </motion.div>
               </div>
               
@@ -69,7 +72,31 @@ export default function LandingPage() {
               delay: 0.2
             }}>
                 <div className="relative">
-                  <img src={dashboardMockup} alt="PostPulse AI Dashboard - LinkedIn Post Analysis" className="w-[500px] h-[375px] rounded-2xl shadow-2xl border border-border" />
+                  {/* Background gradient for visual dynamism */}
+                  <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-transparent to-secondary/20 rounded-3xl blur-2xl"></div>
+                  
+                  <div className="relative bg-background/80 backdrop-blur-sm rounded-2xl border border-border/50 shadow-2xl overflow-hidden">
+                    <img src={dashboardMockup} alt="PostPulse AI Dashboard - LinkedIn Post Analysis" className="w-[500px] h-[375px] rounded-2xl" />
+                    
+                    {/* Floating UI elements for uniqueness */}
+                    <motion.div 
+                      className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm border border-border rounded-lg px-3 py-2 text-xs font-medium"
+                      animate={{ y: [0, -5, 0] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      🔍 Real-time Analysis
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="absolute bottom-16 left-4 bg-green-500/90 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-2"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <TrendingUp className="h-3 w-3" />
+                      Engagement: +245%
+                    </motion.div>
+                  </div>
+                  
                   <div className="absolute -bottom-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
                     ✨ AI Score: 8.7/10
                   </div>
