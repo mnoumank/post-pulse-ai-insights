@@ -1,10 +1,33 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Use service role key to check IP limits
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+function getClientIP(request: Request): string {
+  const xForwardedFor = request.headers.get('x-forwarded-for');
+  const xRealIP = request.headers.get('x-real-ip');
+  const cfConnectingIP = request.headers.get('cf-connecting-ip');
+  
+  if (xForwardedFor) {
+    return xForwardedFor.split(',')[0].trim();
+  }
+  if (xRealIP) {
+    return xRealIP;
+  }
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+  return '0.0.0.0';
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,7 +35,38 @@ serve(async (req) => {
   }
 
   try {
-    const { idea, selectedHook, category, includeViralityOptimization } = await req.json();
+    const { idea, selectedHook, category, includeViralityOptimization, skipIPCheck } = await req.json();
+    
+    // Check IP limits for unauthenticated users (unless skipIPCheck is true)
+    if (!skipIPCheck) {
+      const clientIP = getClientIP(req);
+      console.log('Checking IP limits for:', clientIP);
+      
+      const { data: ipUsage, error: fetchError } = await supabase
+        .from('ip_usage_tracking')
+        .select('creates_used')
+        .eq('ip_address', clientIP)
+        .single();
+      
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error checking IP limits:', fetchError);
+        return new Response(JSON.stringify({ error: 'Unable to verify usage limits' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // If IP usage exists and limit reached, deny request
+      if (ipUsage && ipUsage.creates_used >= 1) {
+        return new Response(JSON.stringify({ 
+          error: 'Demo limit reached. Sign up for unlimited access.',
+          code: 'DEMO_LIMIT_REACHED'
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
     
     if (!idea) {
       return new Response(

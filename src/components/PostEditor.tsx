@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Sparkles, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { AIPostMetrics } from '@/utils/aiAnalyzer';
+import { useAuth } from '@/context/AuthContext';
 
 interface PostEditorProps {
   postNumber: 1 | 2;
@@ -106,13 +107,15 @@ const getRelevantHashtags = (content: string, maxHashtags: number = 4) => {
 
 export function PostEditor({ postNumber, content, onChange, metrics, isWinner }: PostEditorProps) {
   const [showPlaceholder, setShowPlaceholder] = useState(!content);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const { user } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value);
     setShowPlaceholder(e.target.value.length === 0);
   };
 
-  const cleanupText = () => {
+  const cleanupText = async () => {
     if (!content.trim()) {
       toast("No content to clean up", {
         description: "Please add some text first"
@@ -120,6 +123,41 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
       return;
     }
 
+    // Use AI cleanup for authenticated users, fallback to local cleanup for demo users
+    if (user) {
+      setIsCleaningUp(true);
+      try {
+        const response = await fetch('https://eczmumeybuilbwoghcwd.supabase.co/functions/v1/cleanup-post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to cleanup with AI');
+        }
+
+        const data = await response.json();
+        onChange(data.cleanedContent);
+        toast("AI-Enhanced cleanup complete!", {
+          description: "Your post has been polished with AI"
+        });
+      } catch (error) {
+        console.error('AI cleanup failed, falling back to local cleanup:', error);
+        // Fallback to local cleanup
+        performLocalCleanup();
+      } finally {
+        setIsCleaningUp(false);
+      }
+    } else {
+      // Local cleanup for demo users
+      performLocalCleanup();
+    }
+  };
+
+  const performLocalCleanup = () => {
     let cleanedText = content.split('\n').map((line, i) => {
       if (line.trim() && !line.match(/^[👋🎯💡🔑✨🚀📈💪]/)) {
         const emojis = ['👋', '🎯', '💡', '🔑', '✨', '🚀', '📈', '💪'];
@@ -129,7 +167,6 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
     }).join('\n');
 
     cleanedText = cleanedText.replace(/^- /gm, '• ');
-
     cleanedText = cleanedText.replace(/#\w+/g, '').trim();
 
     const relevantHashtags = getRelevantHashtags(cleanedText);
@@ -192,10 +229,13 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
             variant="ghost" 
             size="sm" 
             onClick={cleanupText} 
+            disabled={isCleaningUp}
             className="h-8 text-xs self-end sm:self-auto"
           >
-            <Sparkles className="h-3.5 w-3.5 sm:mr-1" />
-            <span className="hidden sm:inline ml-1">Clean up</span>
+            <Sparkles className={`h-3.5 w-3.5 sm:mr-1 ${isCleaningUp ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline ml-1">
+              {isCleaningUp ? 'Cleaning...' : user ? 'AI Cleanup' : 'Clean up'}
+            </span>
           </Button>
         </div>
         {metrics && (

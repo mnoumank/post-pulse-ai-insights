@@ -1,1 +1,13 @@
 project_id = "eczmumeybuilbwoghcwd"
+
+[functions]
+  [functions.generate-enhanced-post]
+    verify_jwt = false
+  [functions.analyze-post-ai] 
+    verify_jwt = false
+  [functions.analyze-post-suggestions]
+    verify_jwt = false
+  [functions.cleanup-post]
+    verify_jwt = false
+  [functions.demo-usage]
+    verify_jwt = false

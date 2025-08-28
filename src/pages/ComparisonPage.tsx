@@ -9,10 +9,12 @@ import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { AdvancedAnalysisPanel } from '@/components/AdvancedAnalysisPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PostComparisonProvider, usePostComparison } from '@/context/PostComparisonContext';
 import { useFeedbackTracker } from '@/hooks/useFeedbackTracker';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
-import { Trash2 } from 'lucide-react';
+import { useDemoLimits } from '@/hooks/useDemoLimits';
+import { Trash2, AlertCircle, Play } from 'lucide-react';
 
 function ComparisonPageContent() {
   const { 
@@ -34,14 +36,20 @@ function ComparisonPageContent() {
   } = usePostComparison();
 
   const { showFeedback, closeFeedback, trackOperation } = useFeedbackTracker();
+  const { limits, incrementComparisons, isAuthenticated } = useDemoLimits();
   
   const [isAdvancedVisible, setIsAdvancedVisible] = useState(false);
   const [lastAnalyzedA, setLastAnalyzedA] = useState('');
   const [lastAnalyzedB, setLastAnalyzedB] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Auto-analyze when content changes - this ensures real-time updates
+  // For unauthenticated users, disable auto-analysis and show manual trigger
+  const shouldAutoAnalyze = isAuthenticated;
+
+  // Auto-analyze for authenticated users only  
   useEffect(() => {
+    if (!shouldAutoAnalyze) return;
+
     const shouldAnalyze = postA.trim() && 
                          postB.trim() && 
                          (postA !== lastAnalyzedA || postB !== lastAnalyzedB) &&
@@ -55,16 +63,29 @@ function ComparisonPageContent() {
         setLastAnalyzedB(postB);
         analyzePost(postA, postB).then(() => trackOperation()).catch((error) => {
           console.error('Auto-analysis error:', error);
-          // Reset analyzing state on error to prevent infinite loading
-          if (isAnalyzing) {
-            // This should be handled by the analyzePost function, but just in case
-          }
         });
       }, 300); // 300ms debounce
       
       return () => clearTimeout(timeoutId);
     }
-  }, [postA, postB, analyzePost, lastAnalyzedA, lastAnalyzedB, isAnalyzing, trackOperation]);
+  }, [postA, postB, analyzePost, lastAnalyzedA, lastAnalyzedB, isAnalyzing, trackOperation, shouldAutoAnalyze]);
+
+  // Manual comparison for demo users
+  const handleManualCompare = async () => {
+    if (!postA.trim() || !postB.trim()) {
+      return;
+    }
+
+    // Check demo limits
+    const canProceed = await incrementComparisons();
+    if (!canProceed) {
+      return; // Error handled by hook
+    }
+
+    setLastAnalyzedA(postA);
+    setLastAnalyzedB(postB);
+    analyzePost(postA, postB).then(() => trackOperation());
+  };
 
   // Debug logging to verify scoring system
   useEffect(() => {
@@ -128,6 +149,18 @@ function ComparisonPageContent() {
           </div>
 
           <div className="space-y-6 sm:space-y-8">
+            {!isAuthenticated && limits && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Demo Mode: {limits.can_compare ? 'You have 1 free comparison' : 'Comparison limit reached'}. 
+                  <Button variant="link" className="p-0 h-auto ml-2" onClick={() => window.location.href = '/signup'}>
+                    Sign up for unlimited access
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Advanced Analysis Panel */}
             <AdvancedAnalysisPanel
               params={advancedParams}
@@ -158,6 +191,25 @@ function ComparisonPageContent() {
                 isWinner={comparison?.winner === 2}
               />
             </div>
+
+            {/* Demo Mode Manual Compare Button */}
+            {!isAuthenticated && postA.trim() && postB.trim() && !analysisA && !analysisB && !isAnalyzing && limits?.can_compare && (
+              <Card className="w-full">
+                <CardContent className="text-center py-8">
+                  <Button 
+                    onClick={handleManualCompare}
+                    size="lg"
+                    className="flex items-center gap-2"
+                  >
+                    <Play className="h-5 w-5" />
+                    Run 1 Free Comparison
+                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Compare these posts with AI analysis
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Loading State */}
             {isAnalyzing && (

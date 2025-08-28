@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { HookGenerator } from '@/components/HookGenerator';
@@ -16,11 +17,13 @@ import { analyzePostVirality } from '@/utils/enhancedViralityAnalyzer';
 import { useContentPersistence } from '@/context/ContentPersistenceContext';
 import { useFeedbackTracker } from '@/hooks/useFeedbackTracker';
 import { FeedbackDialog } from '@/components/FeedbackDialog';
-import { Trash2 } from 'lucide-react';
+import { useDemoLimits } from '@/hooks/useDemoLimits';
+import { Trash2, AlertCircle } from 'lucide-react';
 
 export default function CreatePostPage() {
   const { createPostState, updateCreatePostState, clearCreatePostState } = useContentPersistence();
   const { showFeedback, closeFeedback, trackOperation } = useFeedbackTracker();
+  const { limits, incrementCreates, isAuthenticated } = useDemoLimits();
   
   const [userIdea, setUserIdea] = useState(createPostState.userIdea);
   const [selectedHook, setSelectedHook] = useState(createPostState.selectedHook);
@@ -75,6 +78,19 @@ export default function CreatePostPage() {
       return;
     }
 
+    // Check demo limits for unauthenticated users
+    if (!isAuthenticated) {
+      const canProceed = await incrementCreates();
+      if (!canProceed) {
+        toast({
+          title: 'Demo limit reached',
+          description: 'Sign up for unlimited access to generate more posts.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-enhanced-post', {
@@ -82,7 +98,8 @@ export default function CreatePostPage() {
           idea: userIdea,
           selectedHook,
           category: categoryId || selectedCategory,
-          includeViralityOptimization: true
+          includeViralityOptimization: true,
+          skipIPCheck: isAuthenticated // Skip IP check for authenticated users
         },
       });
 
@@ -160,6 +177,18 @@ export default function CreatePostPage() {
             </Button>
           </div>
 
+          {!isAuthenticated && limits && (
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Demo Mode: {limits.can_create ? `${1 - limits.creates_used} create remaining` : 'Create limit reached'}. 
+                <Button variant="link" className="p-0 h-auto ml-2" onClick={() => window.location.href = '/signup'}>
+                  Sign up for unlimited access
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="max-w-7xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-4">
@@ -229,9 +258,9 @@ export default function CreatePostPage() {
                   </Button>
                   <Button
                     onClick={() => handleGenerate()}
-                    disabled={isGenerating || !userIdea.trim()}
+                    disabled={isGenerating || !userIdea.trim() || (!isAuthenticated && limits && !limits.can_create)}
                   >
-                    {isGenerating ? 'Generating Post...' : 'Generate Optimized Post'}
+                    {isGenerating ? 'Generating Post...' : (!isAuthenticated && limits && !limits.can_create) ? 'Demo Limit Reached' : 'Generate Optimized Post'}
                   </Button>
                 </div>
               </TabsContent>
