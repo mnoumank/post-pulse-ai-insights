@@ -4,10 +4,16 @@ project_id = "eczmumeybuilbwoghcwd"
   [functions.generate-enhanced-post]
     verify_jwt = false
   [functions.analyze-post-ai] 
-    verify_jwt = false
+    verify_jwt = true
   [functions.analyze-post-suggestions]
-    verify_jwt = false
+    verify_jwt = true
   [functions.cleanup-post]
-    verify_jwt = false
+    verify_jwt = true
   [functions.demo-usage]
     verify_jwt = false
+  [functions.generate-hooks]
+    verify_jwt = true
+  [functions.generate-linkedin-post]
+    verify_jwt = true
+  [functions.optimize-post]
+    verify_jwt = true

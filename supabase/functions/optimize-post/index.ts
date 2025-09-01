@@ -24,17 +24,17 @@ serve(async (req) => {
 
     const { content, optimizationType } = JSON.parse(body);
     
-    if (!content || !optimizationType) {
+    if (!content || !optimizationType || typeof content !== 'string' || typeof optimizationType !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Content and optimization type are required' }),
+        JSON.stringify({ error: 'Content and optimization type are required and must be strings' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Limit content length (10,000 characters)
-    if (content.length > 10000) {
+    // Limit content length for security and cost control
+    if (content.length > 5000) {
       return new Response(
-        JSON.stringify({ error: 'Content too long (max 10,000 characters)' }),
+        JSON.stringify({ error: 'Content must be less than 5000 characters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

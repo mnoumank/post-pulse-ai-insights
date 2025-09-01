@@ -15,9 +15,17 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json();
     
-    if (!prompt) {
+    if (!prompt || typeof prompt !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Prompt is required' }),
+        JSON.stringify({ error: 'Prompt is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Input validation for security and cost control
+    if (prompt.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt must be less than 2000 characters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

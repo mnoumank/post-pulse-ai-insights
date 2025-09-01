@@ -10,7 +10,17 @@ const corsHeaders = {
 // Use service role key to check IP limits
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+// Create client for checking authentication
+function createAuthClient(authHeader: string | null) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: authHeader ? { Authorization: authHeader } : {}
+    }
+  });
+}
 
 function getClientIP(request: Request): string {
   const xForwardedFor = request.headers.get('x-forwarded-for');
@@ -35,14 +45,43 @@ serve(async (req) => {
   }
 
   try {
-    const { idea, selectedHook, category, includeViralityOptimization, skipIPCheck } = await req.json();
+    const { idea, selectedHook, category, includeViralityOptimization } = await req.json();
     
-    // Check IP limits for unauthenticated users (unless skipIPCheck is true)
-    if (!skipIPCheck) {
+    if (!idea || typeof idea !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Idea is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Input validation for security
+    if (idea.length > 2000) {
+      return new Response(
+        JSON.stringify({ error: 'Idea must be less than 2000 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Check if user is authenticated
+    const authHeader = req.headers.get('Authorization');
+    let isAuthenticated = false;
+    
+    if (authHeader) {
+      try {
+        const authClient = createAuthClient(authHeader);
+        const { data: { user } } = await authClient.auth.getUser();
+        isAuthenticated = !!user;
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        // Continue as unauthenticated user
+      }
+    }
+    
+    // Apply IP limits only for unauthenticated users
+    if (!isAuthenticated) {
       const clientIP = getClientIP(req);
-      console.log('Checking IP limits for:', clientIP);
       
-      const { data: ipUsage, error: fetchError } = await supabase
+      const { data: ipUsage, error: fetchError } = await supabaseAdmin
         .from('ip_usage_tracking')
         .select('creates_used')
         .eq('ip_address', clientIP)
@@ -66,13 +105,6 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-    }
-    
-    if (!idea) {
-      return new Response(
-        JSON.stringify({ error: 'Idea is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');

@@ -15,9 +15,17 @@ serve(async (req) => {
   try {
     const { postContent, industry } = await req.json();
     
-    if (!postContent) {
+    if (!postContent || typeof postContent !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Post content is required' }),
+        JSON.stringify({ error: 'Post content is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Input validation for security and cost control
+    if (postContent.length > 5000) {
+      return new Response(
+        JSON.stringify({ error: 'Post content must be less than 5000 characters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

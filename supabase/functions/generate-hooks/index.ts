@@ -14,9 +14,17 @@ serve(async (req) => {
   try {
     const { idea } = await req.json();
     
-    if (!idea) {
+    if (!idea || typeof idea !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'Idea is required' }),
+        JSON.stringify({ error: 'Idea is required and must be a string' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Input validation for security and cost control
+    if (idea.length > 1000) {
+      return new Response(
+        JSON.stringify({ error: 'Idea must be less than 1000 characters' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

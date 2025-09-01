@@ -7,6 +7,7 @@ import { Sparkles, Hash } from 'lucide-react';
 import { toast } from 'sonner';
 import { AIPostMetrics } from '@/utils/aiAnalyzer';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PostEditorProps {
   postNumber: 1 | 2;
@@ -127,19 +128,14 @@ export function PostEditor({ postNumber, content, onChange, metrics, isWinner }:
     if (user) {
       setIsCleaningUp(true);
       try {
-        const response = await fetch('https://eczmumeybuilbwoghcwd.supabase.co/functions/v1/cleanup-post', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ content }),
+        const { data, error } = await supabase.functions.invoke('cleanup-post', {
+          body: { content }
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to cleanup with AI');
+        if (error) {
+          throw new Error(error.message || 'Failed to cleanup with AI');
         }
 
-        const data = await response.json();
         onChange(data.cleanedContent);
         toast("AI-Enhanced cleanup complete!", {
           description: "Your post has been polished with AI"
