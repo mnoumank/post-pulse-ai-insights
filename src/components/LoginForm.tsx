@@ -47,7 +47,7 @@ export function LoginForm() {
       clearError();
       
       await login(values.email, values.password);
-      navigate('/compare');
+      navigate('/dashboard');
     } catch (err) {
       console.error('Login failed:', err);
     } finally {

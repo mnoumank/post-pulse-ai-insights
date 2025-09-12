@@ -52,7 +52,7 @@ export function SignupForm() {
     
     try {
       await register(values.email, values.password, values.name);
-      navigate('/compare');
+      navigate('/dashboard');
     } catch (err) {
       // Error is handled by the auth context
       console.error('Signup failed:', err);
