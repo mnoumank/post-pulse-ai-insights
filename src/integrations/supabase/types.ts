@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_voice_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          keywords: string[] | null
+          name: string
+          sample_content: string | null
+          style: string | null
+          tone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          keywords?: string[] | null
+          name: string
+          sample_content?: string | null
+          style?: string | null
+          tone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          keywords?: string[] | null
+          name?: string
+          sample_content?: string | null
+          style?: string | null
+          tone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comparison_actuals: {
         Row: {
           actual_winner: number | null
@@ -194,8 +233,68 @@ export type Database = {
         }
         Relationships: []
       }
+      post_analytics: {
+        Row: {
+          click_through_rate: number | null
+          comments: number | null
+          content: string
+          created_at: string
+          engagement_rate: number | null
+          id: string
+          impressions: number | null
+          industry_benchmark_score: number | null
+          likes: number | null
+          post_id: string | null
+          published_at: string | null
+          shares: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          click_through_rate?: number | null
+          comments?: number | null
+          content: string
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          impressions?: number | null
+          industry_benchmark_score?: number | null
+          likes?: number | null
+          post_id?: string | null
+          published_at?: string | null
+          shares?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          click_through_rate?: number | null
+          comments?: number | null
+          content?: string
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          impressions?: number | null
+          industry_benchmark_score?: number | null
+          likes?: number | null
+          post_id?: string | null
+          published_at?: string | null
+          shares?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_analytics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
+          brand_voice_id: string | null
           content: string
           created_at: string
           id: string
@@ -203,6 +302,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          brand_voice_id?: string | null
           content: string
           created_at?: string
           id?: string
@@ -210,13 +310,22 @@ export type Database = {
           user_id: string
         }
         Update: {
+          brand_voice_id?: string | null
           content?: string
           created_at?: string
           id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "posts_brand_voice_id_fkey"
+            columns: ["brand_voice_id"]
+            isOneToOne: false
+            referencedRelation: "brand_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -244,6 +353,50 @@ export type Database = {
           is_admin?: boolean
         }
         Relationships: []
+      }
+      scheduled_posts: {
+        Row: {
+          brand_voice_id: string | null
+          content: string
+          created_at: string
+          id: string
+          platform: string | null
+          scheduled_for: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_voice_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          platform?: string | null
+          scheduled_for: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_voice_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          platform?: string | null
+          scheduled_for?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_brand_voice_id_fkey"
+            columns: ["brand_voice_id"]
+            isOneToOne: false
+            referencedRelation: "brand_voice_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_preferences: {
         Row: {
@@ -275,18 +428,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          usage_creates_count: number | null
+          usage_reset_date: string | null
+          usage_virality_checks_count: number | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          usage_creates_count?: number | null
+          usage_reset_date?: string | null
+          usage_virality_checks_count?: number | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          usage_creates_count?: number | null
+          usage_reset_date?: string | null
+          usage_virality_checks_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_usage_limit: {
+        Args: { limit_type: string; user_uuid: string }
+        Returns: boolean
+      }
+      get_user_subscription_tier: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["subscription_tier"]
+      }
       is_current_user_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }
     Enums: {
-      [_ in never]: never
+      subscription_tier: "free" | "pro" | "team"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -413,6 +622,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_tier: ["free", "pro", "team"],
+    },
   },
 } as const
