@@ -41,13 +41,30 @@ export function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // Load scheduled posts count
+      const { data: scheduled } = await supabase
+        .from('scheduled_posts')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('status', 'scheduled');
+
+      // Load analytics for engagement rate
+      const { data: analytics } = await supabase
+        .from('post_analytics')
+        .select('engagement_rate')
+        .eq('user_id', user?.id);
+
+      const avgEngagement = analytics?.length > 0 
+        ? analytics.reduce((sum, a) => sum + (a.engagement_rate || 0), 0) / analytics.length 
+        : 0;
+
       if (error) throw error;
 
       setRecentPosts(posts || []);
       setStats({
         totalPosts: posts?.length || 0,
-        scheduledPosts: 0, // TODO: Add scheduled posts count when calendar is implemented
-        avgEngagement: 0, // TODO: Calculate from analytics
+        scheduledPosts: scheduled?.length || 0,
+        avgEngagement: Math.round(avgEngagement),
         thisMonthPosts: posts?.filter(post => {
           const postDate = new Date(post.created_at);
           const now = new Date();

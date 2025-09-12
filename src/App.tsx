@@ -18,6 +18,12 @@ import AdminDashboard from "./pages/AdminDashboard";
 import CreatePostPage from "./pages/CreatePostPage";
 import ComparisonPage from "./pages/ComparisonPage";
 import HistoryPage from "./pages/HistoryPage";
+import { Dashboard } from "./pages/Dashboard";
+import { Library } from "./pages/Library";
+import { CalendarPage } from "./pages/CalendarPage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
+import { Settings } from "./pages/Settings";
+import { PricingPage } from "./pages/PricingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,8 +43,14 @@ const App = () => (
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
-                <Route path="/create" element={<CreatePostPage />} />
+                <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+                <Route path="/create" element={<AuthGuard><CreatePostPage /></AuthGuard>} />
                 <Route path="/compare" element={<ComparisonPage />} />
+                <Route path="/library" element={<AuthGuard><Library /></AuthGuard>} />
+                <Route path="/calendar" element={<AuthGuard><CalendarPage /></AuthGuard>} />
+                <Route path="/analytics" element={<AuthGuard><AnalyticsPage /></AuthGuard>} />
+                <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+                <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/history" element={<AuthGuard><HistoryPage /></AuthGuard>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
