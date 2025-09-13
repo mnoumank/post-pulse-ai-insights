@@ -45,7 +45,7 @@ const App = () => (
                 <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
                 <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
                 <Route path="/create" element={<AuthGuard><CreatePostPage /></AuthGuard>} />
-                <Route path="/compare" element={<ComparisonPage />} />
+                <Route path="/comparison" element={<ComparisonPage />} />
                 <Route path="/library" element={<AuthGuard><Library /></AuthGuard>} />
                 <Route path="/calendar" element={<AuthGuard><CalendarPage /></AuthGuard>} />
                 <Route path="/analytics" element={<AuthGuard><AnalyticsPage /></AuthGuard>} />
