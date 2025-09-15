@@ -26,50 +26,6 @@ export function Navbar() {
             <span className="hidden font-bold sm:inline-block">PostPulse AI</span>
           </Link>
           
-          {user && (
-            <nav className="hidden lg:flex gap-6">
-              <Link
-                to="/dashboard"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/dashboard' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/create"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/create' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                Create
-              </Link>
-              <Link
-                to="/library"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/library' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                Library
-              </Link>
-              <Link
-                to="/analytics"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/analytics' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                Analytics
-              </Link>
-              <Link
-                to="/calendar"
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/calendar' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                Calendar
-              </Link>
-            </nav>
-          )}
         </div>
         
         <div className="flex items-center gap-4">

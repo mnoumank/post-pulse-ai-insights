@@ -10,6 +10,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ContentPersistenceProvider } from "./context/ContentPersistenceContext";
 import { AuthGuard } from "./components/AuthGuard";
+import { AppLayout } from "./components/AppLayout";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -37,23 +38,25 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
-                <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
-                <Route path="/create" element={<AuthGuard><CreatePostPage /></AuthGuard>} />
-                <Route path="/comparison" element={<ComparisonPage />} />
-                <Route path="/library" element={<AuthGuard><Library /></AuthGuard>} />
-                <Route path="/calendar" element={<AuthGuard><CalendarPage /></AuthGuard>} />
-                <Route path="/analytics" element={<AuthGuard><AnalyticsPage /></AuthGuard>} />
-                <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/history" element={<AuthGuard><HistoryPage /></AuthGuard>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
+                  <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+                  <Route path="/create" element={<AuthGuard><CreatePostPage /></AuthGuard>} />
+                  <Route path="/comparison" element={<ComparisonPage />} />
+                  <Route path="/library" element={<AuthGuard><Library /></AuthGuard>} />
+                  <Route path="/calendar" element={<AuthGuard><CalendarPage /></AuthGuard>} />
+                  <Route path="/analytics" element={<AuthGuard><AnalyticsPage /></AuthGuard>} />
+                  <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/history" element={<AuthGuard><HistoryPage /></AuthGuard>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
             </BrowserRouter>
             <SpeedInsights />
             <Analytics />
