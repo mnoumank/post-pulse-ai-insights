@@ -11,8 +11,6 @@ import trustLogos from '@/assets/trust-logos.jpg';
 export default function LandingPage() {
   const navigate = useNavigate();
   return <div className="flex min-h-screen flex-col">
-      <Navbar />
-      
       <main className="flex-1">
         {/* Hero Section with Product Mockup */}
         <section className="relative py-20 px-4 md:py-32 md:px-8 bg-gradient-to-br from-primary/5 via-background to-secondary/5 overflow-hidden">

@@ -29,7 +29,6 @@ export function Navbar() {
         </div>
         
         <div className="flex items-center gap-4">
-          <ThemeToggle />
           
           {user ? (
             <DropdownMenu>
@@ -61,6 +60,7 @@ export function Navbar() {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                 Log In
               </Button>
